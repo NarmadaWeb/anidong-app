@@ -1,6 +1,5 @@
 import 'package:anidong/main.dart';
 import 'package:anidong/screens/home/home_screen.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

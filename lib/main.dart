@@ -24,7 +24,9 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.background,
         brightness: Brightness.dark,
         primaryColor: AppColors.accent,
-        // Pastikan Anda menggunakan GoogleFonts di sini
+        hintColor: AppColors.secondaryText,
+        cardColor: AppColors.darkSurface,
+        dividerColor: AppColors.surface,
         textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme).apply(
           bodyColor: AppColors.primaryText,
           displayColor: AppColors.primaryText,
@@ -33,7 +35,24 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          foregroundColor: AppColors.primaryText,
         ),
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: MaterialColor(AppColors.accent.value, {
+            50: AppColors.accent.withOpacity(0.1),
+            100: AppColors.accent.withOpacity(0.2),
+            200: AppColors.accent.withOpacity(0.3),
+            300: AppColors.accent.withOpacity(0.4),
+            400: AppColors.accent.withOpacity(0.6),
+            500: AppColors.accent.withOpacity(0.8),
+            600: AppColors.accent,
+            700: AppColors.accent,
+            800: AppColors.accent,
+            900: AppColors.accent,
+          }),
+          brightness: Brightness.dark,
+          backgroundColor: AppColors.background,
+        ).copyWith(secondary: AppColors.accent),
       ),
       home: const SplashScreen(),
     );

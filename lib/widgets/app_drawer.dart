@@ -1,14 +1,13 @@
-import 'package:anidong/screens/explore/explore_screen.dart';
-import 'package:anidong/screens/history/history_screen.dart';
-import 'package:anidong/screens/my_list/my_list_screen.dart';
-import 'package:anidong/screens/premium/premium_screen.dart';
-import 'package:anidong/screens/settings/settings_screen.dart';
+// lib/widgets/app_drawer.dart
+
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  final ValueChanged<int> onPageSelected;
+
+  const AppDrawer({super.key, required this.onPageSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -17,32 +16,33 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
+          // Header sekarang akan menampilkan logo
           _buildHeader(),
           _buildDrawerItem(
             icon: Boxicons.bxs_compass,
             text: 'Explore Genres',
-            onTap: () => _navigateTo(context, const ExploreScreen()),
+            onTap: () => onPageSelected(5),
           ),
           _buildDrawerItem(
             icon: Boxicons.bxs_bookmark_star,
             text: 'My List',
-            onTap: () => _navigateTo(context, const MyListScreen()),
+            onTap: () => onPageSelected(6),
           ),
           _buildDrawerItem(
             icon: Boxicons.bxs_time_five,
             text: 'Watch History',
-            onTap: () => _navigateTo(context, const HistoryScreen()),
+            onTap: () => onPageSelected(2),
           ),
           _buildDrawerItem(
             icon: Boxicons.bxs_crown,
             text: 'Go Premium',
-            onTap: () => _navigateTo(context, const PremiumScreen()),
+            onTap: () => onPageSelected(8),
           ),
-          const Divider(color: AppColors.surface),
+          const Divider(color: AppColors.surface, height: 1),
           _buildDrawerItem(
             icon: Boxicons.bxs_cog,
             text: 'Settings',
-            onTap: () => _navigateTo(context, const SettingsScreen()),
+            onTap: () => onPageSelected(7),
             iconColor: AppColors.secondaryText,
           ),
           _buildDrawerItem(
@@ -59,33 +59,39 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  void _navigateTo(BuildContext context, Widget screen) {
-    Navigator.pop(context); // Close the drawer
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => screen),
-    );
-  }
-
+  // --- PERBAIKAN UTAMA DI SINI ---
+  // Metode _buildHeader() diubah total untuk menampilkan logo.
   Widget _buildHeader() {
-    return const UserAccountsDrawerHeader(
-      accountName: Text(
-        'Your Name',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-          color: AppColors.primaryText,
-        ),
-      ),
-      accountEmail: Text(
-        '@your_username',
-        style: TextStyle(color: AppColors.secondaryText),
-      ),
-      currentAccountPicture: CircleAvatar(
-        backgroundImage: NetworkImage('https://i.pravatar.cc/80?u=user123'),
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40.0),
+      width: double.infinity,
+      child: Column(
+        children: [
+          // Widget untuk menampilkan gambar logo dari folder assets
+          Image.asset(
+            'assets/images/logo.png', // Pastikan path ini sesuai dengan nama file Anda
+            height: 80,
+            // Fallback jika gambar gagal dimuat
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(
+                Icons.movie_filter_rounded,
+                size: 80,
+                color: AppColors.accent,
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'AniDong', // Nama aplikasi Anda
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              color: AppColors.primaryText,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

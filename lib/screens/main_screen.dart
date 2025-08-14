@@ -1,12 +1,22 @@
-import 'package:anidong/screens/download/download_screen.dart';
-import 'package:anidong/screens/history/history_screen.dart';
-import 'package:anidong/screens/home/home_screen.dart';
-import 'package:anidong/screens/profile/profile_screen.dart';
-import 'package:anidong/screens/trending/trending_screen.dart';
-import 'package:anidong/widgets/app_drawer.dart';
+// lib/screens/main_screen.dart
+
+import 'dart:ui';
+import 'package:anidong/widgets/search/search_delegate.dart'; // Import search delegate
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:anidong/utils/app_colors.dart';
+import 'package:anidong/widgets/app_drawer.dart';
+import 'package:anidong/widgets/mode_switch.dart';
+
+import 'package:anidong/screens/download/download_screen.dart';
+import 'package:anidong/screens/explore/explore_screen.dart';
+import 'package:anidong/screens/history/history_screen.dart';
+import 'package:anidong/screens/home/home_screen.dart';
+import 'package:anidong/screens/my_list/my_list_screen.dart';
+import 'package:anidong/screens/premium/premium_screen.dart';
+import 'package:anidong/screens/profile/profile_screen.dart';
+import 'package:anidong/screens/settings/settings_screen.dart';
+import 'package:anidong/screens/trending/trending_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,99 +26,133 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
+  int _currentPageIndex = 0;
+  int _bottomNavIndex = 0;
+  String _currentMode = 'anime';
+  late List<Widget> _pages;
 
-  // Daftar halaman yang akan ditampilkan
-  // TIP: Tambahkan halaman placeholder agar tidak error saat navigasi
-  static const List<Widget> _pages = <Widget>[
-    HomeScreen(),
-    TrendingScreen(),
-    HistoryScreen(),
-    DownloadScreen(),
-    ProfileScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      HomeScreen(currentMode: _currentMode, onModeChanged: _onModeChanged), // 0
+      const TrendingScreen(), // 1
+      const HistoryScreen(),  // 2
+      const DownloadScreen(), // 3
+      const ProfileScreen(),  // 4
+      const ExploreScreen(),  // 5
+      const MyListScreen(),   // 6
+      const SettingsScreen(), // 7
+      const PremiumScreen(),  // 8
+    ];
+  }
 
-  void _onItemTapped(int index) {
+  void _onModeChanged(String newMode) {
     setState(() {
-      _selectedIndex = index;
+      _currentMode = newMode;
+      _pages[0] = HomeScreen(currentMode: newMode, onModeChanged: _onModeChanged);
     });
   }
 
-  AppBar? _buildAppBar() {
-    // The AppBar should only be hidden on the Profile page (index 4).
-    if (_selectedIndex == 4) {
-      return null;
-    }
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentPageIndex = index;
+      _bottomNavIndex = index;
+    });
+  }
 
-    return AppBar(
-      backgroundColor: AppColors.background.withOpacity(0.8),
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: const Icon(Boxicons.bx_menu, size: 30),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
-      ),
-      title: Row(
-        children: [
-          Icon(Boxicons.bxs_movie, color: AppColors.accent, size: 28),
-          const SizedBox(width: 8),
-          const Text('AniDong', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
-        ],
-      ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Boxicons.bx_search, size: 26),
-        ),
-      ],
-    );
+  void _navigateToPageFromDrawer(int index) {
+    Navigator.pop(context);
+    setState(() {
+      _currentPageIndex = index;
+      if (index >= 0 && index <= 4) {
+        _bottomNavIndex = index;
+      } else {
+        _bottomNavIndex = -1;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final Set<int> noAppBarPages = {
+      1, 2, 3, 4, 7, 8
+    };
+
     return Scaffold(
       extendBody: true,
       extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(),
-      drawer: const AppDrawer(),
+      appBar: noAppBarPages.contains(_currentPageIndex)
+          ? null
+          : AppBar(
+              toolbarHeight: 64,
+              backgroundColor: AppColors.background.withAlpha((255 * 0.8).round()),
+              elevation: 0,
+              flexibleSpace: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(color: Colors.transparent),
+                ),
+              ),
+              leading: Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Boxicons.bx_menu, size: 24, color: AppColors.secondaryText),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              ),
+              title: ModeSwitch(currentMode: _currentMode, onModeChanged: _onModeChanged),
+              centerTitle: true,
+              actions: [
+                // Aksi untuk tombol pencarian
+                IconButton(
+                  onPressed: () {
+                    // Menampilkan layar pencarian
+                    showSearch(
+                      context: context,
+                      delegate: AnidongSearchDelegate(),
+                    );
+                  },
+                  icon: const Icon(Boxicons.bx_search, size: 24, color: AppColors.secondaryText),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+      drawer: AppDrawer(
+        onPageSelected: _navigateToPageFromDrawer,
+      ),
       body: IndexedStack(
-        index: _selectedIndex,
+        index: _currentPageIndex,
         children: _pages,
       ),
       bottomNavigationBar: Container(
+        height: 80,
         decoration: BoxDecoration(
-          color: _selectedIndex == 1
-            ? Colors.transparent
-            : AppColors.background.withOpacity(0.9),
-          border: Border(
-            top: BorderSide(
-              color: _selectedIndex == 1
-                ? Colors.transparent
-                : AppColors.surface,
-              width: 1.0,
+          color: AppColors.background.withAlpha((255 * 0.8).round()),
+          border: Border(top: BorderSide(color: AppColors.surface.withAlpha((255 * 0.5).round()), width: 1.0)),
+        ),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: BottomNavigationBar(
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(icon: Icon(Boxicons.bxs_home_smile), label: 'Home'),
+                BottomNavigationBarItem(icon: Icon(Boxicons.bxs_hot), label: 'Trendings'),
+                BottomNavigationBarItem(icon: Icon(Boxicons.bxs_time_five), label: 'History'),
+                BottomNavigationBarItem(icon: Icon(Boxicons.bxs_download), label: 'Downloads'),
+                BottomNavigationBarItem(icon: Icon(Boxicons.bxs_user_circle), label: 'Profile'),
+              ],
+              currentIndex: _bottomNavIndex == -1 ? 0 : _bottomNavIndex,
+              onTap: _onItemTapped,
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: _bottomNavIndex == -1 ? AppColors.secondaryText : AppColors.accent,
+              unselectedItemColor: AppColors.secondaryText,
+              showUnselectedLabels: true,
+              selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+              unselectedLabelStyle: const TextStyle(fontSize: 10),
             ),
           ),
-        ),
-        child: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Boxicons.bxs_home_smile), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Boxicons.bxs_hot), label: 'Trendings'),
-            BottomNavigationBarItem(icon: Icon(Boxicons.bxs_time_five), label: 'History'),
-            BottomNavigationBarItem(icon: Icon(Boxicons.bxs_download), label: 'Downloads'),
-            BottomNavigationBarItem(icon: Icon(Boxicons.bxs_user_circle), label: 'Profile'),
-          ],
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: AppColors.accent,
-          unselectedItemColor: AppColors.secondaryText,
-          // --- PERUBAHAN DI SINI ---
-          showUnselectedLabels: false, // <-- ATUR JADI FALSE UNTUK MENGATASI OVERFLOW
-          // --------------------------
-          selectedFontSize: 12, // Sedikit lebih besar agar mudah dibaca saat aktif
-          unselectedFontSize: 10,
         ),
       ),
     );

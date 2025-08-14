@@ -1,3 +1,5 @@
+// lib/screens/splash_screen.dart
+
 import 'package:anidong/screens/main_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -37,18 +39,18 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Gunakan logo Anda dari folder assets
-            Image.asset('assets/logo.png', width: 120),
-            const SizedBox(height: 24),
-            const Text(
-              'AniDong',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryText,
-              ),
+            Image.asset(
+              'assets/images/logo.png',
+              width: 150,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(
+                  Icons.movie_filter_rounded,
+                  size: 150,
+                  color: AppColors.accent,
+                );
+              },
             ),
-             const SizedBox(height: 40),
+            const SizedBox(height: 40),
             const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
             ),

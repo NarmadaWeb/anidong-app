@@ -1,6 +1,6 @@
 import 'package:anidong/utils/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:carousel_slider/carousel_slider.dart';
+import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 
@@ -12,8 +12,8 @@ class HeroSlider extends StatefulWidget {
 }
 
 class _HeroSliderState extends State<HeroSlider> {
-  int _current = 0;
-  final CarouselController _controller = CarouselController();
+  int current = 0;
+  final SwiperController _controller = SwiperController();
 
   static final List<Map<String, String>> _slides = [
     {
@@ -38,44 +38,33 @@ class _HeroSliderState extends State<HeroSlider> {
     return Stack(
       alignment: Alignment.bottomCenter,
       children: [
-        CarouselSlider.builder(
-          carouselController: _controller,
-          itemCount: _slides.length,
-          itemBuilder: (context, index, realIndex) {
-            final slide = _slides[index];
-            return _buildSlide(context, slide);
-          },
-          options: CarouselOptions(
-            height: 380,
-            autoPlay: true,
+        SizedBox(
+          height: 380,
+          child: Swiper(
+            controller: _controller,
+            itemCount: _slides.length,
+            itemBuilder: (context, index) {
+              final slide = _slides[index];
+              return _buildSlide(context, slide);
+            },
+            autoplay: true,
+            autoplayDelay: 5000,
             viewportFraction: 1.0,
-            autoPlayInterval: const Duration(seconds: 5),
-            onPageChanged: (index, reason) {
+            onIndexChanged: (index) {
               setState(() {
-                _current = index;
+                current = index;
               });
             },
-          ),
-        ),
-        Positioned(
-          bottom: 10,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: _slides.asMap().entries.map((entry) {
-              return GestureDetector(
-                onTap: () => _controller.animateToPage(entry.key),
-                child: Container(
-                  width: 12.0,
-                  height: 12.0,
-                  margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black)
-                        .withOpacity(_current == entry.key ? 0.9 : 0.4),
-                  ),
-                ),
-              );
-            }).toList(),
+            pagination: const SwiperPagination(
+              alignment: Alignment.bottomCenter,
+              builder: DotSwiperPaginationBuilder(
+                color: Colors.white54,
+                activeColor: Colors.white,
+                size: 8.0,
+                activeSize: 8.0,
+                space: 4.0,
+              ),
+            ),
           ),
         ),
       ],
