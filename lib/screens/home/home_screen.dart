@@ -1,3 +1,5 @@
+import 'package:anidong/screens/home/widgets/hero_slider.dart';
+import 'package:anidong/screens/home/widgets/mode_switch.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -11,19 +13,50 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<String> newEpisodes = List.generate(9, (index) => 'Episode Terbaru ${index + 1}');
-  bool _isLoadingMore = false;
+  String _currentMode = 'anime';
 
-  void _loadMore() async {
-    if (_isLoadingMore) return;
-    setState(() => _isLoadingMore = true);
-    await Future.delayed(const Duration(seconds: 1));
+  // Updated data structure
+  static final List<Map<String, String>> _allContent = [
+    {'title': 'Jujutsu Kaisen', 'mode': 'anime', 'type': 'episode'},
+    {'title': 'Perfect World', 'mode': 'donghua', 'type': 'episode'},
+    {'title': 'One Piece', 'mode': 'anime', 'type': 'episode'},
+    {'title': 'Throne of Seal', 'mode': 'donghua', 'type': 'episode'},
+    {'title': 'My Hero Academia', 'mode': 'anime', 'type': 'episode'},
+    {'title': 'Apotheosis', 'mode': 'donghua', 'type': 'episode'},
+    {'title': 'Attack on Titan', 'mode': 'anime', 'type': 'episode'},
+    {'title': 'Swallowed Star', 'mode': 'donghua', 'type': 'episode'},
+    {'title': 'Solo Leveling', 'mode': 'anime', 'type': 'recommended'},
+    {'title': 'Battle Through the Heavens', 'mode': 'donghua', 'type': 'recommended'},
+    {'title': 'Demon Slayer', 'mode': 'anime', 'type': 'recommended'},
+  ];
+
+  List<Map<String, String>> _filteredEpisodes = [];
+  List<Map<String, String>> _filteredRecommended = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filterContent();
+  }
+
+  void _onModeChanged(String newMode) {
     setState(() {
-      int currentLength = newEpisodes.length;
-      newEpisodes.addAll(List.generate(9, (index) => 'Episode Tambahan ${currentLength + index + 1}'));
-      _isLoadingMore = false;
+      _currentMode = newMode;
+      _filterContent();
     });
   }
+
+  void _filterContent() {
+    _filteredEpisodes = _allContent
+        .where((item) => item['mode'] == _currentMode && item['type'] == 'episode')
+        .toList();
+    _filteredRecommended = _allContent
+        .where((item) => item['mode'] == _currentMode && item['type'] == 'recommended')
+        .toList();
+  }
+
+  // The _loadMore function is removed as it's not compatible with the new data structure.
+  // A more advanced pagination logic would be needed.
 
   @override
   Widget build(BuildContext context) {
@@ -31,75 +64,14 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeroBanner(context),
+          const HeroSlider(),
+          ModeSwitch(currentMode: _currentMode, onModeChanged: _onModeChanged),
           _buildSectionTitle('New Episodes'),
           _buildNewEpisodesGrid(),
-          _buildLoadMoreButton(),
+          // Load more button removed for simplicity with the new data model
           _buildSectionTitle('Recommended For You'),
           _buildRecommendedList(),
           const SizedBox(height: 100),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroBanner(BuildContext context) {
-    return SizedBox(
-      height: 380,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CachedNetworkImage(
-            imageUrl: "https://imgs.search.brave.com/KDa7rfrU632SyD6Gowf1I9cCYs6MpSR04v1UHN8-HPU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMwLmdhbWVyYW50/aW1hZ2VzLmNvbS93/b3JkcHJlc3Mvd3At/Y29udGVudC91cGxv/YWRzLzIwMjQvMTEv/ZmVhdHVyZWQtaW1h/Z2UtZm9yLWlzZWth/aS1kb25naHVhLXJh/bmtlZC5qcGc",
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Container(color: AppColors.surface),
-            errorWidget: (context, url, error) => const Icon(Icons.error),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.background, AppColors.background.withOpacity(0.7), Colors.transparent],
-                stops: const [0.0, 0.4, 1.0],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 20, left: 0, right: 0,
-            child: Column(
-              children: [
-                const Text('SPY x FAMILY', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                const Text('Action • Comedy • Shounen', style: TextStyle(color: AppColors.secondaryText)),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Boxicons.bx_play_circle, size: 22),
-                      label: const Text('Play'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white, foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Boxicons.bx_plus, size: 22),
-                      label: const Text('My List'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.surface.withOpacity(0.8), foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
-          )
         ],
       ),
     );
@@ -122,26 +94,27 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisCount: 3,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 16 / 10,
+        childAspectRatio: 2 / 3, // Adjusted for poster-like images
       ),
-      itemCount: newEpisodes.length,
+      itemCount: _filteredEpisodes.length,
       itemBuilder: (context, index) {
+        final episode = _filteredEpisodes[index];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // PERBAIKAN: Menggunakan Expanded untuk mengisi ruang secara fleksibel
-            // dan mencegah overflow.
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(8),
+                  // TODO: Add image here later using CachedNetworkImage
                 ),
+                child: Center(child: Icon(Icons.image, color: AppColors.secondaryText.withOpacity(0.5))),
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              newEpisodes[index],
+              episode['title']!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 12, color: AppColors.secondaryText, fontWeight: FontWeight.w500),
@@ -178,19 +151,33 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        itemCount: 10,
+        itemCount: _filteredRecommended.length,
         itemBuilder: (context, index) {
+          final recommended = _filteredRecommended[index];
           return Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: SizedBox(
               width: 120,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AspectRatio(
                     aspectRatio: 2 / 3,
                     child: Container(
-                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        // TODO: Add image here later
+                      ),
+                      child: Center(child: Icon(Icons.image, color: AppColors.secondaryText.withOpacity(0.5))),
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    recommended['title']!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

@@ -3,8 +3,8 @@ import 'package:anidong/widgets/glass_card.dart';
 import 'package:anidong/widgets/modern_page_header.dart';
 import 'package:flutter/material.dart';
 
-class DownloadScreen extends StatelessWidget {
-  const DownloadScreen({super.key});
+class HistoryScreen extends StatelessWidget {
+  const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,8 +14,8 @@ class DownloadScreen extends StatelessWidget {
         child: Column(
           children: [
             ModernPageHeader(
-              title: '📥 My Downloads',
-              subtitle: 'Watch offline anytime, anywhere',
+              title: '⏰ Watch History',
+              subtitle: 'Continue where you left off',
             ),
             Padding(
               padding: EdgeInsets.all(16.0),
@@ -23,7 +23,7 @@ class DownloadScreen extends StatelessWidget {
                 children: [
                   GlassCard(
                     child: Text(
-                      'Content for downloads page goes here.',
+                      'Content for history page goes here.',
                       style: TextStyle(color: AppColors.primaryText),
                     ),
                   )
