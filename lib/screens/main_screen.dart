@@ -1,4 +1,9 @@
+import 'package:anidong/screens/download/download_screen.dart';
+import 'package:anidong/screens/history/history_screen.dart';
 import 'package:anidong/screens/home/home_screen.dart';
+import 'package:anidong/screens/profile/profile_screen.dart';
+import 'package:anidong/screens/trending/trending_screen.dart';
+import 'package:anidong/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:anidong/utils/app_colors.dart';
@@ -17,10 +22,10 @@ class _MainScreenState extends State<MainScreen> {
   // TIP: Tambahkan halaman placeholder agar tidak error saat navigasi
   static const List<Widget> _pages = <Widget>[
     HomeScreen(),
-    Center(child: Text('Shorts Page')), // Placeholder
-    Center(child: Text('Trendings Page')), // Placeholder
-    Center(child: Text('Downloads Page')), // Placeholder
-    Center(child: Text('Profile Page')), // Placeholder
+    TrendingScreen(),
+    HistoryScreen(),
+    DownloadScreen(),
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -30,12 +35,19 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   AppBar? _buildAppBar() {
-    if (_selectedIndex == 1 || _selectedIndex == 4) {
+    // The AppBar should only be hidden on the Profile page (index 4).
+    if (_selectedIndex == 4) {
       return null;
     }
 
     return AppBar(
       backgroundColor: AppColors.background.withOpacity(0.8),
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Boxicons.bx_menu, size: 30),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
       title: Row(
         children: [
           Icon(Boxicons.bxs_movie, color: AppColors.accent, size: 28),
@@ -58,6 +70,7 @@ class _MainScreenState extends State<MainScreen> {
       extendBody: true,
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(),
+      drawer: const AppDrawer(),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
@@ -79,8 +92,8 @@ class _MainScreenState extends State<MainScreen> {
         child: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(icon: Icon(Boxicons.bxs_home_smile), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Boxicons.bxs_movie_play), label: 'Shorts'),
             BottomNavigationBarItem(icon: Icon(Boxicons.bxs_hot), label: 'Trendings'),
+            BottomNavigationBarItem(icon: Icon(Boxicons.bxs_time_five), label: 'History'),
             BottomNavigationBarItem(icon: Icon(Boxicons.bxs_download), label: 'Downloads'),
             BottomNavigationBarItem(icon: Icon(Boxicons.bxs_user_circle), label: 'Profile'),
           ],
