@@ -25,7 +25,7 @@ class _ModeSwitchState extends State<ModeSwitch> {
         widget.onModeChanged(isAnime ? 'donghua' : 'anime');
       },
       child: Container(
-        width: 130,
+        width: 135,
         height: 36,
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(

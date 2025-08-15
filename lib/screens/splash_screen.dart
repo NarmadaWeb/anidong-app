@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             Image.asset(
               'assets/images/logo.png',
-              width: 150,
+              width: 200,
               errorBuilder: (context, error, stackTrace) {
                 return const Icon(
                   Icons.movie_filter_rounded,
