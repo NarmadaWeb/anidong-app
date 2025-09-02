@@ -1,9 +1,13 @@
 // lib/screens/trending/trending_screen.dart
 
+import 'package:anidong/data/models/show_model.dart';
+import 'package:anidong/providers/trending_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/glass_card.dart';
+import 'package:provider/provider.dart';
 
 class TrendingScreen extends StatelessWidget {
   const TrendingScreen({super.key});
@@ -20,7 +24,6 @@ class TrendingScreen extends StatelessWidget {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // Background Gradien
           Container(
             height: MediaQuery.of(context).size.height * 0.3,
             width: double.infinity,
@@ -32,15 +35,12 @@ class TrendingScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Konten
           SingleChildScrollView(
             child: SafeArea(
               bottom: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Teks
-                  // PERBAIKAN: Menghapus 'const' karena memanggil MediaQuery di atas
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 24.0),
                     child: Column(
@@ -52,7 +52,6 @@ class TrendingScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Konten Utama
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
@@ -110,18 +109,42 @@ class TrendingScreen extends StatelessWidget {
   }
 
   Widget _buildTrendingList() {
-    return Column(
-      children: [
-        _buildTrendingItem(rank: 1, title: 'Jujutsu Kaisen Season 2', genre: 'Action • Supernatural', rating: '9.2'),
-        const SizedBox(height: 12),
-        _buildTrendingItem(rank: 2, title: 'Chainsaw Man', genre: 'Action • Horror', rating: '8.9'),
-        const SizedBox(height: 12),
-        _buildTrendingItem(rank: 3, title: 'One Piece', genre: 'Adventure • Comedy', rating: '9.5'),
-      ],
+    return Consumer<TrendingProvider>(
+      builder: (context, provider, child) {
+        if (provider.state == TrendingState.loading || provider.state == TrendingState.initial) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (provider.state == TrendingState.initial) {
+              provider.fetchTrendingPageData(context);
+            }
+          });
+          return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+        }
+
+        if (provider.state == TrendingState.error) {
+          return Center(
+            child: Text('Error: ${provider.errorMessage}', style: const TextStyle(color: AppColors.secondaryText)),
+          );
+        }
+
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: provider.topRatedShows.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final show = provider.topRatedShows[index];
+            return _buildTrendingItem(
+              rank: index + 1,
+              show: show,
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildTrendingItem({required int rank, required String title, required String genre, required String rating}) {
+  Widget _buildTrendingItem({required int rank, required Show show}) {
+    final genreText = show.genres.map((g) => g.name).join(' • ');
     return GlassCard(
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -130,20 +153,30 @@ class TrendingScreen extends StatelessWidget {
             width: 40,
             child: Text('#$rank', textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.accent)),
           ),
-          Container(width: 64, height: 80, decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8))),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: CachedNetworkImage(
+              imageUrl: show.coverImageUrl ?? '',
+              width: 64,
+              height: 80,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(color: AppColors.surface),
+              errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported)),
+            ),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-                Text(genre, style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+                Text(show.title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                Text(genreText, style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     const Icon(Boxicons.bxs_star, color: AppColors.yellow400, size: 16),
                     const SizedBox(width: 4),
-                    Text(rating, style: const TextStyle(fontSize: 14, color: AppColors.primaryText)),
+                    Text(show.rating.toString(), style: const TextStyle(fontSize: 14, color: AppColors.primaryText)),
                   ],
                 ),
               ],

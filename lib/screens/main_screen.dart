@@ -1,12 +1,14 @@
 // lib/screens/main_screen.dart
 
 import 'dart:ui';
-import 'package:anidong/widgets/search/search_delegate.dart'; // Import search delegate
+import 'package:anidong/widgets/search/search_delegate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/app_drawer.dart';
 import 'package:anidong/widgets/mode_switch.dart';
+import 'package:provider/provider.dart';
+import 'package:anidong/providers/home_provider.dart';
 
 import 'package:anidong/screens/download/download_screen.dart';
 import 'package:anidong/screens/explore/explore_screen.dart';
@@ -28,14 +30,13 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentPageIndex = 0;
   int _bottomNavIndex = 0;
-  String _currentMode = 'anime';
   late List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
     _pages = [
-      HomeScreen(currentMode: _currentMode, onModeChanged: _onModeChanged), // 0
+      const HomeScreen(), // 0
       const TrendingScreen(), // 1
       const HistoryScreen(),  // 2
       const DownloadScreen(), // 3
@@ -45,13 +46,6 @@ class _MainScreenState extends State<MainScreen> {
       const SettingsScreen(), // 7
       const PremiumScreen(),  // 8
     ];
-  }
-
-  void _onModeChanged(String newMode) {
-    setState(() {
-      _currentMode = newMode;
-      _pages[0] = HomeScreen(currentMode: newMode, onModeChanged: _onModeChanged);
-    });
   }
 
   void _onItemTapped(int index) {
@@ -100,7 +94,16 @@ class _MainScreenState extends State<MainScreen> {
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               ),
-              title: ModeSwitch(currentMode: _currentMode, onModeChanged: _onModeChanged),
+              title: Consumer<HomeProvider>(
+                builder: (context, provider, child) {
+                  return ModeSwitch(
+                    currentMode: provider.currentMode,
+                    onModeChanged: (newMode) {
+                      provider.changeMode(context, newMode);
+                    },
+                  );
+                },
+              ),
               centerTitle: true,
               actions: [
                 // Aksi untuk tombol pencarian

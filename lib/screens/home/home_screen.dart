@@ -10,20 +10,19 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class HomeScreen extends StatelessWidget {
-  final String currentMode;
-  final ValueChanged<String> onModeChanged;
-
-  const HomeScreen({
-    super.key,
-    required this.currentMode,
-    required this.onModeChanged,
-  });
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<HomeProvider>(
       builder: (context, provider, child) {
         if (provider.state == HomeState.loading || provider.state == HomeState.initial) {
+          // Call fetchHomePageData with context when the provider is first initialized or loading
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (provider.state == HomeState.initial) {
+              provider.fetchHomePageData(context);
+            }
+          });
           return const Center(child: CircularProgressIndicator(color: AppColors.accent));
         }
 
@@ -37,7 +36,7 @@ class HomeScreen extends StatelessWidget {
                   Text('Error: ${provider.errorMessage}', textAlign: TextAlign.center, style: const TextStyle(color: AppColors.secondaryText)),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
-                    onPressed: () => provider.fetchHomePageData(),
+                    onPressed: () => provider.fetchHomePageData(context),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Try Again'),
                     style: ElevatedButton.styleFrom(
@@ -51,19 +50,15 @@ class HomeScreen extends StatelessWidget {
           );
         }
 
-        // --- PERBAIKAN DI SINI ---
-        // Karena /episodes/recent tidak punya data 'Show', kita tidak bisa memfilternya di sini.
-        // Kita akan memfilter di dalam `_buildNewEpisodesGrid` jika data Show tersedia di sana.
-        // Untuk sekarang, kita asumsikan /episodes/recent MUNGKIN tidak memiliki info 'Show'
         final allRecentEpisodes = provider.recentEpisodes;
 
         // Filter untuk rekomendasi tetap berjalan seperti biasa
         final filteredRecommended = provider.recommendedShows
-            .where((show) => show.type == currentMode)
+            .where((show) => show.type == provider.currentMode)
             .toList();
 
         return RefreshIndicator(
-          onRefresh: () => provider.fetchHomePageData(),
+          onRefresh: () => provider.fetchHomePageData(context),
           backgroundColor: AppColors.surface,
           color: AppColors.accent,
           child: SingleChildScrollView(
@@ -73,7 +68,7 @@ class HomeScreen extends StatelessWidget {
               children: [
                 const HeroSlider(),
                 _buildSectionTitle('New Episodes'),
-                _buildNewEpisodesGrid(allRecentEpisodes, currentMode), // Kirim mode saat ini
+                _buildNewEpisodesGrid(allRecentEpisodes, provider.currentMode), // Kirim mode saat ini
                 _buildSectionTitle('Recommended For You'),
                 _buildRecommendedList(context, filteredRecommended),
                 const SizedBox(height: 100),
@@ -94,16 +89,9 @@ class HomeScreen extends StatelessWidget {
 
   // --- PERBAIKAN DI SINI ---
   Widget _buildNewEpisodesGrid(List<Episode> episodes, String currentMode) {
-    // Lakukan filter di sini. Jika episode.show adalah null, kita butuh fallback.
-    // Solusi terbaik adalah backend mengirim data Show.
-    // Solusi sementara: Tampilkan saja, atau filter jika ada data Show.
-    final filteredEpisodes = episodes.where((ep) {
-      // Jika backend Anda DIPERBAIKI (solusi ideal), baris ini akan berfungsi:
-      // return ep.show?.type == currentMode;
 
-      // SOLUSI SEMENTARA: karena backend belum mengirim data `show` di `/episodes/recent`,
-      // kita tidak bisa memfilter. Untuk menampilkan sesuatu, kita hilangkan filter untuk sementara.
-      // Jika Anda ingin tetap filter, perbaiki backend Anda.
+    final filteredEpisodes = episodes.where((ep) {
+
       return true;
     }).toList();
 
@@ -144,7 +132,7 @@ class HomeScreen extends StatelessWidget {
                       errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
                     ),
                   ),
-                  // ... (overlay lainnya)
+
                   Positioned(
                     bottom: 8, left: 8, right: 8,
                     child: Row(
@@ -193,7 +181,6 @@ class HomeScreen extends StatelessWidget {
     return SizedBox(
       height: itemHeight,
       child: ListView.builder(
-        // ... (kode ini sudah benar dan tidak perlu diubah)
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         itemCount: shows.length,

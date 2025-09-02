@@ -1,6 +1,9 @@
 // lib/main.dart
 
+import 'package:anidong/providers/auth_provider.dart';
 import 'package:anidong/providers/home_provider.dart';
+import 'package:anidong/providers/trending_provider.dart';
+import 'package:anidong/screens/oauth/login_screen.dart';
 import 'package:anidong/screens/splash_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -17,12 +20,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- PERBAIKAN UTAMA DI SINI ---
-    // 3. Bungkus MaterialApp dengan ChangeNotifierProvider
-    return ChangeNotifierProvider(
-      // 'create' dieksekusi sekali untuk membuat instance HomeProvider
-      // yang akan tersedia untuk semua widget di bawahnya.
-      create: (context) => HomeProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => HomeProvider()),
+        ChangeNotifierProvider(create: (_) => TrendingProvider()),
+      ],
       child: MaterialApp(
         title: 'AniDong',
         debugShowCheckedModeBanner: false,
@@ -61,7 +64,15 @@ class MyApp extends StatelessWidget {
             backgroundColor: AppColors.background,
           ).copyWith(secondary: AppColors.accent),
         ),
-        home: const SplashScreen(),
+        home: Consumer<AuthProvider>(
+          builder: (context, authProvider, child) {
+            if (authProvider.state == AuthState.authenticated) {
+              return const SplashScreen();
+            } else {
+              return const LoginScreen();
+            }
+          },
+        ),
       ),
     );
   }

@@ -16,20 +16,27 @@ class HomeProvider with ChangeNotifier {
   List<Show> _recommendedShows = [];
   HomeState _state = HomeState.initial;
   String _errorMessage = '';
+  String _currentMode = 'anime';
 
   // Getter publik agar UI bisa mengakses data tanpa bisa mengubahnya langsung
   List<Episode> get recentEpisodes => _recentEpisodes;
   List<Show> get recommendedShows => _recommendedShows;
   HomeState get state => _state;
   String get errorMessage => _errorMessage;
+  String get currentMode => _currentMode;
 
   // Constructor ini akan langsung memanggil API saat provider pertama kali dibuat
-  HomeProvider() {
-    fetchHomePageData();
+  HomeProvider(); // No longer calls fetchHomePageData directly
+
+  Future<void> changeMode(BuildContext context, String newMode) async {
+    if (_currentMode == newMode) return;
+    _currentMode = newMode;
+    notifyListeners();
+    await fetchHomePageData(context);
   }
 
   // Metode utama untuk mengambil semua data yang dibutuhkan oleh halaman utama
-  Future<void> fetchHomePageData() async {
+  Future<void> fetchHomePageData(BuildContext context) async {
     // Set state ke loading dan beri tahu UI untuk update (menampilkan spinner)
     _state = HomeState.loading;
     notifyListeners();
@@ -37,8 +44,8 @@ class HomeProvider with ChangeNotifier {
     try {
       // Panggil kedua API secara bersamaan untuk efisiensi
       final results = await Future.wait([
-        _apiService.getRecentEpisodes(),
-        _apiService.getTopRatedShows(), // Menggunakan top-rated sebagai rekomendasi
+        _apiService.getRecentEpisodes(context, type: _currentMode),
+        _apiService.getTopRatedShows(context), // Menggunakan top-rated sebagai rekomendasi
       ]);
 
       // Simpan hasil ke properti privat
@@ -50,6 +57,7 @@ class HomeProvider with ChangeNotifier {
       print("=========================================");
       print("======= DEBUGGING: HomeProvider =======");
       print("=========================================");
+      print("=> Mode Saat Ini: $_currentMode");
       print("=> Jumlah Episode Terbaru Diterima: ${_recentEpisodes.length}");
       print("=> Jumlah Top Rated Diterima: ${_recommendedShows.length}");
 

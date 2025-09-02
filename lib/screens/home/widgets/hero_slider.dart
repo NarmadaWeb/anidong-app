@@ -1,95 +1,78 @@
 // lib/screens/home/widgets/hero_slider.dart
 
+import 'package:anidong/data/models/show_model.dart';
+import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
-
-// --- Perbaikan 1: Membuat Model Data ---
-// Menggunakan class membuat kode lebih aman dari typo dan lebih mudah dibaca.
-class SlideModel {
-  final String imageUrl;
-  final String title;
-  final String genre;
-
-  const SlideModel({
-    required this.imageUrl,
-    required this.title,
-    required this.genre,
-  });
-}
+import 'package:provider/provider.dart';
 
 class HeroSlider extends StatelessWidget {
   const HeroSlider({super.key});
 
-  // --- Perbaikan 2: Data dipisahkan dari UI ---
-  // Data sekarang menggunakan SlideModel.
-  static final List<SlideModel> _slides = [
-    const SlideModel(
-      imageUrl: "https://image.tmdb.org/t/p/w780/hTP1DtLGFamjG9sz1w6qCg2xVcN.jpg",
-      title: "SPY x FAMILY",
-      genre: "Action • Comedy • Shounen",
-    ),
-    const SlideModel(
-      imageUrl: "https://image.tmdb.org/t/p/w780/9VUJS3PA69I42Ke8iBSt3bFvflg.jpg",
-      title: "Jujutsu Kaisen",
-      genre: "Action • Dark Fantasy • Supernatural",
-    ),
-    const SlideModel(
-      imageUrl: "https://image.tmdb.org/t/p/w780/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg",
-      title: "Demon Slayer",
-      genre: "Action • Historical • Supernatural",
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    // Menggunakan AspectRatio agar ukuran slider responsif terhadap lebar layar.
-    return AspectRatio(
-      aspectRatio: 16 / 11, // Rasio yang baik untuk hero banner
-      child: Swiper(
-        itemCount: _slides.length,
-        itemBuilder: (context, index) {
-          // Mengirim model data ke metode build
-          return _HeroSlideItem(slide: _slides[index]);
-        },
-        autoplay: true,
-        autoplayDelay: 5000,
-        // --- Perbaikan 3: Pagination yang lebih stylish ---
-        pagination: const SwiperPagination(
-          alignment: Alignment.bottomCenter,
-          margin: EdgeInsets.only(bottom: 20.0),
-          builder: DotSwiperPaginationBuilder(
-            color: Colors.white38,
-            activeColor: AppColors.accent,
-            size: 8.0,
-            activeSize: 10.0,
-            space: 4.0,
+    // Menggunakan Consumer untuk mendapatkan data dari HomeProvider
+    return Consumer<HomeProvider>(
+      builder: (context, provider, child) {
+        // Ambil 3 item pertama dari recommendedShows untuk slider
+        final slides = provider.recommendedShows.take(3).toList();
+
+        if (slides.isEmpty) {
+          // Tampilkan placeholder jika tidak ada data
+          return AspectRatio(
+            aspectRatio: 16 / 11,
+            child: Container(
+              color: AppColors.surface,
+              alignment: Alignment.center,
+              child: const Text('No featured shows available.', style: TextStyle(color: AppColors.secondaryText)),
+            ),
+          );
+        }
+
+        return AspectRatio(
+          aspectRatio: 16 / 11,
+          child: Swiper(
+            itemCount: slides.length,
+            itemBuilder: (context, index) {
+              // Mengirim data 'Show' ke widget item
+              return _HeroSlideItem(show: slides[index]);
+            },
+            autoplay: true,
+            autoplayDelay: 5000,
+            pagination: const SwiperPagination(
+              alignment: Alignment.bottomCenter,
+              margin: EdgeInsets.only(bottom: 20.0),
+              builder: DotSwiperPaginationBuilder(
+                color: Colors.white38,
+                activeColor: AppColors.accent,
+                size: 8.0,
+                activeSize: 10.0,
+                space: 4.0,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-// --- Perbaikan 4: Memisahkan item slide menjadi widget tersendiri ---
-// Ini membuat kode lebih bersih dan dapat digunakan kembali.
 class _HeroSlideItem extends StatelessWidget {
-  final SlideModel slide;
+  // Menerima objek Show, bukan SlideModel
+  final Show show;
 
-  const _HeroSlideItem({required this.slide});
+  const _HeroSlideItem({required this.show});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Gambar Background
         _buildBackgroundImage(),
-        // Gradient Overlay
         _buildGradientOverlay(),
-        // Konten Teks dan Tombol
         _buildSlideContent(),
       ],
     );
@@ -97,7 +80,8 @@ class _HeroSlideItem extends StatelessWidget {
 
   Widget _buildBackgroundImage() {
     return CachedNetworkImage(
-      imageUrl: slide.imageUrl,
+      // Menggunakan bannerImageUrl dari objek Show
+      imageUrl: show.bannerImageUrl ?? show.coverImageUrl ?? '',
       fit: BoxFit.cover,
       placeholder: (context, url) => Container(color: AppColors.surface),
       errorWidget: (context, url, error) => const Center(
@@ -124,15 +108,18 @@ class _HeroSlideItem extends StatelessWidget {
   }
 
   Widget _buildSlideContent() {
+    // Menggabungkan nama genre menjadi satu string
+    final genreText = show.genres.map((g) => g.name).join(' • ');
+
     return Positioned(
-      bottom: 60, // Memberi ruang lebih untuk pagination
+      bottom: 60,
       left: 16,
       right: 16,
       child: Column(
         children: [
-          // --- Perbaikan 5: Menambahkan shadow pada teks agar lebih terbaca ---
           Text(
-            slide.title,
+            // Menggunakan title dari objek Show
+            show.title,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 28,
@@ -146,7 +133,7 @@ class _HeroSlideItem extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            slide.genre,
+            genreText,
             style: const TextStyle(
               color: AppColors.secondaryText,
               fontSize: 14,

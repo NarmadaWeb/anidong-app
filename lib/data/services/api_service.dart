@@ -3,18 +3,33 @@
 import 'dart:convert';
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
+import 'package:anidong/providers/auth_provider.dart'; // Import AuthProvider
+import 'package:flutter/material.dart'; // Import BuildContext
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart'; // Import Provider
 
 class ApiService {
   // Emulator Android: 'http://10.0.2.2:8000/api/v1'
   static const String _baseUrl = 'http://127.0.0.1:8000/api/v1';
 
-  final String _authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoidXNlciIsImV4cCI6MTc1NTI2NTU2OSwiaWF0IjoxNzU1MTc5MTY5fQ.6GgIL8b-cU-FQaSRGlv8hD9svfxk81TEfF0hM8y4h_8";
+  // Remove hardcoded token, get it from AuthProvider
+  Future<Map<String, String>> getHeaders(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final String? authToken = authProvider.authToken;
 
-  Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer $_authToken',
-  };
+    if (authToken == null) {
+      // Handle case where token is not available (e.g., user not logged in)
+      // You might want to throw an exception or return a default header without auth
+      return {
+        'Content-Type': 'application/json',
+      };
+    }
+
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $authToken',
+    };
+  }
 
   // Helper function yang sudah benar
   List<T> _parseResponseToList<T>({
@@ -50,8 +65,9 @@ class ApiService {
   }
 
   // Endpoint: GET /episodes/recent
-  Future<List<Episode>> getRecentEpisodes() async {
-    final response = await http.get(Uri.parse('$_baseUrl/episodes/recent'), headers: _headers);
+  Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime'}) async {
+    final headers = await getHeaders(context);
+    final response = await http.get(Uri.parse('$_baseUrl/episodes/recent?type=$type&limit=10'), headers: headers);
     return _parseResponseToList<Episode>(
       response: response,
       dataKey: 'episodes', // <- Benar, mencari kunci "episodes"
@@ -60,8 +76,9 @@ class ApiService {
   }
 
   // Endpoint: GET /shows/top-rated
-  Future<List<Show>> getTopRatedShows() async {
-    final response = await http.get(Uri.parse('$_baseUrl/shows/top-rated'), headers: _headers);
+  Future<List<Show>> getTopRatedShows(BuildContext context) async {
+    final headers = await getHeaders(context);
+    final response = await http.get(Uri.parse('$_baseUrl/shows/top-rated'), headers: headers);
     return _parseResponseToList<Show>(
       response: response,
       dataKey: 'shows', // <- Benar, mencari kunci "shows"
@@ -70,12 +87,13 @@ class ApiService {
   }
 
   // Endpoint: GET /shows/search?q={title}
-  Future<List<Show>> searchShows(String query) async {
+  Future<List<Show>> searchShows(BuildContext context, String query) async {
     if (query.isEmpty) return [];
 
+    final headers = await getHeaders(context);
     final response = await http.get(
       Uri.parse('$_baseUrl/shows/search?q=${Uri.encodeComponent(query)}'),
-      headers: _headers,
+      headers: headers,
     );
     // Asumsi endpoint search juga mengembalikan { "data": { "shows": [...] } }
     return _parseResponseToList<Show>(
