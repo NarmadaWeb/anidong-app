@@ -1,105 +1,69 @@
 // lib/data/services/api_service.dart
 
-import 'dart:convert';
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
-import 'package:anidong/providers/auth_provider.dart'; // Import AuthProvider
-import 'package:flutter/material.dart'; // Import BuildContext
-import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart'; // Import Provider
+import 'package:anidong/data/services/scraping_service.dart';
+import 'package:flutter/material.dart';
 
 class ApiService {
-  // Emulator Android: 'http://10.0.2.2:8000/api/v1'
-  static const String _baseUrl = 'http://127.0.0.1:8000/api/v1';
-
-  // Remove hardcoded token, get it from AuthProvider
-  Future<Map<String, String>> getHeaders(BuildContext context) async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final String? authToken = authProvider.authToken;
-
-    if (authToken == null) {
-      // Handle case where token is not available (e.g., user not logged in)
-      // You might want to throw an exception or return a default header without auth
-      return {
-        'Content-Type': 'application/json',
-      };
-    }
-
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $authToken',
-    };
-  }
-
-  // Helper function yang sudah benar
-  List<T> _parseResponseToList<T>({
-    required http.Response response,
-    required String dataKey, // Ini adalah kunci yang akan kita gunakan
-    required T Function(Map<String, dynamic>) fromJson,
-  }) {
-    if (response.statusCode == 200) {
-      final decodedBody = json.decode(response.body);
-
-      if (decodedBody is Map<String, dynamic> && decodedBody.containsKey('data')) {
-        final dataObject = decodedBody['data'];
-
-        if (dataObject is Map<String, dynamic> && dataObject.containsKey(dataKey)) {
-          final dataList = dataObject[dataKey];
-
-          if (dataList is List) {
-            return dataList.map((item) => fromJson(item as Map<String, dynamic>)).toList();
-          }
-        }
-      }
-
-      return [];
-
-    } else {
-      try {
-        final error = json.decode(response.body)['error_message'] ?? 'Failed to load data (status code: ${response.statusCode})';
-        throw Exception(error);
-      } catch (e) {
-        throw Exception('Failed to parse error response (status code: ${response.statusCode})');
-      }
-    }
-  }
+  final ScrapingService _scrapingService = ScrapingService();
 
   // Endpoint: GET /episodes/recent
   Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime'}) async {
-    final headers = await getHeaders(context);
-    final response = await http.get(Uri.parse('$_baseUrl/episodes/recent?type=$type&limit=10'), headers: headers);
-    return _parseResponseToList<Episode>(
-      response: response,
-      dataKey: 'episodes', // <- Benar, mencari kunci "episodes"
-      fromJson: (json) => Episode.fromJson(json),
-    );
+    if (type == 'anime') {
+      return await _scrapingService.getAnoboyRecentEpisodes();
+    } else if (type == 'donghua') {
+      return await _scrapingService.getAnichinRecentEpisodes();
+    } else {
+      // Combined mode
+      final results = await Future.wait([
+        _scrapingService.getAnoboyRecentEpisodes(),
+        _scrapingService.getAnichinRecentEpisodes(),
+      ]);
+      final combined = [...results[0], ...results[1]];
+      combined.shuffle();
+      return combined;
+    }
   }
 
   // Endpoint: GET /shows/top-rated
-  Future<List<Show>> getTopRatedShows(BuildContext context) async {
-    final headers = await getHeaders(context);
-    final response = await http.get(Uri.parse('$_baseUrl/shows/top-rated'), headers: headers);
-    return _parseResponseToList<Show>(
-      response: response,
-      dataKey: 'shows', // <- Benar, mencari kunci "shows"
-      fromJson: (json) => Show.fromJson(json),
-    );
+  Future<List<Show>> getTopRatedShows(BuildContext context, {String type = 'anime'}) async {
+    // For now, using search or a default list if scraping doesn't have top-rated
+    // Or we can just return mixed results from recent as a placeholder for recommendations
+    if (type == 'anime') {
+      final eps = await _scrapingService.getAnoboyRecentEpisodes();
+      return eps.map((e) => e.show!).toList();
+    } else if (type == 'donghua') {
+      final eps = await _scrapingService.getAnichinRecentEpisodes();
+      return eps.map((e) => e.show!).toList();
+    } else {
+       final results = await Future.wait([
+        _scrapingService.getAnoboyRecentEpisodes(),
+        _scrapingService.getAnichinRecentEpisodes(),
+      ]);
+      final combined = [...results[0].map((e) => e.show!), ...results[1].map((e) => e.show!)];
+      combined.shuffle();
+      return combined;
+    }
   }
 
   // Endpoint: GET /shows/search?q={title}
   Future<List<Show>> searchShows(BuildContext context, String query) async {
     if (query.isEmpty) return [];
 
-    final headers = await getHeaders(context);
-    final response = await http.get(
-      Uri.parse('$_baseUrl/shows/search?q=${Uri.encodeComponent(query)}'),
-      headers: headers,
-    );
-    // Asumsi endpoint search juga mengembalikan { "data": { "shows": [...] } }
-    return _parseResponseToList<Show>(
-      response: response,
-      dataKey: 'shows', // <- Benar, mencari kunci "shows"
-      fromJson: (json) => Show.fromJson(json),
-    );
+    final results = await Future.wait([
+      _scrapingService.searchAnoboy(query),
+      _scrapingService.searchAnichin(query),
+    ]);
+
+    return [...results[0], ...results[1]];
+  }
+
+  Future<Episode> getEpisodeDetails(Episode episode) async {
+    if (episode.show?.type == 'anime') {
+      return await _scrapingService.getAnoboyEpisodeDetails(episode);
+    } else {
+      return await _scrapingService.getAnichinEpisodeDetails(episode);
+    }
   }
 }

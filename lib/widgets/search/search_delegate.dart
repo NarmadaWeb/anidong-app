@@ -1,12 +1,17 @@
 // lib/widgets/search/search_delegate.dart
 
-import 'package:anidong/data/content_repository.dart';
+import 'package:anidong/data/models/episode_model.dart';
+import 'package:anidong/data/models/show_model.dart';
+import 'package:anidong/data/services/api_service.dart';
+import 'package:anidong/screens/video_player_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/glass_card.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 
 class AnidongSearchDelegate extends SearchDelegate {
+  final ApiService _apiService = ApiService();
 
   // Mengubah tampilan tema agar sesuai dengan aplikasi
   @override
@@ -64,8 +69,6 @@ class AnidongSearchDelegate extends SearchDelegate {
   }
 
   Widget _buildSearchResults() {
-    final searchResults = ContentRepository.search(query);
-
     if (query.isEmpty) {
       return const Center(
         child: Text(
@@ -75,67 +78,112 @@ class AnidongSearchDelegate extends SearchDelegate {
       );
     }
 
-    if (searchResults.isEmpty) {
-      return Center(
-        child: Text(
-          'No results found for "$query"',
-          style: const TextStyle(color: AppColors.secondaryText, fontSize: 16),
-        ),
-      );
-    }
+    return FutureBuilder<List<Show>>(
+      future: _apiService.searchShows(context, query), // ApiService search doesn't really use context now
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+        }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: searchResults.length,
-      itemBuilder: (context, index) {
-        final item = searchResults[index];
-        return _buildResultItem(item);
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(color: AppColors.secondaryText),
+            ),
+          );
+        }
+
+        final searchResults = snapshot.data ?? [];
+
+        if (searchResults.isEmpty) {
+          return Center(
+            child: Text(
+              'No results found for "$query"',
+              style: const TextStyle(color: AppColors.secondaryText, fontSize: 16),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: searchResults.length,
+          itemBuilder: (context, index) {
+            final show = searchResults[index];
+            return _buildResultItem(context, show);
+          },
+        );
       },
     );
   }
 
-  Widget _buildResultItem(Map<String, dynamic> item) {
+  Widget _buildResultItem(BuildContext context, Show show) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
-      child: GlassCard(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
+      child: GestureDetector(
+        onTap: () {
+          final episode = Episode(
+            id: show.id,
+            showId: show.id,
+            episodeNumber: 1,
+            title: show.title,
+            videoUrl: '',
+            originalUrl: show.originalUrl,
+            show: show,
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VideoPlayerScreen(episode: episode),
+            ),
+          );
+        },
+        child: GlassCard(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(child: Icon(Icons.image_outlined, color: AppColors.secondaryText)),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item['title']!,
-                    style: const TextStyle(
-                      color: AppColors.primaryText,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                child: CachedNetworkImage(
+                  imageUrl: show.coverImageUrl ?? '',
+                  width: 60,
+                  height: 80,
+                  fit: BoxFit.cover,
+                  errorWidget: (context, url, error) => Container(
+                    width: 60,
+                    height: 80,
+                    color: AppColors.surface,
+                    child: const Icon(Icons.image_outlined, color: AppColors.secondaryText),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item['mode'] == 'anime' ? 'Anime' : 'Donghua',
-                    style: TextStyle(
-                      color: AppColors.secondaryText,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const Icon(Boxicons.bx_chevron_right, color: AppColors.secondaryText),
-          ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      show.title,
+                      style: const TextStyle(
+                        color: AppColors.primaryText,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      show.type.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Boxicons.bx_chevron_right, color: AppColors.secondaryText),
+            ],
+          ),
         ),
       ),
     );

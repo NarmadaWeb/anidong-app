@@ -4,6 +4,7 @@ import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/screens/home/widgets/hero_slider.dart';
+import 'package:anidong/screens/video_player_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -116,52 +117,62 @@ class HomeScreen extends StatelessWidget {
         // Judul sekarang diambil dari episode itu sendiri jika ada, jika tidak, dari Show.
         final displayTitle = episode.title ?? episode.show?.title ?? 'Unknown Episode';
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: episode.thumbnailUrl ?? '',
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: AppColors.surface),
-                      errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
-                    ),
-                  ),
-
-                  Positioned(
-                    bottom: 8, left: 8, right: 8,
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.9), borderRadius: BorderRadius.circular(4)),
-                          child: Text('Ep ${episode.episodeNumber}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(color: AppColors.yellow400, borderRadius: BorderRadius.circular(4)),
-                          child: const Text('Sub', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VideoPlayerScreen(episode: episode),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              displayTitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13, color: AppColors.primaryText, fontWeight: FontWeight.w500),
-            ),
-          ],
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: CachedNetworkImage(
+                        imageUrl: episode.thumbnailUrl ?? '',
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(color: AppColors.surface),
+                        errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
+                      ),
+                    ),
+
+                    Positioned(
+                      bottom: 8, left: 8, right: 8,
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.9), borderRadius: BorderRadius.circular(4)),
+                            child: Text('Ep ${episode.episodeNumber}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(color: AppColors.yellow400, borderRadius: BorderRadius.circular(4)),
+                            child: const Text('Sub', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                displayTitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13, color: AppColors.primaryText, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -187,32 +198,52 @@ class HomeScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final show = shows[index];
           final itemWidth = itemHeight * (2 / 3);
-          return Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: SizedBox(
-              width: itemWidth,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: show.coverImageUrl ?? '',
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(color: AppColors.surface),
-                        errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
+          return GestureDetector(
+            onTap: () {
+              // Convert Show to a placeholder Episode for the player screen
+              final episode = Episode(
+                id: show.id,
+                showId: show.id,
+                episodeNumber: 1,
+                title: show.title,
+                videoUrl: '',
+                originalUrl: show.originalUrl,
+                show: show,
+              );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerScreen(episode: episode),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: SizedBox(
+                width: itemWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: CachedNetworkImage(
+                          imageUrl: show.coverImageUrl ?? '',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: AppColors.surface),
+                          errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    show.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primaryText),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      show.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primaryText),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
