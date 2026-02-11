@@ -1,9 +1,8 @@
 // lib/main.dart
 
-import 'package:anidong/providers/auth_provider.dart';
 import 'package:anidong/providers/home_provider.dart';
+import 'package:anidong/providers/local_data_provider.dart';
 import 'package:anidong/providers/trending_provider.dart';
-import 'package:anidong/screens/oauth/login_screen.dart';
 import 'package:anidong/screens/splash_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -22,9 +21,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => TrendingProvider()),
+        ChangeNotifierProvider(create: (_) => LocalDataProvider()),
       ],
       child: MaterialApp(
         title: 'AniDong',
@@ -64,15 +63,7 @@ class MyApp extends StatelessWidget {
             backgroundColor: AppColors.background,
           ).copyWith(secondary: AppColors.accent),
         ),
-        home: Consumer<AuthProvider>(
-          builder: (context, authProvider, child) {
-            if (authProvider.state == AuthState.authenticated) {
-              return const SplashScreen();
-            } else {
-              return const LoginScreen();
-            }
-          },
-        ),
+        home: const SplashScreen(),
       ),
     );
   }

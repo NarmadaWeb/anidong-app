@@ -11,6 +11,7 @@ class Episode {
   final String? iframeUrl;
   final String? originalUrl;
   final List<Map<String, String>>? downloadLinks;
+  final List<Map<String, String>>? videoServers;
   final String? thumbnailUrl;
   final int? durationMinute;
   final DateTime? releaseDate;
@@ -25,6 +26,7 @@ class Episode {
     this.iframeUrl,
     this.originalUrl,
     this.downloadLinks,
+    this.videoServers,
     this.thumbnailUrl,
     this.durationMinute,
     this.releaseDate,
@@ -44,6 +46,10 @@ class Episode {
           ? List<Map<String, String>>.from((json['download_links'] as List)
               .map((item) => Map<String, String>.from(item)))
           : null,
+      videoServers: json['video_servers'] != null
+          ? List<Map<String, String>>.from((json['video_servers'] as List)
+              .map((item) => Map<String, String>.from(item)))
+          : null,
       thumbnailUrl: json['thumbnail_url'],
       durationMinute: json['duration_minute'],
       releaseDate: json['release_date'] != null
@@ -52,5 +58,23 @@ class Episode {
       // Secara aman membuat objek Show jika datanya ada
       show: json['show'] != null ? Show.fromJson(json['show']) : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'show_id': showId,
+      'episode_number': episodeNumber,
+      'title': title,
+      'video_url': videoUrl,
+      'iframe_url': iframeUrl,
+      'original_url': originalUrl,
+      'download_links': downloadLinks,
+      'video_servers': videoServers,
+      'thumbnail_url': thumbnailUrl,
+      'duration_minute': durationMinute,
+      'release_date': releaseDate?.toIso8601String(),
+      'show': show?.toJson(),
+    };
   }
 }

@@ -23,20 +23,13 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   _buildUserInfo(),
                   const SizedBox(height: 32),
-                  _buildSettingsSection('Account', [
-                    _buildSettingsItem('Edit Profile', () {}),
-                    _buildSettingsItem('Change Password', () {}),
-                  ]),
-                  const SizedBox(height: 24),
-                  _buildSettingsSection('Others', [
+                  _buildSettingsSection('General', [
                     _buildSettingsItem('Notifications', () {}),
                     _buildSettingsItem('Privacy Policy', () {}),
                     _buildSettingsItem('Help Center', () {}),
                     _buildSettingsItem('Feedback', () {}),
                   ]),
-                  const SizedBox(height: 32),
-                  _buildLogoutButton(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 56),
                 ],
               ),
             ),
@@ -153,21 +146,6 @@ class ProfileScreen extends StatelessWidget {
       title: Text(title, style: const TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.w500)),
       trailing: const Icon(Boxicons.bx_chevron_right, color: AppColors.secondaryText),
       onTap: onTap,
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return Center(
-      child: TextButton(
-        onPressed: () {},
-        style: TextButton.styleFrom(
-          backgroundColor: Colors.red.withOpacity(0.1),
-          foregroundColor: Colors.red.shade300,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-      ),
     );
   }
 }
