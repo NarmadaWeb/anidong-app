@@ -17,16 +17,8 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    bool isSignInSupported = false;
-    // Pengecekan `!kIsWeb` penting agar `Platform.is...` tidak error di web
-    if (!kIsWeb) {
-      if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
-        isSignInSupported = true;
-      }
-    } else {
-
-      isSignInSupported = true;
-    }
+    // Google Sign-In hanya didukung di platform mobile (Android & iOS)
+    bool isSignInSupported = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     // ----------------------------------------------------
 
     return Scaffold(
@@ -97,7 +89,7 @@ class LoginScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
-                    'Google Sign-In tidak didukung di Linux.\nSilakan jalankan di emulator Android atau perangkat macOS untuk menguji fitur ini.',
+                    'Google Sign-In hanya didukung di Android dan iOS.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white70),
                   ),

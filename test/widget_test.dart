@@ -1,22 +1,19 @@
 import 'package:anidong/main.dart';
-import 'package:anidong/screens/home/home_screen.dart';
+import 'package:anidong/screens/oauth/login_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('App starts and displays home screen smoke test', (WidgetTester tester) async {
+  testWidgets('App starts and displays login screen smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
 
-    // The app starts with a SplashScreen. We need to wait for animations
-    // and transitions to complete. pumpAndSettle is good for this.
+    // Wait for auth status check
     await tester.pumpAndSettle();
 
-    // After the splash screen, the MainScreen should be visible,
-    // and within it, the HomeScreen should be the initial page.
-    expect(find.byType(HomeScreen), findsOneWidget);
+    // The app should start with a LoginScreen if not authenticated.
+    expect(find.byType(LoginScreen), findsOneWidget);
 
-    // Also, let's verify a key element from the home screen is present,
-    // like the section title for "New Episodes".
-    expect(find.text('New Episodes'), findsOneWidget);
+    // Verify welcome text
+    expect(find.text('Welcome to AniDong'), findsOneWidget);
   });
 }

@@ -59,16 +59,16 @@ class AnidongSearchDelegate extends SearchDelegate {
   // UI yang ditampilkan saat pengguna menekan 'enter' atau tombol search
   @override
   Widget buildResults(BuildContext context) {
-    return _buildSearchResults();
+    return _buildSearchResults(context);
   }
 
   // UI yang ditampilkan secara real-time saat pengguna mengetik
   @override
   Widget buildSuggestions(BuildContext context) {
-    return _buildSearchResults();
+    return _buildSearchResults(context);
   }
 
-  Widget _buildSearchResults() {
+  Widget _buildSearchResults(BuildContext context) {
     if (query.isEmpty) {
       return const Center(
         child: Text(
