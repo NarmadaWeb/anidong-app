@@ -27,7 +27,7 @@ class ApiService {
   }
 
   // Endpoint: GET /shows/top-rated
-  Future<List<Show>> getTopRatedShows(BuildContext context, {String type = 'anime'}) async {
+  Future<List<Show>> getTopRatedShows(BuildContext context, {String type = 'combined'}) async {
     // For now, using search or a default list if scraping doesn't have top-rated
     // Or we can just return mixed results from recent as a placeholder for recommendations
     if (type == 'anime') {
@@ -37,11 +37,15 @@ class ApiService {
       final eps = await _scrapingService.getAnichinRecentEpisodes();
       return eps.map((e) => e.show!).toList();
     } else {
-       final results = await Future.wait([
+      // Combined mode
+      final results = await Future.wait([
         _scrapingService.getAnoboyRecentEpisodes(),
         _scrapingService.getAnichinRecentEpisodes(),
       ]);
-      final combined = [...results[0].map((e) => e.show!), ...results[1].map((e) => e.show!)];
+      final combined = [
+        ...results[0].map((e) => e.show!),
+        ...results[1].map((e) => e.show!)
+      ];
       combined.shuffle();
       return combined;
     }

@@ -22,7 +22,7 @@ class TrendingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _topRatedShows = await _apiService.getTopRatedShows(context);
+      _topRatedShows = await _apiService.getTopRatedShows(context, type: 'combined');
       _state = TrendingState.loaded;
     } catch (e) {
       _errorMessage = e.toString().replaceFirst("Exception: ", "");
