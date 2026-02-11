@@ -15,4 +15,11 @@ class Genre {
       name: json['name'] ?? 'Unknown Genre',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+    };
+  }
 }

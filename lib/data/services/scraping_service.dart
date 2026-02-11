@@ -123,35 +123,41 @@ class ScrapingService {
 
       final document = parse(response.body);
 
-      // Extract IFrame
-      String? iframeUrl;
+      // Extract IFrame and Servers
+      final List<Map<String, String>> videoServers = [];
+      String? primaryIframe;
+
       final iframeElement = document.querySelector('iframe');
       if (iframeElement != null) {
-        iframeUrl = iframeElement.attributes['src'];
+        primaryIframe = iframeElement.attributes['src'];
+        if (primaryIframe != null) {
+          videoServers.add({
+            'name': 'Server 1',
+            'url': primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe'
+          });
+        }
       }
 
-      // If iframe not found directly, look for the adsbatch link
-      if (iframeUrl == null) {
-        final allIframes = document.querySelectorAll('iframe');
-        for (var ifr in allIframes) {
-          final src = ifr.attributes['src'];
-          if (src != null && src.contains('uploads')) {
-            iframeUrl = src;
-            if (!iframeUrl.startsWith('http')) {
-              iframeUrl = '$anoboyBaseUrl$iframeUrl';
-            }
-            break;
-          }
+      // Extract Mirror Links as additional servers
+      final mirrorElements = document.querySelectorAll('.vmirror a');
+      int serverCount = videoServers.length + 1;
+      for (var mirror in mirrorElements) {
+        final link = mirror.attributes['data-video'] ?? mirror.attributes['href'];
+        if (link != null && link.isNotEmpty && !link.contains('download')) {
+          videoServers.add({
+            'name': 'Server $serverCount',
+            'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link'
+          });
+          serverCount++;
         }
       }
 
       // Extract Download Links
       final List<Map<String, String>> downloadLinks = [];
-      final downloadElements = document.querySelectorAll('.vmirror a');
-      for (var dl in downloadElements) {
+      for (var dl in mirrorElements) {
         final name = dl.text.trim();
         final link = dl.attributes['href'];
-        if (link != null && link.isNotEmpty) {
+        if (link != null && link.isNotEmpty && (link.contains('download') || name.toLowerCase().contains('download'))) {
           downloadLinks.add({'name': name, 'url': link});
         }
       }
@@ -162,7 +168,8 @@ class ScrapingService {
         episodeNumber: episode.episodeNumber,
         title: episode.title,
         videoUrl: episode.videoUrl,
-        iframeUrl: iframeUrl,
+        iframeUrl: videoServers.isNotEmpty ? videoServers[0]['url'] : primaryIframe,
+        videoServers: videoServers,
         originalUrl: episode.originalUrl,
         downloadLinks: downloadLinks,
         thumbnailUrl: episode.thumbnailUrl,
@@ -183,11 +190,33 @@ class ScrapingService {
 
       final document = parse(response.body);
 
-      // Extract IFrame
-      String? iframeUrl;
+      // Extract IFrame and Servers
+      final List<Map<String, String>> videoServers = [];
+      String? primaryIframe;
+
       final iframeElement = document.querySelector('.video-content iframe');
       if (iframeElement != null) {
-        iframeUrl = iframeElement.attributes['src'];
+        primaryIframe = iframeElement.attributes['src'];
+        if (primaryIframe != null) {
+          videoServers.add({'name': 'Server 1', 'url': primaryIframe});
+        }
+      }
+
+      // Anichin sometimes has multiple servers in a list
+      final serverElements = document.querySelectorAll('.mirror option');
+      if (serverElements.isNotEmpty) {
+        videoServers.clear();
+        int serverCount = 1;
+        for (var opt in serverElements) {
+          final url = opt.attributes['value'];
+          if (url != null && url.isNotEmpty) {
+             // value often needs decoding or is a base64, but for this mock-up/scraper we assume it's a direct URL or handled by webview
+             // Some sites use data-post and data-nounce for AJAX servers, which is harder.
+             // Let's stick to what's easily available.
+             videoServers.add({'name': 'Server $serverCount', 'url': url});
+             serverCount++;
+          }
+        }
       }
 
       // Extract Download Links
@@ -210,7 +239,8 @@ class ScrapingService {
         episodeNumber: episode.episodeNumber,
         title: episode.title,
         videoUrl: episode.videoUrl,
-        iframeUrl: iframeUrl,
+        iframeUrl: videoServers.isNotEmpty ? videoServers[0]['url'] : primaryIframe,
+        videoServers: videoServers,
         originalUrl: episode.originalUrl,
         downloadLinks: downloadLinks,
         thumbnailUrl: episode.thumbnailUrl,

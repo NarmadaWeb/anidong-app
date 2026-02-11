@@ -1,11 +1,63 @@
 // lib/screens/explore/explore_screen.dart
 
+import 'package:anidong/data/models/episode_model.dart';
+import 'package:anidong/data/models/show_model.dart';
+import 'package:anidong/data/services/api_service.dart';
+import 'package:anidong/screens/video_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/glass_card.dart';
 
-class ExploreScreen extends StatelessWidget {
+class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
+
+  @override
+  State<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends State<ExploreScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  final ApiService _apiService = ApiService();
+  String _searchType = 'anime'; // 'anime' or 'donghua'
+  List<Show> _searchResults = [];
+  bool _isSearching = false;
+  bool _hasSearched = false;
+
+  Future<void> _handleSearch(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _hasSearched = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _hasSearched = true;
+    });
+
+    try {
+      // In a real app, we might want to filter by type in ApiService
+      // but searchShows currently returns both. We can filter here.
+      final results = await _apiService.searchShows(context, query);
+      setState(() {
+        _searchResults = results.where((s) => s.type == _searchType).toList();
+      });
+    } catch (e) {
+      print('Search error: $e');
+    } finally {
+      setState(() {
+        _isSearching = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,28 +87,70 @@ class ExploreScreen extends StatelessWidget {
                 children: [
                   // Header Teks
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 56.0, 16.0, 24.0), // Tambah padding atas
+                    padding: const EdgeInsets.fromLTRB(16.0, 56.0, 16.0, 24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('🎭 Explore Genres', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                        const Text('🔍 Search & Explore', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                         const SizedBox(height: 4),
-                        Text('Discover anime by your favorite genres', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
+                        Text('Find your favorite Anime & Donghua', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
                       ],
                     ),
                   ),
-                  // Konten utama halaman
+
+                  // Search Bar
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       children: [
-                        _buildGenreGrid(),
-                        const SizedBox(height: 24),
-                        _buildSubGenreGrid(),
-                        const SizedBox(height: 100),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: const InputDecoration(
+                              hintText: 'Search title...',
+                              border: InputBorder.none,
+                              icon: Icon(Icons.search, color: AppColors.secondaryText),
+                            ),
+                            onSubmitted: _handleSearch,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _buildTypeChip('Anime', 'anime'),
+                            const SizedBox(width: 8),
+                            _buildTypeChip('Donghua', 'donghua'),
+                          ],
+                        ),
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 24),
+
+                  // Results or Genres
+                  if (_hasSearched)
+                    _buildSearchResults()
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('🎭 Genres', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 16),
+                          _buildGenreGrid(),
+                          const SizedBox(height: 24),
+                          _buildSubGenreGrid(),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -66,9 +160,110 @@ class ExploreScreen extends StatelessWidget {
     );
   }
 
-  // --- Widget-widget lainnya tetap sama persis seperti sebelumnya ---
-  // ... (salin semua metode _build di sini)
-    Widget _buildGenreGrid() {
+  Widget _buildTypeChip(String label, String type) {
+    bool isSelected = _searchType == type;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _searchType = type;
+        });
+        if (_searchController.text.isNotEmpty) {
+          _handleSearch(_searchController.text);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accent : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.secondaryText,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    if (_isSearching) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+    }
+
+    if (_searchResults.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Text('No results found.', style: TextStyle(color: AppColors.secondaryText)),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _searchResults.length,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemBuilder: (context, index) {
+        final show = _searchResults[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: InkWell(
+            onTap: () {
+              // Convert Show to a placeholder Episode for the player screen
+              final episode = Episode(
+                id: show.id,
+                showId: show.id,
+                episodeNumber: 1,
+                title: show.title,
+                videoUrl: '',
+                originalUrl: show.originalUrl,
+                show: show,
+              );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerScreen(episode: episode),
+                ),
+              );
+            },
+            child: GlassCard(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: show.coverImageUrl != null
+                        ? Image.network(show.coverImageUrl!, width: 60, height: 80, fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(color: AppColors.surface, width: 60, height: 80, child: const Icon(Icons.movie)),
+                          )
+                        : Container(color: AppColors.surface, width: 60, height: 80, child: const Icon(Icons.movie)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(show.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 4),
+                        Text(show.status, style: const TextStyle(color: AppColors.secondaryText, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: AppColors.secondaryText),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGenreGrid() {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),

@@ -2,6 +2,7 @@
 
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/providers/home_provider.dart';
+import 'package:anidong/providers/local_data_provider.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   bool _isLoading = true;
   late Episode _detailedEpisode;
   bool _isDataLoading = true;
+  String? _currentIframeUrl;
 
   @override
   void initState() {
@@ -38,29 +40,45 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       setState(() {
         _detailedEpisode = detailed;
         _isDataLoading = false;
+        _currentIframeUrl = _detailedEpisode.iframeUrl;
 
-        if (_detailedEpisode.iframeUrl != null) {
-          _controller = WebViewController()
-            ..setJavaScriptMode(JavaScriptMode.unrestricted)
-            ..setBackgroundColor(const Color(0x00000000))
-            ..setNavigationDelegate(
-              NavigationDelegate(
-                onProgress: (int progress) {
-                  // Update loading bar.
-                },
-                onPageStarted: (String url) {},
-                onPageFinished: (String url) {
-                  setState(() {
-                    _isLoading = false;
-                  });
-                },
-                onWebResourceError: (WebResourceError error) {},
-              ),
-            )
-            ..loadRequest(Uri.parse(_detailedEpisode.iframeUrl!));
+        if (_currentIframeUrl != null) {
+          _initWebViewController(_currentIframeUrl!);
         }
       });
+
+      // Add to history
+      Provider.of<LocalDataProvider>(context, listen: false).addToHistory(_detailedEpisode);
     }
+  }
+
+  void _initWebViewController(String url) {
+    _isLoading = true;
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar.
+          },
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+          onWebResourceError: (WebResourceError error) {},
+        ),
+      )
+      ..loadRequest(Uri.parse(url));
+  }
+
+  void _changeServer(String url) {
+    setState(() {
+      _currentIframeUrl = url;
+      _initWebViewController(url);
+    });
   }
 
   Future<void> _launchUrl(String url) async {
@@ -79,6 +97,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       appBar: AppBar(
         title: Text(_detailedEpisode.title ?? 'Playing Video'),
         backgroundColor: AppColors.background,
+        actions: [
+          if (_detailedEpisode.show != null)
+            Consumer<LocalDataProvider>(
+              builder: (context, localData, child) {
+                bool isBookmarked = localData.isBookmarked(_detailedEpisode.show!);
+                return IconButton(
+                  icon: Icon(
+                    isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                    color: isBookmarked ? AppColors.accent : Colors.white,
+                  ),
+                  onPressed: () => localData.toggleBookmark(_detailedEpisode.show!),
+                );
+              },
+            ),
+        ],
       ),
       body: _isDataLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
@@ -88,7 +121,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 children: [
                   AspectRatio(
                     aspectRatio: 16 / 9,
-                    child: _detailedEpisode.iframeUrl != null
+                    child: _currentIframeUrl != null
                         ? Stack(
                             children: [
                               WebViewWidget(controller: _controller),
@@ -118,6 +151,37 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                           style: const TextStyle(color: AppColors.secondaryText, fontSize: 16),
                         ),
                         const SizedBox(height: 24),
+                        if (_detailedEpisode.videoServers != null && _detailedEpisode.videoServers!.isNotEmpty) ...[
+                          const Text(
+                            'Select Server',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 40,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _detailedEpisode.videoServers!.length,
+                              itemBuilder: (context, index) {
+                                final server = _detailedEpisode.videoServers![index];
+                                final isSelected = _currentIframeUrl == server['url'];
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: ElevatedButton(
+                                    onPressed: () => _changeServer(server['url']!),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: isSelected ? AppColors.accent : AppColors.surface,
+                                      foregroundColor: isSelected ? Colors.white : AppColors.primaryText,
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                    child: Text(server['name'] ?? 'Server ${index + 1}'),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                         const Text(
                           'Download Links',
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

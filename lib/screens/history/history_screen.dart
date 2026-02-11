@@ -1,8 +1,12 @@
 // lib/screens/history/history_screen.dart
 
+import 'package:anidong/data/models/episode_model.dart';
+import 'package:anidong/providers/local_data_provider.dart';
+import 'package:anidong/screens/video_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/glass_card.dart';
+import 'package:provider/provider.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
@@ -15,6 +19,14 @@ class HistoryScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.primaryText),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_sweep),
+            onPressed: () {
+              Provider.of<LocalDataProvider>(context, listen: false).clearHistory();
+            },
+          )
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -32,39 +44,46 @@ class HistoryScreen extends StatelessWidget {
             ),
           ),
           // Konten
-          SingleChildScrollView(
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Teks
-                  // PERBAIKAN: Menghapus 'const'
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('⏰ Watch History', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-                        const SizedBox(height: 4),
-                        Text('Continue where you left off', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
-                      ],
-                    ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Teks
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('⏰ Watch History', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                      const SizedBox(height: 4),
+                      Text('Continue where you left off', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
+                    ],
                   ),
-                  // Konten Utama
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      children: [
-                        _buildHistoryItem(title: 'Attack on Titan', episodeInfo: 'Episode 15 • 18:42 / 24:00', progress: 0.75),
-                        const SizedBox(height: 12),
-                        _buildHistoryItem(title: 'Jujutsu Kaisen', episodeInfo: 'Episode 12 • 10:30 / 24:00', progress: 0.45),
-                        const SizedBox(height: 100),
-                      ],
-                    ),
-                  )
-                ],
-              ),
+                ),
+                // Konten Utama
+                Expanded(
+                  child: Consumer<LocalDataProvider>(
+                    builder: (context, localData, child) {
+                      final history = localData.history;
+                      if (history.isEmpty) {
+                        return const Center(child: Text('No history yet.', style: TextStyle(color: AppColors.secondaryText)));
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        itemCount: history.length,
+                        itemBuilder: (context, index) {
+                          final episode = history[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: _buildHistoryItem(context, episode),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                )
+              ],
             ),
           ),
         ],
@@ -72,71 +91,55 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHistoryItem({required String title, required String episodeInfo, required double progress}) {
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            height: 112,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Container(
-                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)),
-                  child: Center(child: Icon(Icons.image_outlined, color: AppColors.secondaryText.withOpacity(0.5))),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.transparent,
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
-                      minHeight: 5,
-                    ),
+  Widget _buildHistoryItem(BuildContext context, Episode episode) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => VideoPlayerScreen(episode: episode)),
+        );
+      },
+      child: GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 80,
+              height: 112,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: episode.thumbnailUrl != null
+                    ? Image.network(episode.thumbnailUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.movie))
+                    : const Icon(Icons.movie),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(episode.title ?? episode.show?.title ?? 'Unknown',
+                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primaryText)),
+                  const SizedBox(height: 4),
+                  Text('Episode ${episode.episodeNumber}', style: const TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                    child: const Text('Watched', style: TextStyle(fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.bold)),
                   ),
-                )
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primaryText)),
-                const SizedBox(height: 4),
-                Text(episodeInfo, style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Expanded(
-                      flex: 4,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                        child: LinearProgressIndicator(
-                          value: 0.75, // Contoh, sesuaikan dengan `progress`
-                          backgroundColor: AppColors.surface,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: Text('${(progress * 100).toInt()}%', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+            IconButton(
+              icon: const Icon(Icons.close, color: AppColors.secondaryText),
+              onPressed: () {
+                Provider.of<LocalDataProvider>(context, listen: false).removeFromHistory(episode);
+              },
+            )
+          ],
+        ),
       ),
     );
   }

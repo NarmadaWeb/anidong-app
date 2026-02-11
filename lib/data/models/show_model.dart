@@ -50,9 +50,25 @@ class Show {
       rating: (json['rating'] as num?)?.toDouble(),
       releaseYear: json['release_year'],
       genres: genreList,
-      // <-- TAMBAHKAN INI
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
       originalUrl: json['original_url'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'synopsis': synopsis,
+      'type': type,
+      'status': status,
+      'cover_image_url': coverImageUrl,
+      'banner_image_url': bannerImageUrl,
+      'rating': rating,
+      'release_year': releaseYear,
+      'genres': genres.map((g) => g.toJson()).toList(),
+      'created_at': createdAt?.toIso8601String(),
+      'original_url': originalUrl,
+    };
   }
 }
