@@ -50,7 +50,7 @@ class PremiumScreen extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'Unlock the ultimate anime experience',
-                          style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8)),
+                          style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8)),
                         ),
                       ],
                     ),

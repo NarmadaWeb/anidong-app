@@ -57,7 +57,7 @@ class HistoryScreen extends StatelessWidget {
                     children: [
                       const Text('⏰ Watch History', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                       const SizedBox(height: 4),
-                      Text('Continue where you left off', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
+                      Text('Continue where you left off', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
                     ],
                   ),
                 ),
@@ -126,7 +126,7 @@ class HistoryScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                    decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
                     child: const Text('Watched', style: TextStyle(fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.bold)),
                   ),
                 ],

@@ -48,7 +48,7 @@ class DownloadScreen extends StatelessWidget {
                       children: [
                         const Text('📥 My Downloads', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                         const SizedBox(height: 4),
-                        Text('Watch offline anytime, anywhere', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
+                        Text('Watch offline anytime, anywhere', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),

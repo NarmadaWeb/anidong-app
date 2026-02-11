@@ -64,7 +64,7 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
                     children: [
                       const Text('⭐ My List', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                       const SizedBox(height: 4),
-                      Text('Your favorite collection', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
+                      Text('Your favorite collection', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
                     ],
                   ),
                 ),

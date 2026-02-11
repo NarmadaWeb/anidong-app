@@ -25,7 +25,7 @@ class ModernPageHeader extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24.0)), // border-radius: 0 0 1.5rem 1.5rem
         boxShadow: [
           BoxShadow(
-            color: AppColors.accent.withOpacity(0.3),
+            color: AppColors.accent.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -47,7 +47,7 @@ class ModernPageHeader extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 14, // text-sm
-              color: AppColors.primaryText.withOpacity(0.8), // text-white/80
+              color: AppColors.primaryText.withValues(alpha: 0.8), // text-white/80
             ),
           ),
         ],

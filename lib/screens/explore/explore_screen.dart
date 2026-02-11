@@ -45,7 +45,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _searchResults = results.where((s) => s.type == _searchType).toList();
       });
     } catch (e) {
-      print('Search error: $e');
+      debugPrint('Search error: $e');
     } finally {
       setState(() {
         _isSearching = false;
@@ -93,7 +93,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       children: [
                         const Text('🔍 Search & Explore', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                         const SizedBox(height: 4),
-                        Text('Find your favorite Anime & Donghua', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
+                        Text('Find your favorite Anime & Donghua', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),
@@ -296,7 +296,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
       gradient: LinearGradient(colors: gradientColors, begin: Alignment.topLeft, end: Alignment.bottomRight),
-      border: Border.all(color: Colors.white.withOpacity(0.1)),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -305,10 +305,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             children: [
               Text(title, style: const TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold, fontSize: 20)),
               const SizedBox(height: 4),
-              Text(description, style: TextStyle(color: AppColors.primaryText.withOpacity(0.8), fontSize: 14), textAlign: TextAlign.center),
+              Text(description, style: TextStyle(color: AppColors.primaryText.withValues(alpha: 0.8), fontSize: 14), textAlign: TextAlign.center),
             ],
           ),
-          Text(count, style: TextStyle(color: AppColors.primaryText.withOpacity(0.7), fontSize: 12)),
+          Text(count, style: TextStyle(color: AppColors.primaryText.withValues(alpha: 0.7), fontSize: 12)),
         ],
       ),
     );

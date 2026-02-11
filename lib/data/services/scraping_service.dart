@@ -2,6 +2,7 @@
 
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 
@@ -56,7 +57,7 @@ class ScrapingService {
       }
       return episodes;
     } catch (e) {
-      print('Error scraping Anoboy: $e');
+      debugPrint('Error scraping Anoboy: $e');
       return [];
     }
   }
@@ -109,7 +110,7 @@ class ScrapingService {
       }
       return episodes;
     } catch (e) {
-      print('Error scraping Anichin: $e');
+      debugPrint('Error scraping Anichin: $e');
       return [];
     }
   }
@@ -176,7 +177,7 @@ class ScrapingService {
         show: episode.show,
       );
     } catch (e) {
-      print('Error getting Anoboy details: $e');
+      debugPrint('Error getting Anoboy details: $e');
       return episode;
     }
   }
@@ -247,7 +248,7 @@ class ScrapingService {
         show: episode.show,
       );
     } catch (e) {
-      print('Error getting Anichin details: $e');
+      debugPrint('Error getting Anichin details: $e');
       return episode;
     }
   }

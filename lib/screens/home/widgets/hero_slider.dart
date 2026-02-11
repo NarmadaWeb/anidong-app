@@ -96,7 +96,7 @@ class _HeroSlideItem extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             AppColors.background,
-            AppColors.background.withOpacity(0.7),
+            AppColors.background.withValues(alpha: 0.7),
             Colors.transparent
           ],
           stops: const [0.0, 0.4, 1.0],
@@ -170,11 +170,11 @@ class _HeroSlideItem extends StatelessWidget {
           icon: const Icon(Boxicons.bx_plus, size: 22),
           label: const Text('My List'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.surface.withOpacity(0.8),
+            backgroundColor: AppColors.surface.withValues(alpha: 0.8),
             foregroundColor: AppColors.primaryText,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            side: BorderSide(color: Colors.white.withOpacity(0.2)),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
         ),
