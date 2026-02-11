@@ -8,6 +8,9 @@ class Episode {
   final int episodeNumber;
   final String? title;
   final String videoUrl;
+  final String? iframeUrl;
+  final String? originalUrl;
+  final List<Map<String, String>>? downloadLinks;
   final String? thumbnailUrl;
   final int? durationMinute;
   final DateTime? releaseDate;
@@ -19,6 +22,9 @@ class Episode {
     required this.episodeNumber,
     this.title,
     required this.videoUrl,
+    this.iframeUrl,
+    this.originalUrl,
+    this.downloadLinks,
     this.thumbnailUrl,
     this.durationMinute,
     this.releaseDate,
@@ -32,6 +38,12 @@ class Episode {
       episodeNumber: json['episode_number'] ?? 0,
       title: json['title'],
       videoUrl: json['video_url'] ?? '',
+      iframeUrl: json['iframe_url'],
+      originalUrl: json['original_url'],
+      downloadLinks: json['download_links'] != null
+          ? List<Map<String, String>>.from((json['download_links'] as List)
+              .map((item) => Map<String, String>.from(item)))
+          : null,
       thumbnailUrl: json['thumbnail_url'],
       durationMinute: json['duration_minute'],
       releaseDate: json['release_date'] != null

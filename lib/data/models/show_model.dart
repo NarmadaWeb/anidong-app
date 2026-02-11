@@ -14,6 +14,7 @@ class Show {
   final int? releaseYear;
   final List<Genre> genres;
   final DateTime? createdAt; // <-- TAMBAHKAN INI
+  final String? originalUrl;
 
   Show({
     required this.id,
@@ -27,6 +28,7 @@ class Show {
     this.releaseYear,
     required this.genres,
     this.createdAt, // <-- TAMBAHKAN INI
+    this.originalUrl,
   });
 
   factory Show.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,7 @@ class Show {
       genres: genreList,
       // <-- TAMBAHKAN INI
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
+      originalUrl: json['original_url'],
     );
   }
 }

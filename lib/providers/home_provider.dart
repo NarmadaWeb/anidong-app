@@ -45,7 +45,7 @@ class HomeProvider with ChangeNotifier {
       // Panggil kedua API secara bersamaan untuk efisiensi
       final results = await Future.wait([
         _apiService.getRecentEpisodes(context, type: _currentMode),
-        _apiService.getTopRatedShows(context), // Menggunakan top-rated sebagai rekomendasi
+        _apiService.getTopRatedShows(context, type: _currentMode), // Menggunakan top-rated sebagai rekomendasi
       ]);
 
       // Simpan hasil ke properti privat
@@ -89,5 +89,9 @@ class HomeProvider with ChangeNotifier {
 
     // Beri tahu UI sekali lagi untuk update (menampilkan data atau pesan error)
     notifyListeners();
+  }
+
+  Future<Episode> getEpisodeDetails(Episode episode) async {
+    return await _apiService.getEpisodeDetails(episode);
   }
 }
