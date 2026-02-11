@@ -48,7 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         const Text('⚙️ Settings', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                         const SizedBox(height: 4),
-                        Text('Customize your experience', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
+                        Text('Customize your experience', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),
@@ -77,15 +77,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildVideoQualityCard() {
     return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Video Quality', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-          const SizedBox(height: 8),
-          _buildRadioTile('Auto'),
-          _buildRadioTile('1080p'),
-          _buildRadioTile('720p'),
-        ],
+      child: RadioGroup<String>(
+        groupValue: _selectedQuality,
+        onChanged: (newValue) {
+          if (newValue != null) {
+            setState(() { _selectedQuality = newValue; });
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Video Quality', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+            const SizedBox(height: 8),
+            _buildRadioTile('Auto'),
+            _buildRadioTile('1080p'),
+            _buildRadioTile('720p'),
+          ],
+        ),
       ),
     );
   }
@@ -94,12 +102,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return RadioListTile<String>(
       title: Text(value, style: const TextStyle(color: AppColors.primaryText)),
       value: value,
-      groupValue: _selectedQuality,
-      onChanged: (newValue) {
-        if (newValue != null) {
-          setState(() { _selectedQuality = newValue; });
-        }
-      },
       activeColor: AppColors.accent,
       contentPadding: EdgeInsets.zero,
       visualDensity: VisualDensity.compact,
@@ -114,7 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onChanged: (bool value) {
           setState(() { _newEpisodesNotification = value; });
         },
-        activeColor: AppColors.accent,
+        activeThumbColor: AppColors.accent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
@@ -137,7 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               setState(() { _wifiOnlyDownload = value; });
             },
           ),
-          Divider(color: Colors.white.withOpacity(0.1), height: 1),
+          Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
           _buildSwitchTile(
             title: 'Auto Download',
             subtitle: 'Automatically download new episodes',
@@ -175,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.accent,
+            activeThumbColor: AppColors.accent,
           ),
         ],
       ),

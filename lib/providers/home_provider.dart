@@ -54,23 +54,23 @@ class HomeProvider with ChangeNotifier {
 
       // --- PRINT UNTUK DEBUGGING ---
       // Ini akan muncul di Debug Console Anda saat aplikasi berjalan
-      print("=========================================");
-      print("======= DEBUGGING: HomeProvider =======");
-      print("=========================================");
-      print("=> Mode Saat Ini: $_currentMode");
-      print("=> Jumlah Episode Terbaru Diterima: ${_recentEpisodes.length}");
-      print("=> Jumlah Top Rated Diterima: ${_recommendedShows.length}");
+      debugPrint("=========================================");
+      debugPrint("======= DEBUGGING: HomeProvider =======");
+      debugPrint("=========================================");
+      debugPrint("=> Mode Saat Ini: $_currentMode");
+      debugPrint("=> Jumlah Episode Terbaru Diterima: ${_recentEpisodes.length}");
+      debugPrint("=> Jumlah Top Rated Diterima: ${_recommendedShows.length}");
 
       // Periksa konten dari list Top Rated jika tidak kosong
       if (_recommendedShows.isNotEmpty) {
-        print("\n--- Detail Top Rated Shows ---");
+        debugPrint("\n--- Detail Top Rated Shows ---");
         for (var show in _recommendedShows) {
-          print("  - ID: ${show.id}, Judul: ${show.title}, Tipe: ${show.type}");
+          debugPrint("  - ID: ${show.id}, Judul: ${show.title}, Tipe: ${show.type}");
         }
       } else {
-        print("  - Tidak ada data Top Rated yang diterima atau diparsing.");
+        debugPrint("  - Tidak ada data Top Rated yang diterima atau diparsing.");
       }
-      print("=========================================\n");
+      debugPrint("=========================================\n");
       // --- AKHIR DARI PRINT UNTUK DEBUGGING ---
 
       // Set state ke loaded karena data sudah siap
@@ -82,9 +82,9 @@ class HomeProvider with ChangeNotifier {
       _state = HomeState.error;
 
       // --- PRINT ERROR UNTUK DEBUGGING ---
-      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-      print("!!!! ERROR di HomeProvider: $e !!!!");
-      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+      debugPrint("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+      debugPrint("!!!! ERROR di HomeProvider: $e !!!!");
+      debugPrint("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     }
 
     // Beri tahu UI sekali lagi untuk update (menampilkan data atau pesan error)

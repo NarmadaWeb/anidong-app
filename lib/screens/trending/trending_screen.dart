@@ -48,7 +48,7 @@ class TrendingScreen extends StatelessWidget {
                       children: [
                         const Text('🔥 Trending Now', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                         const SizedBox(height: 4),
-                        Text('Discover what everyone is watching', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withOpacity(0.8))),
+                        Text('Discover what everyone is watching', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),

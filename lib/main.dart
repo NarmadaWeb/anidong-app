@@ -47,13 +47,13 @@ class MyApp extends StatelessWidget {
             foregroundColor: AppColors.primaryText,
           ),
           colorScheme: ColorScheme.fromSwatch(
-            primarySwatch: MaterialColor(AppColors.accent.value, {
-              50: AppColors.accent.withOpacity(0.1),
-              100: AppColors.accent.withOpacity(0.2),
-              200: AppColors.accent.withOpacity(0.3),
-              300: AppColors.accent.withOpacity(0.4),
-              400: AppColors.accent.withOpacity(0.6),
-              500: AppColors.accent.withOpacity(0.8),
+            primarySwatch: MaterialColor(AppColors.accent.toARGB32(), {
+              50: AppColors.accent.withValues(alpha: 0.1),
+              100: AppColors.accent.withValues(alpha: 0.2),
+              200: AppColors.accent.withValues(alpha: 0.3),
+              300: AppColors.accent.withValues(alpha: 0.4),
+              400: AppColors.accent.withValues(alpha: 0.6),
+              500: AppColors.accent.withValues(alpha: 0.8),
               600: AppColors.accent,
               700: AppColors.accent,
               800: AppColors.accent,
