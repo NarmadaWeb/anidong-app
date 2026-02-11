@@ -1,8 +1,12 @@
 import 'package:anidong/main.dart';
 import 'package:anidong/screens/splash_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
+
   testWidgets('App starts and displays splash screen smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
