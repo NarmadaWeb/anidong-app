@@ -80,7 +80,7 @@ class _MainScreenState extends State<MainScreen> {
           ? null
           : AppBar(
               toolbarHeight: 64,
-              backgroundColor: AppColors.background.withAlpha((255 * 0.8).round()),
+              backgroundColor: AppColors.background.withValues(alpha: 0.8),
               elevation: 0,
               flexibleSpace: ClipRect(
                 child: BackdropFilter(
@@ -130,8 +130,8 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: AppColors.background.withAlpha((255 * 0.8).round()),
-          border: Border(top: BorderSide(color: AppColors.surface.withAlpha((255 * 0.5).round()), width: 1.0)),
+          color: AppColors.background.withValues(alpha: 0.8),
+          border: Border(top: BorderSide(color: AppColors.surface.withValues(alpha: 0.5), width: 1.0)),
         ),
         child: ClipRect(
           child: BackdropFilter(

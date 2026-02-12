@@ -122,16 +122,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildRadioTile(String value) {
-    return RadioListTile<String>(
-      title: Text(value, style: const TextStyle(color: AppColors.primaryText)),
-      value: value,
-      activeColor: AppColors.accent,
-      contentPadding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
-    );
-  }
-
   Widget _buildNotificationsCard() {
     return GlassCard(
       child: SwitchListTile(
