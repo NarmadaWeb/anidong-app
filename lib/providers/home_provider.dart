@@ -14,6 +14,7 @@ class HomeProvider with ChangeNotifier {
   // Properti privat untuk menyimpan data dan state
   List<Episode> _recentEpisodes = [];
   List<Show> _recommendedShows = [];
+  List<Show> _popularToday = [];
   HomeState _state = HomeState.initial;
   String _errorMessage = '';
   String _currentMode = 'anime';
@@ -21,6 +22,7 @@ class HomeProvider with ChangeNotifier {
   // Getter publik agar UI bisa mengakses data tanpa bisa mengubahnya langsung
   List<Episode> get recentEpisodes => _recentEpisodes;
   List<Show> get recommendedShows => _recommendedShows;
+  List<Show> get popularToday => _popularToday;
   HomeState get state => _state;
   String get errorMessage => _errorMessage;
   String get currentMode => _currentMode;
@@ -42,15 +44,17 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Panggil kedua API secara bersamaan untuk efisiensi
+      // Panggil API secara bersamaan untuk efisiensi
       final results = await Future.wait([
         _apiService.getRecentEpisodes(context, type: _currentMode),
-        _apiService.getTopRatedShows(context, type: _currentMode), // Menggunakan top-rated sebagai rekomendasi
+        _apiService.getTopRatedShows(context, type: _currentMode), // Recommendations
+        _apiService.getPopularShows(context, type: _currentMode),
       ]);
 
       // Simpan hasil ke properti privat
       _recentEpisodes = results[0] as List<Episode>;
       _recommendedShows = results[1] as List<Show>;
+      _popularToday = results[2] as List<Show>;
 
       // --- PRINT UNTUK DEBUGGING ---
       // Ini akan muncul di Debug Console Anda saat aplikasi berjalan

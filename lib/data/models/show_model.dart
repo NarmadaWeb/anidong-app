@@ -1,6 +1,7 @@
 // lib/data/models/show_model.dart
 
 import 'package:anidong/data/models/genre_model.dart';
+import 'package:anidong/data/models/episode_model.dart';
 
 class Show {
   final int id;
@@ -13,8 +14,9 @@ class Show {
   final double? rating;
   final int? releaseYear;
   final List<Genre> genres;
-  final DateTime? createdAt; // <-- TAMBAHKAN INI
+  final DateTime? createdAt;
   final String? originalUrl;
+  final List<Episode>? episodes;
 
   Show({
     required this.id,
@@ -27,8 +29,9 @@ class Show {
     this.rating,
     this.releaseYear,
     required this.genres,
-    this.createdAt, // <-- TAMBAHKAN INI
+    this.createdAt,
     this.originalUrl,
+    this.episodes,
   });
 
   factory Show.fromJson(Map<String, dynamic> json) {
@@ -36,6 +39,13 @@ class Show {
     if (json['genres'] != null) {
       genreList = (json['genres'] as List)
           .map((g) => Genre.fromJson(g))
+          .toList();
+    }
+
+    var epList = <Episode>[];
+    if (json['episodes'] != null) {
+      epList = (json['episodes'] as List)
+          .map((e) => Episode.fromJson(e))
           .toList();
     }
 
@@ -52,6 +62,7 @@ class Show {
       genres: genreList,
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
       originalUrl: json['original_url'],
+      episodes: epList.isNotEmpty ? epList : null,
     );
   }
 
@@ -69,6 +80,7 @@ class Show {
       'genres': genres.map((g) => g.toJson()).toList(),
       'created_at': createdAt?.toIso8601String(),
       'original_url': originalUrl,
+      'episodes': episodes?.map((e) => e.toJson()).toList(),
     };
   }
 }
