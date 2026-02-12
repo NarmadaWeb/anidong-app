@@ -26,25 +26,47 @@ class ApiService {
     }
   }
 
-  // Endpoint: GET /shows/top-rated
+  // Endpoint: GET /shows/top-rated (Recommendations)
   Future<List<Show>> getTopRatedShows(BuildContext context, {String type = 'combined'}) async {
-    // For now, using search or a default list if scraping doesn't have top-rated
-    // Or we can just return mixed results from recent as a placeholder for recommendations
     if (type == 'anime') {
       final eps = await _scrapingService.getAnoboyRecentEpisodes();
       return eps.map((e) => e.show!).toList();
     } else if (type == 'donghua') {
-      final eps = await _scrapingService.getAnichinRecentEpisodes();
-      return eps.map((e) => e.show!).toList();
+      return await _scrapingService.getAnichinRecommendations();
     } else {
       // Combined mode
       final results = await Future.wait([
         _scrapingService.getAnoboyRecentEpisodes(),
-        _scrapingService.getAnichinRecentEpisodes(),
+        _scrapingService.getAnichinRecommendations(),
       ]);
+      final anoboyEps = results[0] as List<Episode>;
+      final anichinShows = results[1] as List<Show>;
       final combined = [
-        ...results[0].map((e) => e.show!),
-        ...results[1].map((e) => e.show!)
+        ...anoboyEps.map((e) => e.show!),
+        ...anichinShows
+      ];
+      combined.shuffle();
+      return combined;
+    }
+  }
+
+  Future<List<Show>> getPopularShows(BuildContext context, {String type = 'combined'}) async {
+    if (type == 'anime') {
+      // Anoboy doesn't have a clear popular section, using recent as placeholder
+      final eps = await _scrapingService.getAnoboyRecentEpisodes();
+      return eps.map((e) => e.show!).toList();
+    } else if (type == 'donghua') {
+      return await _scrapingService.getAnichinPopularToday();
+    } else {
+      final results = await Future.wait([
+        _scrapingService.getAnoboyRecentEpisodes(),
+        _scrapingService.getAnichinPopularToday(),
+      ]);
+      final anoboyEps = results[0] as List<Episode>;
+      final anichinShows = results[1] as List<Show>;
+      final combined = [
+        ...anoboyEps.map((e) => e.show!),
+        ...anichinShows
       ];
       combined.shuffle();
       return combined;

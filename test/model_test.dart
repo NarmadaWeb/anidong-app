@@ -27,7 +27,8 @@ void main() {
         'release_year': 2002,
         'genres': [{'id': 1, 'name': 'Action'}],
         'created_at': '2023-01-01T00:00:00.000',
-        'original_url': 'https://example.com/naruto'
+        'original_url': 'https://example.com/naruto',
+        'episodes': null
       };
       final show = Show.fromJson(json);
       expect(show.id, 1);
@@ -63,7 +64,8 @@ void main() {
           'release_year': null,
           'genres': [],
           'created_at': null,
-          'original_url': null
+          'original_url': null,
+          'episodes': null
         }
       };
       final episode = Episode.fromJson(json);
