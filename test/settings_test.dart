@@ -1,5 +1,6 @@
 
 import 'package:anidong/screens/settings/settings_screen.dart';
+import 'package:anidong/widgets/radio_group.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,15 +16,15 @@ void main() {
     expect(find.text('720p'), findsOneWidget);
 
     // Initial state: Auto is selected
-    final radioGroup = tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
+    final radioGroup = tester.widget<AppRadioGroup<String>>(find.byType(AppRadioGroup<String>));
     expect(radioGroup.groupValue, 'Auto');
 
     // Tap to change quality
     await tester.tap(find.text('1080p'));
     await tester.pumpAndSettle();
 
-    // Verify RadioGroup state updated
-    final updatedRadioGroup = tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
+    // Verify AppRadioGroup state updated
+    final updatedRadioGroup = tester.widget<AppRadioGroup<String>>(find.byType(AppRadioGroup<String>));
     expect(updatedRadioGroup.groupValue, '1080p');
 
     // Verify Switches
