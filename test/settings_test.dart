@@ -15,10 +15,8 @@ void main() {
     expect(find.text('720p'), findsOneWidget);
 
     // Initial state: Auto is selected
-    final autoTile = tester.widget<RadioListTile<String>>(find.byWidgetPredicate(
-      (widget) => widget is RadioListTile<String> && widget.value == 'Auto'
-    ));
-    expect(autoTile.groupValue, 'Auto');
+    final radioGroup = tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
+    expect(radioGroup.groupValue, 'Auto');
 
     // Actually, let's just check if we can tap it
     await tester.tap(find.text('1080p'));

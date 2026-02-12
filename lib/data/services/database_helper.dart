@@ -1,6 +1,7 @@
 // lib/data/services/database_helper.dart
 
 import 'dart:convert';
+import 'package:meta/meta.dart';
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:path/path.dart';
@@ -12,6 +13,13 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static Database? _database;
+  static String? _overriddenPath;
+
+  @visibleForTesting
+  static set databasePath(String? path) {
+    _overriddenPath = path;
+    _database = null; // Force re-initialization
+  }
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -20,7 +28,7 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'anidong.db');
+    String path = _overriddenPath ?? join(await getDatabasesPath(), 'anidong.db');
     return await openDatabase(
       path,
       version: 1,
