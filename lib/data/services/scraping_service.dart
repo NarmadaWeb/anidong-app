@@ -10,10 +10,11 @@ class ScrapingService {
   static const String anoboyBaseUrl = 'https://ww1.anoboy.boo';
   static const String anichinBaseUrl = 'https://anichin.asia';
 
-  Future<List<Episode>> getAnoboyRecentEpisodes() async {
+  Future<List<Episode>> getAnoboyRecentEpisodes({int page = 1}) async {
     try {
+      final url = page > 1 ? '$anoboyBaseUrl/page/$page/' : anoboyBaseUrl;
       final response = await http.get(
-        Uri.parse(anoboyBaseUrl),
+        Uri.parse(url),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
@@ -57,6 +58,7 @@ class ScrapingService {
               type: 'anime',
               status: 'ongoing',
               genres: [],
+              coverImageUrl: thumb.isEmpty ? '' : (thumb.startsWith('http') ? thumb : '$anoboyBaseUrl$thumb'),
             ),
           ));
         }
@@ -68,9 +70,10 @@ class ScrapingService {
     }
   }
 
-  Future<List<Episode>> getAnichinRecentEpisodes() async {
+  Future<List<Episode>> getAnichinRecentEpisodes({int page = 1}) async {
     try {
-      final response = await http.get(Uri.parse(anichinBaseUrl));
+      final url = page > 1 ? '$anichinBaseUrl/page/$page/' : anichinBaseUrl;
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -230,109 +233,125 @@ class ScrapingService {
 
       final document = parse(response.body);
 
-      // Extract IFrame and Servers
-      final List<Map<String, String>> videoServers = [];
-      String? primaryIframe;
+      // Detection: Is this a Show Page (list of eps) or Episode Page (player)?
+      // Episode page has #mediaplayer or iframe. Show page has list of bookmarks but no player.
+      final hasPlayer = document.querySelector('#mediaplayer') != null || document.querySelector('iframe') != null;
+      final isShowPage = !hasPlayer && document.querySelectorAll('a[rel="bookmark"]').isNotEmpty;
 
-      final iframeElement = document.querySelector('iframe#mediaplayer') ?? document.querySelector('iframe');
-      if (iframeElement != null) {
-        primaryIframe = iframeElement.attributes['src'];
-        if (primaryIframe != null) {
-          final iframeUrl = primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe';
-          videoServers.add({
-            'name': 'Primary Server',
-            'url': iframeUrl
-          });
-          primaryIframe = iframeUrl;
-        }
-      }
-
-      final mirrorElements = document.querySelectorAll('.vmiror a');
-      for (var mirror in mirrorElements) {
-        final link = mirror.attributes['data-video'] ?? mirror.attributes['href'];
-        if (link != null && link.isNotEmpty && link != '#') {
-          String serverName = mirror.text.trim();
-          final parentText = mirror.parent?.text.split('|')[0].trim() ?? '';
-          if (parentText.isNotEmpty && parentText != serverName) {
-            serverName = '$parentText $serverName';
-          }
-          final fullLink = link.startsWith('http') ? link : '$anoboyBaseUrl$link';
-          if (!videoServers.any((s) => s['url'] == fullLink)) {
-            videoServers.add({
-              'name': serverName.isEmpty ? 'Mirror Server' : serverName,
-              'url': fullLink
-            });
-          }
-        }
-      }
-
-      final List<Map<String, String>> downloadLinks = [];
-      final dlElements = document.querySelectorAll('a.udl');
-      for (var dl in dlElements) {
-        final name = dl.text.trim();
-        final link = dl.attributes['href'];
-        if (link != null && link.isNotEmpty && link != 'none') {
-          String dlName = name;
-          final parent = dl.parent;
-          if (parent != null) {
-            final providerText = parent.querySelector('.udj')?.text.trim() ?? '';
-            if (providerText.isNotEmpty) {
-              dlName = '$providerText $name';
-            }
-          }
-          downloadLinks.add({
-            'name': dlName,
-            'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link'
-          });
-        }
-      }
-
-      // Fetch All Episodes for the Show
       List<Episode> allEpisodes = [];
       String? showUrl;
 
-      // Try finding show link from breadcrumbs
-      final breadcrumbs = document.querySelectorAll('.anime > a');
-      if (breadcrumbs.length >= 2) {
-        showUrl = breadcrumbs[1].attributes['href'];
-      }
+      final List<Map<String, String>> videoServers = [];
+      String? primaryIframe;
+      final List<Map<String, String>> downloadLinks = [];
 
-      // Fallback: search for "Semua Episode" link
-      if (showUrl == null) {
-        final allEpLink = document.querySelectorAll('a').firstWhere(
-          (a) => a.text.contains('Semua Episode'),
-          orElse: () => document.createElement('a')
-        ).attributes['href'];
-        showUrl = allEpLink;
-      }
+      if (isShowPage) {
+        // Parse episodes directly from this page
+        allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId);
+        showUrl = episode.originalUrl;
+      } else {
+        // Episode Page: Extract Video, Servers, Downloads
+        final iframeElement = document.querySelector('iframe#mediaplayer') ?? document.querySelector('iframe');
+        if (iframeElement != null) {
+          primaryIframe = iframeElement.attributes['src'];
+          if (primaryIframe != null) {
+            final iframeUrl = primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe';
+            videoServers.add({
+              'name': 'Primary Server',
+              'url': iframeUrl
+            });
+            primaryIframe = iframeUrl;
+          }
+        }
 
-      if (showUrl != null) {
-        final showResponse = await http.get(
-          Uri.parse(showUrl.startsWith('http') ? showUrl : '$anoboyBaseUrl$showUrl'),
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-        );
-        if (showResponse.statusCode == 200) {
-          final showDoc = parse(showResponse.body);
-          final epLinks = showDoc.querySelectorAll('a[rel="bookmark"]');
-          for (var link in epLinks) {
-            final title = link.attributes['title'] ?? link.text.trim();
-            final url = link.attributes['href'] ?? '';
-            if (url.isNotEmpty && (title.contains('Episode') || title.contains('Ep '))) {
-              int epNum = 0;
-              final epMatch = RegExp(r'Episode\s+(\d+)').firstMatch(title);
-              if (epMatch != null) epNum = int.tryParse(epMatch.group(1)!) ?? 0;
-
-              allEpisodes.add(Episode(
-                id: url.hashCode,
-                showId: episode.showId,
-                episodeNumber: epNum,
-                title: title,
-                videoUrl: '',
-                originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
-              ));
+        final mirrorElements = document.querySelectorAll('.vmiror a');
+        for (var mirror in mirrorElements) {
+          final link = mirror.attributes['data-video'] ?? mirror.attributes['href'];
+          if (link != null && link.isNotEmpty && link != '#') {
+            String serverName = mirror.text.trim();
+            final parentText = mirror.parent?.text.split('|')[0].trim() ?? '';
+            if (parentText.isNotEmpty && parentText != serverName) {
+              serverName = '$parentText $serverName';
+            }
+            final fullLink = link.startsWith('http') ? link : '$anoboyBaseUrl$link';
+            if (!videoServers.any((s) => s['url'] == fullLink)) {
+              videoServers.add({
+                'name': serverName.isEmpty ? 'Mirror Server' : serverName,
+                'url': fullLink
+              });
             }
           }
         }
+
+        final dlElements = document.querySelectorAll('a.udl');
+        for (var dl in dlElements) {
+          final name = dl.text.trim();
+          final link = dl.attributes['href'];
+          if (link != null && link.isNotEmpty && link != 'none') {
+            String dlName = name;
+            final parent = dl.parent;
+            if (parent != null) {
+              final providerText = parent.querySelector('.udj')?.text.trim() ?? '';
+              if (providerText.isNotEmpty) {
+                dlName = '$providerText $name';
+              }
+            }
+            downloadLinks.add({
+              'name': dlName,
+              'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link'
+            });
+          }
+        }
+
+        // Find Show URL to fetch all episodes
+        // Try finding show link from breadcrumbs
+        final breadcrumbs = document.querySelectorAll('.anime > a');
+        if (breadcrumbs.length >= 2) {
+          showUrl = breadcrumbs[1].attributes['href'];
+        }
+
+        // Fallback: search for "Semua Episode" link
+        if (showUrl == null) {
+          final allEpLink = document.querySelectorAll('a').firstWhere(
+            (a) => a.text.contains('Semua Episode'),
+            orElse: () => document.createElement('a')
+          ).attributes['href'];
+          showUrl = allEpLink;
+        }
+
+        if (showUrl != null) {
+          final showResponse = await http.get(
+            Uri.parse(showUrl!.startsWith('http') ? showUrl! : '$anoboyBaseUrl$showUrl'),
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+          );
+          if (showResponse.statusCode == 200) {
+            final showDoc = parse(showResponse.body);
+            allEpisodes = _parseAnoboyEpisodesFromDoc(showDoc, episode.showId);
+          }
+        }
+      }
+
+      // Sort episodes by number (Ascending)
+      allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
+
+      // Determine Prev/Next
+      String? prevEpisodeUrl;
+      String? nextEpisodeUrl;
+
+      // Note: If isShowPage, we don't have a "current episode" context unless we pick one.
+      // But typically this function returns 'episode' with details.
+      // If isShowPage, we might want to return the FIRST or LATEST episode as the main one,
+      // or just a placeholder.
+      // Let's rely on passed 'episode.url' to find index if possible.
+
+      final currentIdx = allEpisodes.indexWhere((e) => e.originalUrl == episode.originalUrl);
+      if (currentIdx != -1) {
+        if (currentIdx > 0) prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
+        if (currentIdx < allEpisodes.length - 1) nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
+      } else if (isShowPage && allEpisodes.isNotEmpty) {
+        // If we are on Show Page, maybe we want to facilitate playing the first episode?
+        // But VideoPlayerScreen expects a video.
+        // Let's leave prev/next null, user will select from list.
       }
 
       final show = episode.show ?? Show(id: episode.showId, title: episode.title ?? 'Anime', type: 'anime', status: 'ongoing', genres: []);
@@ -359,11 +378,37 @@ class ScrapingService {
         downloadLinks: downloadLinks,
         thumbnailUrl: episode.thumbnailUrl,
         show: updatedShow,
+        prevEpisodeUrl: prevEpisodeUrl,
+        nextEpisodeUrl: nextEpisodeUrl,
       );
     } catch (e) {
       debugPrint('Error getting Anoboy details: $e');
       return episode;
     }
+  }
+
+  List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId) {
+    final List<Episode> eps = [];
+    final epLinks = document.querySelectorAll('a[rel="bookmark"]');
+    for (var link in epLinks) {
+      final title = link.attributes['title'] ?? link.text.trim();
+      final url = link.attributes['href'] ?? '';
+      if (url.isNotEmpty && (title.contains('Episode') || title.contains('Ep '))) {
+        int epNum = 0;
+        final epMatch = RegExp(r'Episode\s+(\d+)').firstMatch(title);
+        if (epMatch != null) epNum = int.tryParse(epMatch.group(1)!) ?? 0;
+
+        eps.add(Episode(
+          id: url.hashCode,
+          showId: showId,
+          episodeNumber: epNum,
+          title: title,
+          videoUrl: '',
+          originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
+        ));
+      }
+    }
+    return eps;
   }
 
   Future<Episode> getAnichinEpisodeDetails(Episode episode) async {
