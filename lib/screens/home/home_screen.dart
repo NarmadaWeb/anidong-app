@@ -67,6 +67,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: 64 + MediaQuery.of(context).viewPadding.top + 16),
                 const HeroSlider(),
                 _buildSectionTitle('New Episodes'),
                 _buildNewEpisodesGrid(allRecentEpisodes, provider.currentMode), // Kirim mode saat ini

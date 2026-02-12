@@ -39,18 +39,13 @@ class AppDrawer extends StatelessWidget {
                   text: 'Watch History',
                   onTap: () => onPageSelected(2),
                 ),
-                _buildDrawerItem(
-                  icon: Boxicons.bxs_crown,
-                  text: 'Go Premium',
-                  onTap: () => onPageSelected(8),
-                ),
               ],
             ),
 
             // Spacer akan mendorong grup bawah ke posisi paling bawah
             const Spacer(),
 
-            // Grup Bawah: Settings dan Logout
+            // Grup Bawah: Settings
             Column(
               children: [
                 const Divider(color: AppColors.surface, height: 1, indent: 16, endIndent: 16),
@@ -58,15 +53,6 @@ class AppDrawer extends StatelessWidget {
                   icon: Boxicons.bxs_cog,
                   text: 'Settings',
                   onTap: () => onPageSelected(4),
-                  iconColor: AppColors.secondaryText,
-                ),
-                _buildDrawerItem(
-                  icon: Boxicons.bxs_log_out,
-                  text: 'Logout',
-                  onTap: () {
-                    // Placeholder for logout logic
-                    Navigator.pop(context);
-                  },
                   iconColor: AppColors.secondaryText,
                 ),
               ],
