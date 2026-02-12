@@ -21,8 +21,6 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildUserInfo(),
-                  const SizedBox(height: 32),
                   _buildSettingsSection('General', [
                     _buildSettingsItem('Notifications', () {}),
                     _buildSettingsItem('Privacy Policy', () {}),
@@ -57,7 +55,7 @@ class ProfileScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Profile & Settings',
+                'Settings',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -70,43 +68,6 @@ class ProfileScreen extends StatelessWidget {
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Row(
-        children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/80?u=user123'),
-          ),
-          SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your Name',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryText,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'your.email@example.com',
-                style: TextStyle(color: AppColors.secondaryText, fontSize: 14),
-              ),
-            ],
-          )
         ],
       ),
     );
