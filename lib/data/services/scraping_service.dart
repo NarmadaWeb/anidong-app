@@ -12,22 +12,28 @@ class ScrapingService {
 
   Future<List<Episode>> getAnoboyRecentEpisodes() async {
     try {
-      final response = await http.get(Uri.parse(anoboyBaseUrl));
+      final response = await http.get(
+        Uri.parse(anoboyBaseUrl),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
       final List<Episode> episodes = [];
 
-      // Anoboy episodes are usually in a grid
-      final elements = document.querySelectorAll('.home-mgrid .home-mcont');
+      // Anoboy episodes are in .home_index with a[rel="bookmark"]
+      // Filter only those that contain .amv to avoid picking up the 'Jadwal' table links
+      final elements = document.querySelectorAll('.home_index a[rel="bookmark"]');
       for (var element in elements) {
-        final titleElement = element.querySelector('.home-mtitle');
-        final linkElement = element.querySelector('a');
+        if (element.querySelector('.amv') == null) continue;
+
+        final title = element.attributes['title'] ?? element.querySelector('h3.ibox1')?.text.trim() ?? '';
+        final url = element.attributes['href'] ?? '';
         final imgElement = element.querySelector('img');
 
-        if (titleElement != null && linkElement != null) {
-          final title = titleElement.text.trim();
-          final url = linkElement.attributes['href'] ?? '';
+        if (title.isNotEmpty && url.isNotEmpty) {
           final thumb = imgElement?.attributes['src'] ?? '';
 
           // Try to extract episode number from title
@@ -43,8 +49,8 @@ class ScrapingService {
             episodeNumber: epNum,
             title: title,
             videoUrl: '', // Will be fetched in details
-            thumbnailUrl: thumb.startsWith('http') ? thumb : '$anoboyBaseUrl$thumb',
-            originalUrl: url,
+            thumbnailUrl: thumb.isEmpty ? '' : (thumb.startsWith('http') ? thumb : '$anoboyBaseUrl$thumb'),
+            originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
             show: Show(
               id: title.hashCode,
               title: title.split(' Episode')[0],
@@ -119,7 +125,12 @@ class ScrapingService {
     if (episode.originalUrl == null || episode.originalUrl!.isEmpty) return episode;
 
     try {
-      final response = await http.get(Uri.parse(episode.originalUrl!));
+      final response = await http.get(
+        Uri.parse(episode.originalUrl!),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      );
       if (response.statusCode != 200) return episode;
 
       final document = parse(response.body);
@@ -128,38 +139,76 @@ class ScrapingService {
       final List<Map<String, String>> videoServers = [];
       String? primaryIframe;
 
-      final iframeElement = document.querySelector('iframe');
+      final iframeElement = document.querySelector('iframe#mediaplayer') ?? document.querySelector('iframe');
       if (iframeElement != null) {
         primaryIframe = iframeElement.attributes['src'];
         if (primaryIframe != null) {
+          final iframeUrl = primaryIframe!.startsWith('http') ? primaryIframe! : '$anoboyBaseUrl$primaryIframe';
           videoServers.add({
-            'name': 'Server 1',
-            'url': primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe'
+            'name': 'Primary Server',
+            'url': iframeUrl
           });
+          primaryIframe = iframeUrl;
         }
       }
 
       // Extract Mirror Links as additional servers
-      final mirrorElements = document.querySelectorAll('.vmirror a');
-      int serverCount = videoServers.length + 1;
+      // Selector fixed to .vmiror (one 'r') based on actual HTML
+      final mirrorElements = document.querySelectorAll('.vmiror a');
       for (var mirror in mirrorElements) {
         final link = mirror.attributes['data-video'] ?? mirror.attributes['href'];
-        if (link != null && link.isNotEmpty && !link.contains('download')) {
-          videoServers.add({
-            'name': 'Server $serverCount',
-            'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link'
-          });
-          serverCount++;
+        if (link != null && link.isNotEmpty && link != '#') {
+          // Extract server name from text or parent text
+          String serverName = mirror.text.trim();
+          final parentText = mirror.parent?.text.split('|')[0].trim() ?? '';
+          if (parentText.isNotEmpty && parentText != serverName) {
+            serverName = '$parentText $serverName';
+          }
+
+          final fullLink = link.startsWith('http') ? link : '$anoboyBaseUrl$link';
+
+          // Avoid duplicates
+          if (!videoServers.any((s) => s['url'] == fullLink)) {
+            videoServers.add({
+              'name': serverName.isEmpty ? 'Mirror Server' : serverName,
+              'url': fullLink
+            });
+          }
         }
       }
 
-      // Extract Download Links
+      // Extract Download Links using a.udl
       final List<Map<String, String>> downloadLinks = [];
-      for (var dl in mirrorElements) {
+      final dlElements = document.querySelectorAll('a.udl');
+      for (var dl in dlElements) {
         final name = dl.text.trim();
         final link = dl.attributes['href'];
-        if (link != null && link.isNotEmpty && (link.contains('download') || name.toLowerCase().contains('download'))) {
-          downloadLinks.add({'name': name, 'url': link});
+        if (link != null && link.isNotEmpty && link != 'none') {
+          // Try to get resolution/provider info from sibling/parent
+          String dlName = name;
+          final parent = dl.parent;
+          if (parent != null) {
+            final providerText = parent.querySelector('.udj')?.text.trim() ?? '';
+            if (providerText.isNotEmpty) {
+              dlName = '$providerText $name';
+            }
+          }
+
+          downloadLinks.add({
+            'name': dlName,
+            'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link'
+          });
+        }
+      }
+
+      // If a.udl not found, fallback to old method
+      if (downloadLinks.isEmpty) {
+        for (var dl in mirrorElements) {
+          final name = dl.text.trim();
+          final link = dl.attributes['href'];
+          if (link != null && link.isNotEmpty && link != '#' && (link.contains('download') || name.toLowerCase().contains('download'))) {
+            downloadLinks.add({'name': name, 'url': link});
+          }
         }
       }
 
@@ -255,21 +304,25 @@ class ScrapingService {
 
   Future<List<Show>> searchAnoboy(String query) async {
     try {
-      final response = await http.get(Uri.parse('$anoboyBaseUrl/?s=${Uri.encodeComponent(query)}'));
+      final response = await http.get(
+        Uri.parse('$anoboyBaseUrl/?s=${Uri.encodeComponent(query)}'),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      final elements = document.querySelectorAll('.home-mgrid .home-mcont');
+      // Search results use similar structure as home page
+      final elements = document.querySelectorAll('a[rel="bookmark"]');
       for (var element in elements) {
-        final titleElement = element.querySelector('.home-mtitle');
-        final linkElement = element.querySelector('a');
+        final title = element.attributes['title'] ?? element.querySelector('h3.ibox1')?.text.trim() ?? '';
+        final url = element.attributes['href'] ?? '';
         final imgElement = element.querySelector('img');
 
-        if (titleElement != null && linkElement != null) {
-          final title = titleElement.text.trim();
-          final url = linkElement.attributes['href'] ?? '';
+        if (title.isNotEmpty && url.isNotEmpty) {
           final thumb = imgElement?.attributes['src'] ?? '';
 
           shows.add(Show(
@@ -277,8 +330,8 @@ class ScrapingService {
             title: title,
             type: 'anime',
             status: 'ongoing',
-            coverImageUrl: thumb.startsWith('http') ? thumb : '$anoboyBaseUrl$thumb',
-            originalUrl: url,
+            coverImageUrl: thumb.isEmpty ? '' : (thumb.startsWith('http') ? thumb : '$anoboyBaseUrl$thumb'),
+            originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
             genres: [],
           ));
         }
