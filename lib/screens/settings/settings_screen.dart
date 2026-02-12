@@ -1,8 +1,7 @@
 // lib/screens/settings/settings_screen.dart
 
 import 'package:anidong/widgets/glass_card.dart';
-import 'package:anidong/widgets/radio_group.dart';
-import 'package:flutter/material.dart' hide RadioGroup;
+import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
 
 
@@ -106,29 +105,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildRadioTile(String value) {
-    return Builder(
-      builder: (context) {
-        final group = RadioGroup.of<String>(context);
-        return RadioListTile<String>(
-          title: Text(value, style: const TextStyle(color: AppColors.primaryText)),
-          value: value,
-          groupValue: group?.groupValue ?? _selectedQuality,
-          onChanged: (newValue) {
-            if (newValue != null) {
-              if (group != null) {
-                group.onChanged(newValue);
-              } else {
-                setState(() {
-                  _selectedQuality = newValue;
-                });
-              }
-            }
-          },
-          activeColor: AppColors.accent,
-          contentPadding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-        );
-      },
+    return RadioListTile<String>(
+      title: Text(value, style: const TextStyle(color: AppColors.primaryText)),
+      value: value,
+      activeColor: AppColors.accent,
+      contentPadding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
     );
   }
 
