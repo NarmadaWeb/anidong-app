@@ -1,10 +1,8 @@
 // lib/screens/settings/settings_screen.dart
-
 import 'package:anidong/widgets/glass_card.dart';
 import 'package:anidong/widgets/radio_group.dart';
 import 'package:flutter/material.dart' hide RadioGroup;
 import 'package:anidong/utils/app_colors.dart';
-
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -47,9 +45,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('⚙️ Settings', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                        const Text(
+                          '⚙️ Settings',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryText,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        Text('Customize your experience', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
+                        Text(
+                          'Customize your experience',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.primaryText.withValues(alpha: 0.8),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -81,11 +92,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Video Quality', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+          const Text(
+            'Video Quality',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryText,
+            ),
+          ),
           const SizedBox(height: 8),
           RadioGroup<String>(
             groupValue: _selectedQuality,
-            onChanged: (newValue) {
+            onChanged: (String? newValue) {
               if (newValue != null) {
                 setState(() {
                   _selectedQuality = newValue;
@@ -93,10 +111,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
             child: Column(
-              children: [
-                _buildRadioTile('Auto'),
-                _buildRadioTile('1080p'),
-                _buildRadioTile('720p'),
+              children: const [
+                _QualityRadioTile('Auto'),
+                _QualityRadioTile('1080p'),
+                _QualityRadioTile('720p'),
               ],
             ),
           ),
@@ -105,40 +123,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildRadioTile(String value) {
-    return Builder(
-      builder: (context) {
-        final group = RadioGroup.of<String>(context);
-        return RadioListTile<String>(
-          title: Text(value, style: const TextStyle(color: AppColors.primaryText)),
-          value: value,
-          groupValue: group?.groupValue ?? _selectedQuality,
-          onChanged: (newValue) {
-            if (newValue != null) {
-              if (group != null) {
-                group.onChanged(newValue);
-              } else {
-                setState(() {
-                  _selectedQuality = newValue;
-                });
-              }
-            }
-          },
-          activeColor: AppColors.accent,
-          contentPadding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-        );
-      },
-    );
-  }
-
   Widget _buildNotificationsCard() {
     return GlassCard(
       child: SwitchListTile(
-        title: const Text('New Episodes', style: TextStyle(fontSize: 16, color: AppColors.primaryText, fontWeight: FontWeight.w600)),
+        title: const Text(
+          'New Episodes',
+          style: TextStyle(
+            fontSize: 16,
+            color: AppColors.primaryText,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         value: _newEpisodesNotification,
         onChanged: (bool value) {
-          setState(() { _newEpisodesNotification = value; });
+          setState(() {
+            _newEpisodesNotification = value;
+          });
         },
         thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
@@ -158,14 +158,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-            child: Text('Download Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+            child: Text(
+              'Download Settings',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryText,
+              ),
+            ),
           ),
           _buildSwitchTile(
             title: 'WiFi only',
             subtitle: 'Download only on WiFi',
             value: _wifiOnlyDownload,
             onChanged: (bool value) {
-              setState(() { _wifiOnlyDownload = value; });
+              setState(() {
+                _wifiOnlyDownload = value;
+              });
             },
           ),
           Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
@@ -174,7 +183,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: 'Automatically download new episodes',
             value: _autoDownload,
             onChanged: (bool value) {
-              setState(() { _autoDownload = value; });
+              setState(() {
+                _autoDownload = value;
+              });
             },
           ),
         ],
@@ -196,9 +207,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 16, color: AppColors.primaryText, fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.primaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: TextStyle(color: AppColors.secondaryText, fontSize: 13)),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -215,6 +236,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Widget helper untuk RadioListTile (tanpa groupValue & onChanged)
+class _QualityRadioTile extends StatelessWidget {
+  final String value;
+
+  const _QualityRadioTile(this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return RadioListTile<String>(
+      title: Text(
+        value,
+        style: const TextStyle(color: AppColors.primaryText),
+      ),
+      value: value,
+      // Tidak perlu groupValue dan onChanged → ditangani oleh RadioGroup ancestor
+      activeColor: AppColors.accent,
+      contentPadding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
     );
   }
 }
