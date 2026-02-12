@@ -40,15 +40,14 @@ class DownloadScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header Teks
-                  // PERBAIKAN: Menghapus 'const'
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('📥 My Downloads', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                        const Text('🗓️ Jadwal Rilis', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                         const SizedBox(height: 4),
-                        Text('Watch offline anytime, anywhere', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
+                        Text('Jadwal update anime & donghua terbaru', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),
@@ -57,9 +56,7 @@ class DownloadScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       children: [
-                        _buildStorageCard(),
-                        const SizedBox(height: 24),
-                        _buildDownloadedList(),
+                        _buildScheduleList(),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -73,87 +70,33 @@ class DownloadScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStorageCard() {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Storage Used', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-              TextButton(
-                onPressed: () {},
-                child: const Text('Manage Storage', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-            child: LinearProgressIndicator(
-              value: 0.65, // 65%
-              minHeight: 8,
-              backgroundColor: AppColors.darkSurface,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('6.5 GB used', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
-              Text('10 GB total', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildScheduleList() {
+    final days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
-  Widget _buildDownloadedList() {
     return Column(
-      children: [
-        _buildDownloadItem(title: 'Jujutsu Kaisen', details: 'Episode 24 • 1080p • 350 MB'),
-        const SizedBox(height: 12),
-        // Tambahkan item lain di sini
-      ],
+      children: days.map((day) => _buildScheduleDayItem(day)).toList(),
     );
   }
 
-  Widget _buildDownloadItem({required String title, required String details}) {
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          Container(
-            width: 80,
-            height: 56,
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)),
-            child: const Center(child: Icon(Boxicons.bxs_check_circle, color: AppColors.green500, size: 28)),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-                const SizedBox(height: 2),
-                Text(details, style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
-                const SizedBox(height: 4),
-                const Row(
-                  children: [
-                    Icon(Icons.circle, size: 12, color: AppColors.green500),
-                    SizedBox(width: 6),
-                    Text('Downloaded', style: TextStyle(fontSize: 12, color: AppColors.green500)),
-                  ],
-                ),
-              ],
+  Widget _buildScheduleDayItem(String day) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: GlassCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              day,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryText,
+              ),
             ),
-          ),
-          IconButton(onPressed: () {}, icon: const Icon(Boxicons.bx_play_circle, color: AppColors.accent, size: 28)),
-          IconButton(onPressed: () {}, icon: const Icon(Boxicons.bx_trash, color: AppColors.secondaryText, size: 24)),
-        ],
+            const Icon(Boxicons.bx_chevron_right, color: AppColors.accent),
+          ],
+        ),
       ),
     );
   }

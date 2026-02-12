@@ -57,7 +57,7 @@ class AppDrawer extends StatelessWidget {
                 _buildDrawerItem(
                   icon: Boxicons.bxs_cog,
                   text: 'Settings',
-                  onTap: () => onPageSelected(7),
+                  onTap: () => onPageSelected(4),
                   iconColor: AppColors.secondaryText,
                 ),
                 _buildDrawerItem(
