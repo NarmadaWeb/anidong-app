@@ -19,6 +19,10 @@ class HomeProvider with ChangeNotifier {
   String _errorMessage = '';
   String _currentMode = 'anime';
 
+  // Pagination State
+  int _currentPage = 1;
+  bool _isLoadingMore = false;
+
   // Getter publik agar UI bisa mengakses data tanpa bisa mengubahnya langsung
   List<Episode> get recentEpisodes => _recentEpisodes;
   List<Show> get recommendedShows => _recommendedShows;
@@ -26,6 +30,7 @@ class HomeProvider with ChangeNotifier {
   HomeState get state => _state;
   String get errorMessage => _errorMessage;
   String get currentMode => _currentMode;
+  bool get isLoadingMore => _isLoadingMore;
 
   // Constructor ini akan langsung memanggil API saat provider pertama kali dibuat
   HomeProvider(); // No longer calls fetchHomePageData directly
@@ -41,12 +46,14 @@ class HomeProvider with ChangeNotifier {
   Future<void> fetchHomePageData(BuildContext context) async {
     // Set state ke loading dan beri tahu UI untuk update (menampilkan spinner)
     _state = HomeState.loading;
+    _currentPage = 1;
+    _isLoadingMore = false;
     notifyListeners();
 
     try {
       // Panggil API secara bersamaan untuk efisiensi
       final results = await Future.wait([
-        _apiService.getRecentEpisodes(context, type: _currentMode),
+        _apiService.getRecentEpisodes(context, type: _currentMode, page: 1),
         _apiService.getTopRatedShows(context, type: _currentMode), // Recommendations
         _apiService.getPopularShows(context, type: _currentMode),
       ]);
@@ -97,5 +104,27 @@ class HomeProvider with ChangeNotifier {
 
   Future<Episode> getEpisodeDetails(Episode episode) async {
     return await _apiService.getEpisodeDetails(episode);
+  }
+
+  Future<void> loadMoreEpisodes(BuildContext context) async {
+    if (_isLoadingMore) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final nextPage = _currentPage + 1;
+      final newEpisodes = await _apiService.getRecentEpisodes(context, type: _currentMode, page: nextPage);
+
+      if (newEpisodes.isNotEmpty) {
+        _recentEpisodes.addAll(newEpisodes);
+        _currentPage = nextPage;
+      }
+    } catch (e) {
+      debugPrint("Error loading more episodes: $e");
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
+    }
   }
 }

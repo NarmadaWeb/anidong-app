@@ -9,16 +9,16 @@ class ApiService {
   final ScrapingService _scrapingService = ScrapingService();
 
   // Endpoint: GET /episodes/recent
-  Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime'}) async {
+  Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime', int page = 1}) async {
     if (type == 'anime') {
-      return await _scrapingService.getAnoboyRecentEpisodes();
+      return await _scrapingService.getAnoboyRecentEpisodes(page: page);
     } else if (type == 'donghua') {
-      return await _scrapingService.getAnichinRecentEpisodes();
+      return await _scrapingService.getAnichinRecentEpisodes(page: page);
     } else {
       // Combined mode
       final results = await Future.wait([
-        _scrapingService.getAnoboyRecentEpisodes(),
-        _scrapingService.getAnichinRecentEpisodes(),
+        _scrapingService.getAnoboyRecentEpisodes(page: page),
+        _scrapingService.getAnichinRecentEpisodes(page: page),
       ]);
       final combined = [...results[0], ...results[1]];
       combined.shuffle();

@@ -70,7 +70,7 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(height: 64 + MediaQuery.of(context).viewPadding.top + 16),
                 const HeroSlider(),
                 _buildSectionTitle('New Episodes'),
-                _buildNewEpisodesGrid(allRecentEpisodes, provider.currentMode), // Kirim mode saat ini
+                _buildNewEpisodesGrid(context, allRecentEpisodes, provider.currentMode, provider), // Kirim mode saat ini
                 _buildSectionTitle('Recommended For You'),
                 _buildRecommendedList(context, filteredRecommended),
                 const SizedBox(height: 100),
@@ -90,7 +90,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   // --- PERBAIKAN DI SINI ---
-  Widget _buildNewEpisodesGrid(List<Episode> episodes, String currentMode) {
+  Widget _buildNewEpisodesGrid(BuildContext context, List<Episode> episodes, String currentMode, HomeProvider provider) {
 
     final filteredEpisodes = episodes.where((ep) {
 
@@ -105,77 +105,98 @@ class HomeScreen extends StatelessWidget {
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 16, childAspectRatio: 0.6,
-      ),
-      itemCount: filteredEpisodes.length,
-      itemBuilder: (context, index) {
-        final episode = filteredEpisodes[index];
-        // Judul sekarang diambil dari episode itu sendiri jika ada, jika tidak, dari Show.
-        final displayTitle = episode.title ?? episode.show?.title ?? 'Unknown Episode';
+    return Column(
+      children: [
+        GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 16, childAspectRatio: 0.6,
+          ),
+          itemCount: filteredEpisodes.length,
+          itemBuilder: (context, index) {
+            final episode = filteredEpisodes[index];
+            // Judul sekarang diambil dari episode itu sendiri jika ada, jika tidak, dari Show.
+            final displayTitle = episode.title ?? episode.show?.title ?? 'Unknown Episode';
 
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => VideoPlayerScreen(episode: episode),
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VideoPlayerScreen(episode: episode),
+                  ),
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: episode.thumbnailUrl ?? '',
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(color: AppColors.surface),
+                            errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
+                          ),
+                        ),
+
+                        Positioned(
+                          bottom: 8, left: 8, right: 8,
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(4)),
+                                child: Text('Ep ${episode.episodeNumber}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(color: AppColors.yellow400, borderRadius: BorderRadius.circular(4)),
+                                child: const Text('Sub', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    displayTitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13, color: AppColors.primaryText, fontWeight: FontWeight.w500),
+                  ),
+                ],
               ),
             );
           },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: episode.thumbnailUrl ?? '',
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(color: AppColors.surface),
-                        errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
-                      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: provider.isLoadingMore
+              ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+              : SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => provider.loadMoreEpisodes(context),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.accent),
+                      foregroundColor: AppColors.accent,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-
-                    Positioned(
-                      bottom: 8, left: 8, right: 8,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                            decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(4)),
-                            child: Text('Ep ${episode.episodeNumber}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                            decoration: BoxDecoration(color: AppColors.yellow400, borderRadius: BorderRadius.circular(4)),
-                            child: const Text('Sub', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    child: const Text('Load More Episodes'),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                displayTitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, color: AppColors.primaryText, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        );
-      },
+        ),
+      ],
     );
   }
 
