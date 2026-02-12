@@ -1,7 +1,6 @@
 // lib/screens/settings/settings_screen.dart
 
 import 'package:anidong/widgets/glass_card.dart';
-import 'package:anidong/widgets/radio_group.dart';
 import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
 
@@ -83,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const Text('Video Quality', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
           const SizedBox(height: 8),
-          AppRadioGroup<String>(
+          RadioGroup<String>(
             groupValue: _selectedQuality,
             onChanged: (newValue) {
               if (newValue != null) {
@@ -106,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildRadioTile(String value) {
-    return RadioGroupTile<String>(
+    return RadioListTile<String>(
       title: Text(value, style: const TextStyle(color: AppColors.primaryText)),
       value: value,
       activeColor: AppColors.accent,

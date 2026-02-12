@@ -1,6 +1,5 @@
 
 import 'package:anidong/screens/settings/settings_screen.dart';
-import 'package:anidong/widgets/radio_group.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,30 +15,30 @@ void main() {
     expect(find.text('720p'), findsOneWidget);
 
     // Initial state: Auto is selected
-    final radioGroup = tester.widget<AppRadioGroup<String>>(find.byType(AppRadioGroup<String>));
+    final radioGroup = tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
     expect(radioGroup.groupValue, 'Auto');
 
     // Tap to change quality
     await tester.tap(find.text('1080p'));
     await tester.pumpAndSettle();
 
-    // Verify AppRadioGroup state updated
-    final updatedRadioGroup = tester.widget<AppRadioGroup<String>>(find.byType(AppRadioGroup<String>));
+    // Verify RadioGroup state updated
+    final updatedRadioGroup = tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
     expect(updatedRadioGroup.groupValue, '1080p');
 
     // Verify Switches
     expect(find.byType(Switch), findsNWidgets(3)); // Notifications, WiFi only, Auto Download
 
     // Initial switch states
-    final notificationSwitch = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+    final notificationSwitch = tester.widget<SwitchListTile>(find.byType(SwitchListTile).first);
     expect(notificationSwitch.value, true);
 
     // Tap a switch (Notifications)
-    await tester.tap(find.byType(SwitchListTile));
+    await tester.tap(find.byType(SwitchListTile).first);
     await tester.pumpAndSettle();
 
     // Verify switch state updated
-    final updatedNotificationSwitch = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+    final updatedNotificationSwitch = tester.widget<SwitchListTile>(find.byType(SwitchListTile).first);
     expect(updatedNotificationSwitch.value, false);
   });
 }
