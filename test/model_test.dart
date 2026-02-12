@@ -49,6 +49,8 @@ void main() {
         'original_url': 'https://example.com/ep1',
         'download_links': [{'name': 'Mega', 'url': 'https://mega.nz'}],
         'video_servers': [{'name': 'Server 1', 'url': 'https://server1.com'}],
+        'prev_episode_url': null,
+        'next_episode_url': null,
         'thumbnail_url': 'https://example.com/thumb.jpg',
         'duration_minute': 24,
         'release_date': '2023-01-01T00:00:00.000',

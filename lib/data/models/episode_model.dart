@@ -16,6 +16,8 @@ class Episode {
   final int? durationMinute;
   final DateTime? releaseDate;
   final Show? show;
+  final String? prevEpisodeUrl;
+  final String? nextEpisodeUrl;
 
   Episode({
     required this.id,
@@ -31,6 +33,8 @@ class Episode {
     this.durationMinute,
     this.releaseDate,
     this.show,
+    this.prevEpisodeUrl,
+    this.nextEpisodeUrl,
   });
 
   factory Episode.fromJson(Map<String, dynamic> json) {
@@ -57,6 +61,8 @@ class Episode {
           : null,
       // Secara aman membuat objek Show jika datanya ada
       show: json['show'] != null ? Show.fromJson(json['show']) : null,
+      prevEpisodeUrl: json['prev_episode_url'],
+      nextEpisodeUrl: json['next_episode_url'],
     );
   }
 
@@ -75,6 +81,8 @@ class Episode {
       'duration_minute': durationMinute,
       'release_date': releaseDate?.toIso8601String(),
       'show': show?.toJson(),
+      'prev_episode_url': prevEpisodeUrl,
+      'next_episode_url': nextEpisodeUrl,
     };
   }
 }

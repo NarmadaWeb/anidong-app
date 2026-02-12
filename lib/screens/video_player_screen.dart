@@ -82,6 +82,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     _fetchDetails(episode);
   }
 
+  void _playEpisodeFromUrl(String url) {
+    final nextEp = Episode(
+      id: url.hashCode,
+      showId: _detailedEpisode.showId,
+      episodeNumber: 0,
+      title: 'Loading...',
+      videoUrl: '',
+      originalUrl: url,
+      show: _detailedEpisode.show,
+    );
+    _fetchDetails(nextEp);
+  }
+
   Future<void> _launchUrl(String url) async {
     if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
       if (mounted) {
@@ -165,6 +178,43 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                             const Icon(Icons.star, color: AppColors.yellow400, size: 18),
                             const SizedBox(width: 4),
                             Text(_detailedEpisode.show?.rating?.toString() ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.skip_previous),
+                                label: const Text('Prev'),
+                                onPressed: _detailedEpisode.prevEpisodeUrl != null
+                                    ? () => _playEpisodeFromUrl(_detailedEpisode.prevEpisodeUrl!)
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.surface,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: AppColors.surface.withValues(alpha: 0.5),
+                                  disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.skip_next),
+                                label: const Text('Next'),
+                                onPressed: _detailedEpisode.nextEpisodeUrl != null
+                                    ? () => _playEpisodeFromUrl(_detailedEpisode.nextEpisodeUrl!)
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.accent,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.5),
+                                  disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 24),
