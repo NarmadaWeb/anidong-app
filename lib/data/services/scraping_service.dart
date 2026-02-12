@@ -234,7 +234,7 @@ class ScrapingService {
       if (iframeElement != null) {
         primaryIframe = iframeElement.attributes['src'];
         if (primaryIframe != null) {
-          final iframeUrl = primaryIframe!.startsWith('http') ? primaryIframe! : '$anoboyBaseUrl$primaryIframe';
+          final iframeUrl = primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe';
           videoServers.add({
             'name': 'Primary Server',
             'url': iframeUrl
@@ -412,10 +412,8 @@ class ScrapingService {
       // Fetch All Episodes from Show Page
       List<Episode> allEpisodes = [];
       String? showUrl = document.querySelector('.breadcrumb a[href*="/anime/"], .breadcrumb a:nth-child(2)')?.attributes['href'];
-      if (showUrl == null) {
-         // Fallback: find link in entry-title or meta
-         showUrl = document.querySelector('.entry-title a')?.attributes['href'];
-      }
+      // Fallback: find link in entry-title or meta
+      showUrl ??= document.querySelector('.entry-title a')?.attributes['href'];
 
       if (showUrl != null) {
         final showResponse = await http.get(Uri.parse(showUrl));
