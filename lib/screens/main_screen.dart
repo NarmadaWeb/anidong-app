@@ -15,7 +15,6 @@ import 'package:anidong/screens/explore/explore_screen.dart';
 import 'package:anidong/screens/history/history_screen.dart';
 import 'package:anidong/screens/home/home_screen.dart';
 import 'package:anidong/screens/my_list/my_list_screen.dart';
-import 'package:anidong/screens/premium/premium_screen.dart';
 import 'package:anidong/screens/profile/profile_screen.dart';
 import 'package:anidong/screens/settings/settings_screen.dart';
 import 'package:anidong/screens/trending/trending_screen.dart';
@@ -44,7 +43,6 @@ class _MainScreenState extends State<MainScreen> {
       const ExploreScreen(),  // 5
       const MyListScreen(),   // 6
       const SettingsScreen(), // 7
-      const PremiumScreen(),  // 8
     ];
   }
 
@@ -70,7 +68,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final Set<int> noAppBarPages = {
-      1, 2, 3, 4, 7, 8
+      1, 2, 3, 4, 7
     };
 
     return Scaffold(

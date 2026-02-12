@@ -1,4 +1,6 @@
+import 'package:anidong/screens/settings/settings_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
+import 'package:anidong/widgets/placeholder_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 
@@ -21,10 +23,38 @@ class ProfileScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSettingsSection('General', [
-                    _buildSettingsItem('Notifications', () {}),
-                    _buildSettingsItem('Privacy Policy', () {}),
-                    _buildSettingsItem('Help Center', () {}),
-                    _buildSettingsItem('Feedback', () {}),
+                    _buildSettingsItem('Notifications', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    }),
+                    _buildSettingsItem('Privacy Policy', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PlaceholderScreen(title: 'Privacy Policy'),
+                        ),
+                      );
+                    }),
+                    _buildSettingsItem('Help Center', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PlaceholderScreen(title: 'Help Center'),
+                        ),
+                      );
+                    }),
+                    _buildSettingsItem('Feedback', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PlaceholderScreen(title: 'Feedback'),
+                        ),
+                      );
+                    }),
                   ]),
                   const SizedBox(height: 56),
                 ],
