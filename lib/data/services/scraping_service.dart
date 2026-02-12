@@ -90,7 +90,7 @@ class ScrapingService {
         final epElement = element.querySelector('.epx');
 
         if (titleElement != null && linkElement != null) {
-          final title = titleElement.text.trim();
+          final rawTitle = titleElement.text.trim();
           final url = linkElement.attributes['href'] ?? '';
           final thumb = imgElement?.attributes['src'] ?? '';
           final epText = epElement?.text.trim() ?? '';
@@ -103,17 +103,21 @@ class ScrapingService {
             epNum = int.tryParse(epMatch.group(1)!) ?? 0;
           }
 
+          // Clean title to allow cleaner UI (Show Name only)
+          // e.g. "Perfect World Episode 255 Subtitle Indonesia" -> "Perfect World"
+          final showTitle = rawTitle.split(' Episode')[0].split(' Ep ')[0];
+
           episodes.add(Episode(
             id: url.hashCode,
-            showId: title.hashCode,
+            showId: showTitle.hashCode, // Use Show Title hash to group better
             episodeNumber: epNum,
-            title: title,
+            title: showTitle, // Use cleaned title for display
             videoUrl: '',
             thumbnailUrl: thumb,
             originalUrl: url,
             show: Show(
-              id: title.hashCode,
-              title: title.split(' Episode')[0].split(' Ep ')[0],
+              id: showTitle.hashCode,
+              title: showTitle,
               type: 'donghua',
               status: 'ongoing',
               genres: [],
@@ -373,19 +377,21 @@ class ScrapingService {
 
       // Extract IFrame and Servers
       final List<Map<String, String>> videoServers = [];
-      String? primaryIframe;
 
-      final iframeElement = document.querySelector('.video-content iframe');
-      if (iframeElement != null) {
-        primaryIframe = iframeElement.attributes['src'];
-        if (primaryIframe != null) {
-          videoServers.add({'name': 'Server 1', 'url': primaryIframe});
-        }
+      // Attempt 1: Look for iframe with src containing 'anichin.stream'
+      var iframeElement = document.querySelector('iframe[src*="anichin.stream"]');
+      // Attempt 2: Look for iframe in .video-content
+      iframeElement ??= document.querySelector('.video-content iframe');
+      // Attempt 3: Any iframe (risky but fallback)
+      iframeElement ??= document.querySelector('iframe');
+
+      String? primaryIframe = iframeElement?.attributes['src'];
+      if (primaryIframe != null && primaryIframe.isNotEmpty) {
+        videoServers.add({'name': 'Primary Server', 'url': primaryIframe});
       }
 
       final serverElements = document.querySelectorAll('.mirror option');
       if (serverElements.isNotEmpty) {
-        videoServers.clear();
         int serverCount = 1;
         for (var opt in serverElements) {
           final url = opt.attributes['value'];
@@ -396,24 +402,46 @@ class ScrapingService {
         }
       }
 
+      // Download Links
+      // Search for anchor tags containing typical download keywords
       final List<Map<String, String>> downloadLinks = [];
-      final downloadSection = document.querySelector('.download');
-      if (downloadSection != null) {
-        final links = downloadSection.querySelectorAll('a');
-        for (var dl in links) {
-          final name = dl.text.trim();
-          final link = dl.attributes['href'];
-          if (link != null && link.isNotEmpty) {
-            downloadLinks.add({'name': name, 'url': link});
+      final dlElements = document.querySelectorAll('a');
+      for (var a in dlElements) {
+        final text = a.text.trim();
+        final lowerText = text.toLowerCase();
+        final href = a.attributes['href'];
+
+        if (href != null && href.isNotEmpty && !href.startsWith('#')) {
+          if (lowerText.contains('mirrored') ||
+              lowerText.contains('terabox') ||
+              lowerText.contains('gdrive') ||
+              lowerText.contains('acefile') ||
+              lowerText.contains('files')) {
+            downloadLinks.add({'name': text.isEmpty ? 'Download Link' : text, 'url': href});
           }
         }
       }
 
+      // Prev/Next Links
+      String? prevUrl;
+      String? nextUrl;
+      for (var a in dlElements) { // iterate all links again or query specifically
+         final text = a.text.trim().toLowerCase();
+         if (text == 'prev' || text == 'sebelumnya' || text.contains('prev')) {
+           prevUrl = a.attributes['href'];
+         }
+         if (text == 'next' || text == 'selanjutnya' || text.contains('next')) {
+           nextUrl = a.attributes['href'];
+         }
+      }
+
       // Fetch All Episodes from Show Page
       List<Episode> allEpisodes = [];
-      String? showUrl = document.querySelector('.breadcrumb a[href*="/anime/"], .breadcrumb a:nth-child(2)')?.attributes['href'];
-      // Fallback: find link in entry-title or meta
-      showUrl ??= document.querySelector('.entry-title a')?.attributes['href'];
+      // Attempt to find Show URL from breadcrumbs
+      // Breadcrumb structure: Home > Show Title > Episode Title
+      String? showUrl = document.querySelector('.breadcrumb a:nth-child(2)')?.attributes['href'];
+      // Fallback
+      showUrl ??= document.querySelector('.breadcrumb a[href*="/anime/"]')?.attributes['href'];
 
       if (showUrl != null) {
         final showResponse = await http.get(Uri.parse(showUrl));
@@ -463,6 +491,8 @@ class ScrapingService {
         downloadLinks: downloadLinks,
         thumbnailUrl: episode.thumbnailUrl,
         show: updatedShow,
+        prevEpisodeUrl: prevUrl,
+        nextEpisodeUrl: nextUrl,
       );
     } catch (e) {
       debugPrint('Error getting Anichin details: $e');
@@ -492,9 +522,6 @@ class ScrapingService {
         if (title.isNotEmpty && url.isNotEmpty) {
           final thumb = imgElement?.attributes['src'] ?? '';
 
-          // Try to filter out individual episodes if possible, but Anoboy search is mostly episodes.
-          // We will handle grouping/listing in the details screen.
-
           shows.add(Show(
             id: url.hashCode,
             title: title.split(' Episode')[0].split(' Ep ')[0],
@@ -507,7 +534,6 @@ class ScrapingService {
         }
       }
 
-      // Basic grouping by title to avoid duplicate shows in search
       final seenTitles = <String>{};
       return shows.where((s) => seenTitles.add(s.title)).toList();
     } catch (e) {
