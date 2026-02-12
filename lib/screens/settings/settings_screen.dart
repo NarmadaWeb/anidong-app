@@ -77,23 +77,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildVideoQualityCard() {
     return GlassCard(
-      child: RadioGroup<String>(
-        groupValue: _selectedQuality,
-        onChanged: (newValue) {
-          if (newValue != null) {
-            setState(() { _selectedQuality = newValue; });
-          }
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Video Quality', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-            const SizedBox(height: 8),
-            _buildRadioTile('Auto'),
-            _buildRadioTile('1080p'),
-            _buildRadioTile('720p'),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Video Quality', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+          const SizedBox(height: 8),
+          _buildRadioTile('Auto'),
+          _buildRadioTile('1080p'),
+          _buildRadioTile('720p'),
+        ],
       ),
     );
   }
@@ -102,6 +94,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return RadioListTile<String>(
       title: Text(value, style: const TextStyle(color: AppColors.primaryText)),
       value: value,
+      groupValue: _selectedQuality,
+      onChanged: (newValue) {
+        if (newValue != null) {
+          setState(() { _selectedQuality = newValue; });
+        }
+      },
       activeColor: AppColors.accent,
       contentPadding: EdgeInsets.zero,
       visualDensity: VisualDensity.compact,
@@ -116,7 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onChanged: (bool value) {
           setState(() { _newEpisodesNotification = value; });
         },
-        activeThumbColor: AppColors.accent,
+        activeColor: AppColors.accent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
@@ -177,7 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: AppColors.accent,
+            activeColor: AppColors.accent,
           ),
         ],
       ),
