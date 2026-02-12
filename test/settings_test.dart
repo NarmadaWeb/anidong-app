@@ -18,15 +18,27 @@ void main() {
     final radioGroup = tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
     expect(radioGroup.groupValue, 'Auto');
 
-    // Actually, let's just check if we can tap it
+    // Tap to change quality
     await tester.tap(find.text('1080p'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+
+    // Verify RadioGroup state updated
+    final updatedRadioGroup = tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
+    expect(updatedRadioGroup.groupValue, '1080p');
 
     // Verify Switches
     expect(find.byType(Switch), findsNWidgets(3)); // Notifications, WiFi only, Auto Download
 
-    // Tap a switch
-    await tester.tap(find.byType(Switch).first);
-    await tester.pump();
+    // Initial switch states
+    final notificationSwitch = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+    expect(notificationSwitch.value, true);
+
+    // Tap a switch (Notifications)
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+
+    // Verify switch state updated
+    final updatedNotificationSwitch = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+    expect(updatedNotificationSwitch.value, false);
   });
 }

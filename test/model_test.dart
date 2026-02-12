@@ -47,8 +47,8 @@ void main() {
         'video_url': 'https://example.com/video.mp4',
         'iframe_url': 'https://example.com/iframe',
         'original_url': 'https://example.com/ep1',
-        'download_links': [{'name': 'Mega', 'link': 'https://mega.nz'}],
-        'video_servers': [{'name': 'Server 1', 'link': 'https://server1.com'}],
+        'download_links': [{'name': 'Mega', 'url': 'https://mega.nz'}],
+        'video_servers': [{'name': 'Server 1', 'url': 'https://server1.com'}],
         'thumbnail_url': 'https://example.com/thumb.jpg',
         'duration_minute': 24,
         'release_date': '2023-01-01T00:00:00.000',
@@ -72,6 +72,7 @@ void main() {
       expect(episode.id, 101);
       expect(episode.showId, 1);
       expect(episode.downloadLinks?.first['name'], 'Mega');
+      expect(episode.downloadLinks?.first['url'], 'https://mega.nz');
       expect(episode.show?.title, 'Naruto');
       expect(episode.toJson(), json);
     });
