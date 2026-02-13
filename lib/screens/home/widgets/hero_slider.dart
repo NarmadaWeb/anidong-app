@@ -2,7 +2,6 @@
 
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/providers/home_provider.dart';
-import 'package:anidong/utils/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
