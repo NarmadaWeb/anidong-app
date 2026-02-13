@@ -85,14 +85,14 @@ class _DownloadScreenState extends State<DownloadScreen> {
                         }
 
                         final schedule = snapshot.data!;
-                        // Order days? Ideally API returns ordered map or we enforce order.
-                        // Map iteration order is insertion order in Dart (mostly).
-                        // Let's rely on that since scraper iterates days.
+                        final List<String> daysOrder = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
                         return Column(
-                          children: schedule.entries.map((entry) {
-                            return _buildDaySection(context, entry.key, entry.value);
-                          }).toList() + [const SizedBox(height: 100)],
+                          children: daysOrder
+                              .where((day) => schedule.containsKey(day))
+                              .map((day) => _buildDaySection(context, day, schedule[day]!))
+                              .toList() +
+                              [const SizedBox(height: 100)],
                         );
                       },
                     ),
@@ -110,8 +110,15 @@ class _DownloadScreenState extends State<DownloadScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(vertical: 12.0),
+          padding: const EdgeInsets.all(12.0),
+          decoration: BoxDecoration(
+            color: AppColors.accent.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+          ),
           child: Text(
             day,
             style: const TextStyle(
