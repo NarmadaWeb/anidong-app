@@ -118,6 +118,6 @@ class ApiService {
   }
 
   Future<Map<String, List<Show>>> getSchedule() async {
-    return await _scrapingService.getAnichinSchedule();
+    return await ConfigService().fetchSchedule();
   }
 }
