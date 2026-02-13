@@ -62,4 +62,44 @@ class ConfigService {
       return [];
     }
   }
+
+  Future<Map<String, List<Show>>> fetchSchedule() async {
+    try {
+      final response = await http.get(Uri.parse('https://raw.githubusercontent.com/rajasunrise/anidong/main/jadwal.json'));
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        final Map<String, List<Show>> schedule = {};
+
+        for (var dayObj in jsonList) {
+          final String day = dayObj['hari'] ?? '';
+          if (day.isEmpty) continue;
+
+          final List<dynamic> items = dayObj['items'] ?? [];
+          final List<Show> shows = [];
+
+          for (var item in items) {
+            shows.add(Show(
+              id: item['no'] ?? 0,
+              title: item['nama'] ?? 'Unknown',
+              type: 'donghua',
+              status: 'ongoing',
+              coverImageUrl: item['imageurl'],
+              originalUrl: '', // Intentionally empty as source doesn't provide it
+              genres: [],
+            ));
+          }
+          if (shows.isNotEmpty) {
+            schedule[day] = shows;
+          }
+        }
+        return schedule;
+      } else {
+        debugPrint('Failed to load schedule: ${response.statusCode}');
+        return {};
+      }
+    } catch (e) {
+      debugPrint('Error fetching schedule: $e');
+      return {};
+    }
+  }
 }
