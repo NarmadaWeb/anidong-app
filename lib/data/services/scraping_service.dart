@@ -175,11 +175,20 @@ class ScrapingService {
           final url = linkElement.attributes['href'] ?? '';
           final thumb = imgElement?.attributes['src'] ?? '';
 
+          String status = 'ongoing';
+          final statusEl = element.querySelector('.status') ?? element.querySelector('.sb') ?? element.querySelector('.limit .bt');
+          if (statusEl != null) {
+            final text = statusEl.text.trim().toLowerCase();
+            if (text.contains('completed') || text.contains('end') || text.contains('tamat')) {
+              status = 'completed';
+            }
+          }
+
           shows.add(Show(
             id: url.hashCode,
             title: title.split(' Episode')[0].split(' Ep ')[0],
             type: 'donghua',
-            status: 'ongoing',
+            status: status,
             coverImageUrl: thumb,
             originalUrl: url,
             genres: [],
@@ -217,11 +226,20 @@ class ScrapingService {
           final url = linkElement.attributes['href'] ?? '';
           final thumb = imgElement?.attributes['src'] ?? '';
 
+          String status = 'ongoing';
+          final statusEl = element.querySelector('.status') ?? element.querySelector('.sb') ?? element.querySelector('.limit .bt');
+          if (statusEl != null) {
+            final text = statusEl.text.trim().toLowerCase();
+            if (text.contains('completed') || text.contains('end') || text.contains('tamat')) {
+              status = 'completed';
+            }
+          }
+
           shows.add(Show(
             id: url.hashCode,
             title: title.split(' Episode')[0].split(' Ep ')[0],
             type: 'donghua',
-            status: 'ongoing',
+            status: status,
             coverImageUrl: thumb,
             originalUrl: url,
             genres: [],
@@ -380,10 +398,21 @@ class ScrapingService {
           showUrl = breadcrumbs[1].attributes['href'];
       }
 
+      // Fallback Breadcrumbs (e.g. standard WP breadcrumbs)
+      if (showUrl == null) {
+          final bc = document.querySelectorAll('.breadcrumbs a, .breadcrumb a');
+          for (var b in bc) {
+             if (b.attributes['href']?.contains('/anime/') ?? false) {
+                 showUrl = b.attributes['href'];
+                 break;
+             }
+          }
+      }
+
       if (showUrl == null) {
           try {
             final allEpLink = document.querySelectorAll('a').firstWhere(
-              (a) => a.text.contains('Semua Episode'),
+              (a) => a.text.toLowerCase().contains('semua episode') || a.text.toLowerCase().contains('list episode'),
             ).attributes['href'];
             showUrl = allEpLink;
           } catch (_) {}
@@ -542,12 +571,17 @@ class ScrapingService {
       }
 
       // Check if this is a Show Page (no video player, has episode list)
-      final isShowPage = document.querySelector('.eplister') != null && document.querySelector('iframe') == null;
+      // Enhanced check
+      final hasList = document.querySelector('.eplister') != null || document.querySelector('.lstep') != null || document.querySelector('.episodelist') != null;
+      final isShowPage = hasList && document.querySelector('iframe') == null;
 
       if (isShowPage) {
          // Parse episodes
          List<Episode> allEpisodes = [];
-         final epElements = document.querySelectorAll('.eplister li a');
+         var epElements = document.querySelectorAll('.eplister li a');
+         if (epElements.isEmpty) epElements = document.querySelectorAll('.lstep li a');
+         if (epElements.isEmpty) epElements = document.querySelectorAll('.episodelist li a');
+
           for (var epEl in epElements) {
             final url = epEl.attributes['href'] ?? '';
             final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
@@ -691,13 +725,27 @@ class ScrapingService {
 
       List<Episode> allEpisodes = [];
       String? showUrl = document.querySelector('.breadcrumb a:nth-child(2)')?.attributes['href'];
-      showUrl ??= document.querySelector('.breadcrumb a[href*="/anime/"]')?.attributes['href'];
+
+      // Fallback
+      if (showUrl == null) {
+         final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
+         for (var b in bcs) {
+            final href = b.attributes['href'];
+            if (href != null && (href.contains('/donghua/') || href.contains('/anime/'))) {
+               showUrl = href;
+               break; // Usually the show link is the parent
+            }
+         }
+      }
 
       if (showUrl != null) {
         final showResponse = await http.get(Uri.parse(showUrl));
         if (showResponse.statusCode == 200) {
           final showDoc = parse(showResponse.body);
-          final epElements = showDoc.querySelectorAll('.eplister li a');
+          var epElements = showDoc.querySelectorAll('.eplister li a');
+          if (epElements.isEmpty) epElements = showDoc.querySelectorAll('.lstep li a');
+          if (epElements.isEmpty) epElements = showDoc.querySelectorAll('.episodelist li a');
+
           for (var epEl in epElements) {
             final url = epEl.attributes['href'] ?? '';
             final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
@@ -773,11 +821,16 @@ class ScrapingService {
         if (title.isNotEmpty && url.isNotEmpty) {
           final thumb = _extractImageUrl(imgElement);
 
+          String status = 'ongoing';
+          if (title.toLowerCase().contains('completed') || title.toLowerCase().contains('tamat')) {
+            status = 'completed';
+          }
+
           shows.add(Show(
             id: url.hashCode,
             title: title.split(' Episode')[0].split(' Ep ')[0],
             type: 'anime',
-            status: 'ongoing',
+            status: status,
             coverImageUrl: thumb,
             originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
             genres: [],
@@ -831,11 +884,16 @@ class ScrapingService {
         // Dedup based on URL
         if (shows.any((s) => s.originalUrl == url)) continue;
 
+        String status = 'ongoing';
+        if (title.toLowerCase().contains('completed') || title.toLowerCase().contains('tamat')) {
+          status = 'completed';
+        }
+
         shows.add(Show(
           id: url.hashCode,
           title: title,
           type: 'anime',
-          status: 'ongoing', // Default, difficult to know from list without parsing text
+          status: status,
           genres: [],
           originalUrl: url,
           coverImageUrl: '', // List usually doesn't have images for all items
@@ -869,11 +927,20 @@ class ScrapingService {
           final url = linkElement.attributes['href'] ?? '';
           final thumb = imgElement?.attributes['src'] ?? '';
 
+          String status = 'ongoing';
+          final statusEl = element.querySelector('.status') ?? element.querySelector('.sb') ?? element.querySelector('.limit .bt');
+          if (statusEl != null) {
+            final text = statusEl.text.trim().toLowerCase();
+            if (text.contains('completed') || text.contains('end') || text.contains('tamat')) {
+              status = 'completed';
+            }
+          }
+
           shows.add(Show(
             id: url.hashCode,
             title: title.split(' Episode')[0].split(' Ep ')[0],
             type: 'donghua',
-            status: 'ongoing',
+            status: status,
             coverImageUrl: thumb,
             originalUrl: url,
             genres: [],
