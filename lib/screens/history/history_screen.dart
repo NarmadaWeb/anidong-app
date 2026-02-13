@@ -14,7 +14,6 @@ class HistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -109,8 +108,8 @@ class HistoryScreen extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: episode.thumbnailUrl != null
-                    ? Image.network(episode.thumbnailUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.movie))
-                    : const Icon(Icons.movie),
+                    ? Image.network(episode.thumbnailUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.movie, color: Theme.of(context).iconTheme.color))
+                    : Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
               ),
             ),
             const SizedBox(width: 16),
@@ -120,9 +119,9 @@ class HistoryScreen extends StatelessWidget {
                 children: [
                   Text(episode.title ?? episode.show?.title ?? 'Unknown',
                       maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primaryText)),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color)),
                   const SizedBox(height: 4),
-                  Text('Episode ${episode.episodeNumber}', style: const TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+                  Text('Episode ${episode.episodeNumber}', style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -133,7 +132,7 @@ class HistoryScreen extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.close, color: AppColors.secondaryText),
+              icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
               onPressed: () {
                 Provider.of<LocalDataProvider>(context, listen: false).removeFromHistory(episode);
               },

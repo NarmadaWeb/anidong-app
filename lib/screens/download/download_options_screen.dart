@@ -29,9 +29,8 @@ class DownloadOptionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Download $title', style: const TextStyle(fontSize: 18)),
+        title: Text('Download $title', style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleLarge?.color)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -53,13 +52,13 @@ class DownloadOptionsScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         link['name'] ?? 'Download Link',
-                        style: const TextStyle(
-                          color: AppColors.primaryText,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    const Icon(Boxicons.bx_chevron_right, color: AppColors.secondaryText),
+                    Icon(Boxicons.bx_chevron_right, color: Theme.of(context).iconTheme.color),
                   ],
                 ),
               ),

@@ -11,12 +11,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Privacy Policy', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+        title: Text('Privacy Policy', style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryText),
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -27,25 +26,25 @@ class PrivacyPolicyScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'Data Privacy',
                     style: TextStyle(color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
                     'This application does not collect any personal data. All data including watch history and bookmarks is stored locally on your device using secure storage.',
-                    style: TextStyle(color: AppColors.secondaryText, fontSize: 14, height: 1.5),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14, height: 1.5),
                   ),
-                  SizedBox(height: 24),
-                  Text(
+                  const SizedBox(height: 24),
+                  const Text(
                     'Content Disclaimer',
                     style: TextStyle(color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
                     'This app scrapes publicly available content from third-party websites (Anoboy & Anichin). We do not host any content on our servers. All videos and images are property of their respective owners.',
-                    style: TextStyle(color: AppColors.secondaryText, fontSize: 14, height: 1.5),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14, height: 1.5),
                   ),
                 ],
               ),
@@ -63,39 +62,42 @@ class HelpCenterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Help Center', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+        title: Text('Help Center', style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryText),
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
-              child: Text('FAQ', style: TextStyle(color: AppColors.secondaryText, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+              child: Text('FAQ', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold)),
             ),
             GlassCard(
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
                   _buildExpansionTile(
+                    context,
                     'Why is the video buffering?',
                     'Video playback depends on the third-party server speed. Try switching to a different resolution or server if available.',
                   ),
                   _buildExpansionTile(
+                    context,
                     'How do I download episodes?',
                     'Navigate to the episode page, click the "Download" button, and select your preferred quality/server.',
                   ),
                   _buildExpansionTile(
+                    context,
                     'Is the content free?',
                     'Yes, all content provided is free to watch as it is sourced from publicly available websites.',
                   ),
                   _buildExpansionTile(
+                    context,
                     'Where are my bookmarks?',
                     'Your bookmarks are stored locally. Go to the "My List" tab to view them.',
                   ),
@@ -115,11 +117,11 @@ class HelpCenterScreen extends StatelessWidget {
                     child: const Icon(Boxicons.bx_envelope, color: AppColors.accent),
                   ),
                   const SizedBox(width: 16),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Still need help?', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
-                      Text('Contact us at support@anidong.app', style: TextStyle(color: AppColors.secondaryText, fontSize: 12)),
+                      Text('Still need help?', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
+                      Text('Contact us at support@anidong.app', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                     ],
                   ),
                 ],
@@ -131,19 +133,19 @@ class HelpCenterScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildExpansionTile(String title, String content) {
+  Widget _buildExpansionTile(BuildContext context, String title, String content) {
     return Theme(
       data: ThemeData(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        title: Text(title, style: const TextStyle(color: AppColors.primaryText, fontSize: 14, fontWeight: FontWeight.w600)),
+        title: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 14, fontWeight: FontWeight.w600)),
         iconColor: AppColors.accent,
-        collapsedIconColor: AppColors.secondaryText,
+        collapsedIconColor: Theme.of(context).textTheme.bodyMedium?.color,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Text(
               content,
-              style: const TextStyle(color: AppColors.secondaryText, fontSize: 13, height: 1.4),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13, height: 1.4),
             ),
           ),
         ],
@@ -175,42 +177,41 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Feedback', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+        title: Text('Feedback', style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryText),
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'We value your feedback',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 14),
+              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14),
             ),
             const SizedBox(height: 16),
             GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Subject', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+                  Text('Subject', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedType,
-                        dropdownColor: AppColors.surface,
+                        dropdownColor: Theme.of(context).cardColor,
                         isExpanded: true,
-                        style: const TextStyle(color: AppColors.primaryText),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         items: _feedbackTypes.map((String type) {
                           return DropdownMenuItem<String>(
                             value: type,
@@ -228,7 +229,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Rate your experience', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+                  Text('Rate your experience', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -248,24 +249,24 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     }),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Message', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+                  Text('Message', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _controller,
                     maxLines: 5,
-                    style: const TextStyle(color: AppColors.primaryText),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                     decoration: InputDecoration(
                       hintText: 'Tell us what you think...',
-                      hintStyle: const TextStyle(color: AppColors.secondaryText),
+                      hintStyle: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: Theme.of(context).cardColor,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                        borderSide: BorderSide(color: Theme.of(context).dividerColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                        borderSide: BorderSide(color: Theme.of(context).dividerColor),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
