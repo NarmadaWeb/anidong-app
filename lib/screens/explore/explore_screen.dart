@@ -135,6 +135,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         ),
                         const SizedBox(height: 12),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _buildTypeChip('Anime', 'anime'),
                             const SizedBox(width: 8),
@@ -296,26 +297,26 @@ class _ExploreScreenState extends State<ExploreScreen> {
       childAspectRatio: 0.85,
       children: [
         _buildGenreCard(
-          emoji: '⚔️', title: 'Action', description: 'Fast-paced adventures', count: '150+ shows',
+          emoji: '⚔️', title: 'Action', description: 'Fast-paced adventures',
           gradientColors: [AppColors.actionGradientStart, AppColors.actionGradientEnd],
         ),
         _buildGenreCard(
-          emoji: '💖', title: 'Romance', description: 'Heart-warming stories', count: '80+ shows',
+          emoji: '💖', title: 'Romance', description: 'Heart-warming stories',
           gradientColors: [AppColors.romanceGradientStart, AppColors.romanceGradientEnd],
         ),
         _buildGenreCard(
-          emoji: '🔮', title: 'Fantasy', description: 'Magical adventures', count: '120+ shows',
+          emoji: '🔮', title: 'Fantasy', description: 'Magical adventures',
           gradientColors: [AppColors.fantasyGradientStart, AppColors.fantasyGradientEnd],
         ),
         _buildGenreCard(
-          emoji: '😂', title: 'Comedy', description: 'Hilarious moments', count: '95+ shows',
+          emoji: '😂', title: 'Comedy', description: 'Hilarious moments',
           gradientColors: [AppColors.comedyGradientStart, AppColors.comedyGradientEnd],
         ),
       ],
     );
   }
 
-  Widget _buildGenreCard({ required String emoji, required String title, required String description, required String count, required List<Color> gradientColors}) {
+  Widget _buildGenreCard({ required String emoji, required String title, required String description, required List<Color> gradientColors}) {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
       gradient: LinearGradient(colors: gradientColors, begin: Alignment.topLeft, end: Alignment.bottomRight),
@@ -331,7 +332,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
               Text(description, style: TextStyle(color: AppColors.primaryText.withValues(alpha: 0.8), fontSize: 14), textAlign: TextAlign.center),
             ],
           ),
-          Text(count, style: TextStyle(color: AppColors.primaryText.withValues(alpha: 0.7), fontSize: 12)),
         ],
       ),
     );

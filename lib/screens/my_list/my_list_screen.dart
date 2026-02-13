@@ -4,6 +4,7 @@ import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/providers/local_data_provider.dart';
 import 'package:anidong/screens/video_player_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:anidong/utils/app_colors.dart';
@@ -131,7 +132,18 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: show.coverImageUrl != null
-                  ? Image.network(show.coverImageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.movie))
+                  ? CachedNetworkImage(
+                      imageUrl: show.coverImageUrl!,
+                      width: 70,
+                      height: 90,
+                      fit: BoxFit.cover,
+                      httpHeaders: const {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Referer': 'https://ww1.anoboy.boo/',
+                      },
+                      placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                      errorWidget: (context, url, error) => const Icon(Icons.movie),
+                    )
                   : const Icon(Icons.movie),
             ),
           ),
