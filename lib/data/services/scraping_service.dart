@@ -5,6 +5,7 @@ import 'package:anidong/data/models/show_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
+import 'package:html/dom.dart';
 
 class ScrapingService {
   static String anoboyBaseUrl = 'https://ww1.anoboy.boo';
@@ -13,6 +14,21 @@ class ScrapingService {
   static void updateBaseUrls(String anoboy, String anichin) {
     if (anoboy.isNotEmpty) anoboyBaseUrl = anoboy;
     if (anichin.isNotEmpty) anichinBaseUrl = anichin;
+  }
+
+  String _extractImageUrl(Element? imgElement) {
+    if (imgElement == null) return '';
+    String thumb = imgElement.attributes['data-src'] ??
+                   imgElement.attributes['data-lazy-src'] ??
+                   imgElement.attributes['src'] ?? '';
+
+    if (thumb.startsWith('//')) {
+      return 'https:$thumb';
+    }
+    if (thumb.isNotEmpty && !thumb.startsWith('http')) {
+      return '$anoboyBaseUrl$thumb';
+    }
+    return thumb;
   }
 
   Future<List<Episode>> getAnoboyRecentEpisodes({int page = 1}) async {
@@ -38,7 +54,7 @@ class ScrapingService {
         final imgElement = element.querySelector('img');
 
         if (title.isNotEmpty && url.isNotEmpty) {
-          final thumb = imgElement?.attributes['src'] ?? '';
+          final thumb = _extractImageUrl(imgElement);
           int epNum = 0;
           final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
           if (epMatch != null) {
@@ -51,7 +67,7 @@ class ScrapingService {
             episodeNumber: epNum,
             title: title,
             videoUrl: '',
-            thumbnailUrl: thumb.isEmpty ? '' : (thumb.startsWith('http') ? thumb : '$anoboyBaseUrl$thumb'),
+            thumbnailUrl: thumb,
             originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
             show: Show(
               id: title.hashCode,
@@ -59,7 +75,7 @@ class ScrapingService {
               type: 'anime',
               status: 'ongoing',
               genres: [],
-              coverImageUrl: thumb.isEmpty ? '' : (thumb.startsWith('http') ? thumb : '$anoboyBaseUrl$thumb'),
+              coverImageUrl: thumb,
             ),
           ));
         }
@@ -232,90 +248,82 @@ class ScrapingService {
 
       final document = parse(response.body);
 
+      // Always try to parse episode list first to populate show.episodes
+      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId);
+
       final hasPlayer = document.querySelector('#mediaplayer') != null || document.querySelector('iframe') != null;
 
-      // Improved Show Page detection: check for content body links if no player
-      var isShowPage = !hasPlayer && document.querySelectorAll('a[rel="bookmark"]').isNotEmpty;
-      if (!hasPlayer && !isShowPage) {
-         // Fallback: Check if there are many links in entry-content which usually indicates an episode list
-         final contentLinks = document.querySelectorAll('.entry-content a, .post-body a');
-         if (contentLinks.length > 5) {
-            isShowPage = true;
-         }
-      }
+      // Determine if this is primarily a Show Page (List) or Episode Page (Video)
+      // If no player, it's definitely a Show Page.
+      bool isShowPage = !hasPlayer;
 
-      List<Episode> allEpisodes = [];
-      String? showUrl;
-
+      String? showUrl = episode.originalUrl;
       final List<Map<String, String>> videoServers = [];
       String? primaryIframe;
       final List<Map<String, String>> downloadLinks = [];
 
       if (isShowPage) {
-        allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId);
-        showUrl = episode.originalUrl;
+         // Pure Show Page logic (recurse to target episode)
+         String coverImage = episode.thumbnailUrl ?? '';
+         if (coverImage.isEmpty) {
+             final imgEl = document.querySelector('.entry-content img, .post-body img');
+             coverImage = _extractImageUrl(imgEl);
+         }
 
-        // Extract Cover Image for Series Page
-        String coverImage = episode.thumbnailUrl ?? '';
-        if (coverImage.isEmpty) {
-           final imgEl = document.querySelector('.entry-content img, .post-body img');
-           if (imgEl != null) {
-              final src = imgEl.attributes['src'];
-              if (src != null && src.startsWith('http')) {
-                 coverImage = src;
-              }
-           }
-        }
+         if (allEpisodes.isNotEmpty) {
+            final targetEp = allEpisodes.firstWhere(
+               (e) => e.episodeNumber == episode.episodeNumber,
+               orElse: () => allEpisodes.first,
+            );
 
-        if (allEpisodes.isNotEmpty) {
-          final targetEp = allEpisodes.firstWhere(
-            (e) => e.episodeNumber == episode.episodeNumber,
-            orElse: () => allEpisodes.first,
-          );
+            // Recurse ONLY if target URL is different to prevent loops
+            if (targetEp.originalUrl != episode.originalUrl) {
+               final detailedEp = await getAnoboyEpisodeDetails(targetEp);
+                final fullShow = detailedEp.show ?? Show(
+                    id: episode.showId,
+                    title: episode.title ?? 'Anime',
+                    type: 'anime',
+                    status: 'ongoing',
+                    genres: [],
+                    coverImageUrl: coverImage,
+                    originalUrl: showUrl,
+                );
 
-          final detailedEp = await getAnoboyEpisodeDetails(targetEp);
+                final updatedShow = Show(
+                    id: fullShow.id,
+                    title: fullShow.title,
+                    type: fullShow.type,
+                    status: fullShow.status,
+                    genres: fullShow.genres,
+                    originalUrl: fullShow.originalUrl ?? showUrl,
+                    coverImageUrl: fullShow.coverImageUrl,
+                    rating: fullShow.rating,
+                    episodes: allEpisodes,
+                );
 
-          final fullShow = detailedEp.show ?? Show(
-            id: episode.showId,
-            title: episode.title ?? 'Anime',
-            type: 'anime',
-            status: 'ongoing',
-            genres: [],
-            coverImageUrl: coverImage.isNotEmpty ? coverImage : episode.thumbnailUrl,
-            originalUrl: showUrl,
-          );
+                // Manually copyWith since Episode model might not have it
+                return Episode(
+                  id: detailedEp.id,
+                  showId: detailedEp.showId,
+                  episodeNumber: detailedEp.episodeNumber,
+                  title: detailedEp.title,
+                  videoUrl: detailedEp.videoUrl,
+                  iframeUrl: detailedEp.iframeUrl,
+                  videoServers: detailedEp.videoServers,
+                  originalUrl: detailedEp.originalUrl,
+                  downloadLinks: detailedEp.downloadLinks,
+                  thumbnailUrl: detailedEp.thumbnailUrl,
+                  show: updatedShow,
+                  prevEpisodeUrl: detailedEp.prevEpisodeUrl,
+                  nextEpisodeUrl: detailedEp.nextEpisodeUrl,
+                );
+            }
+         }
+      }
 
-          final updatedShow = Show(
-            id: fullShow.id,
-            title: fullShow.title,
-            type: fullShow.type,
-            status: fullShow.status,
-            genres: fullShow.genres,
-            originalUrl: fullShow.originalUrl ?? showUrl,
-            coverImageUrl: fullShow.coverImageUrl,
-            rating: fullShow.rating,
-            episodes: allEpisodes,
-          );
-
-          return Episode(
-            id: detailedEp.id,
-            showId: detailedEp.showId,
-            episodeNumber: detailedEp.episodeNumber,
-            title: detailedEp.title,
-            videoUrl: detailedEp.videoUrl,
-            iframeUrl: detailedEp.iframeUrl,
-            videoServers: detailedEp.videoServers,
-            originalUrl: detailedEp.originalUrl,
-            downloadLinks: detailedEp.downloadLinks,
-            thumbnailUrl: detailedEp.thumbnailUrl,
-            show: updatedShow,
-            prevEpisodeUrl: detailedEp.prevEpisodeUrl,
-            nextEpisodeUrl: detailedEp.nextEpisodeUrl,
-          );
-        }
-      } else {
-        final iframeElement = document.querySelector('iframe#mediaplayer') ?? document.querySelector('iframe');
-        if (iframeElement != null) {
+      // Episode Page Logic (Extract Player) - Runs for Episode Pages OR Bulk Pages (Player + List)
+      final iframeElement = document.querySelector('iframe#mediaplayer') ?? document.querySelector('iframe');
+      if (iframeElement != null) {
           primaryIframe = iframeElement.attributes['src'];
           if (primaryIframe != null) {
             final iframeUrl = primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe';
@@ -325,10 +333,10 @@ class ScrapingService {
             });
             primaryIframe = iframeUrl;
           }
-        }
+      }
 
-        final mirrorElements = document.querySelectorAll('.vmiror a');
-        for (var mirror in mirrorElements) {
+      final mirrorElements = document.querySelectorAll('.vmiror a');
+      for (var mirror in mirrorElements) {
           final link = mirror.attributes['data-video'] ?? mirror.attributes['href'];
           if (link != null && link.isNotEmpty && link != '#') {
             String serverName = mirror.text.trim();
@@ -344,10 +352,10 @@ class ScrapingService {
               });
             }
           }
-        }
+      }
 
-        final dlElements = document.querySelectorAll('a.udl');
-        for (var dl in dlElements) {
+      final dlElements = document.querySelectorAll('a.udl');
+      for (var dl in dlElements) {
           final name = dl.text.trim();
           final link = dl.attributes['href'];
           if (link != null && link.isNotEmpty && link != 'none') {
@@ -364,24 +372,26 @@ class ScrapingService {
               'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link'
             });
           }
-        }
+      }
 
-        final breadcrumbs = document.querySelectorAll('.anime > a');
-        if (breadcrumbs.length >= 2) {
+      // Breadcrumbs
+      final breadcrumbs = document.querySelectorAll('.anime > a');
+      if (breadcrumbs.length >= 2) {
           showUrl = breadcrumbs[1].attributes['href'];
-        }
+      }
 
-        if (showUrl == null) {
+      if (showUrl == null) {
           try {
             final allEpLink = document.querySelectorAll('a').firstWhere(
               (a) => a.text.contains('Semua Episode'),
             ).attributes['href'];
             showUrl = allEpLink;
           } catch (_) {}
-        }
+      }
 
-        if (showUrl != null) {
-          final showResponse = await http.get(
+      // Fetch episodes from Show Page if not already parsed and we have a Show URL
+      if (allEpisodes.isEmpty && showUrl != null && showUrl != episode.originalUrl) {
+           final showResponse = await http.get(
             Uri.parse(showUrl.startsWith('http') ? showUrl : '$anoboyBaseUrl$showUrl'),
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
           );
@@ -389,10 +399,9 @@ class ScrapingService {
             final showDoc = parse(showResponse.body);
             allEpisodes = _parseAnoboyEpisodesFromDoc(showDoc, episode.showId);
           }
-        }
       }
 
-      // Extract rating from #score
+      // Rating
       double? extractedRating;
       final scoreElement = document.querySelector('#score');
       if (scoreElement != null) {
@@ -404,10 +413,10 @@ class ScrapingService {
       String? prevEpisodeUrl;
       String? nextEpisodeUrl;
 
-      // Scrape Prev/Next directly (Target specific containers first for performance)
+      // Enhanced Prev/Next Scrape
       var navLinks = document.querySelectorAll('.naveps a, .entry-content a, .post-body a');
       if (navLinks.isEmpty) {
-         navLinks = document.querySelectorAll('a'); // Fallback to all links
+         navLinks = document.querySelectorAll('a');
       }
 
       for (var link in navLinks) {
@@ -415,16 +424,26 @@ class ScrapingService {
          final href = link.attributes['href'];
          if (href == null || href.isEmpty || href == '#') continue;
 
-         // Check for specific keywords or classes if needed
          if (text == 'episode sebelumnya' || text == 'prev' || text == 'sebelumnya' || text.contains('<< previous')) {
              prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
          } else if (text == 'episode selanjutnya' || text == 'next' || text == 'selanjutnya' || text.contains('next >>')) {
              nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+         } else {
+             // Heuristic: Check if text matches "Title Episode X" where X is current +/- 1
+             // Clean title from "Episode ..."
+             final cleanTitle = episode.title?.split(' Episode')[0].toLowerCase() ?? '';
+             if (cleanTitle.isNotEmpty && text.contains(cleanTitle)) {
+                 if (text.contains('episode ${episode.episodeNumber - 1}')) {
+                     prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+                 } else if (text.contains('episode ${episode.episodeNumber + 1}')) {
+                     nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+                 }
+             }
          }
       }
 
-      // Fallback/Override with list-based navigation if available (usually more reliable for sequence)
-      final currentIdx = allEpisodes.indexWhere((e) => e.originalUrl == episode.originalUrl);
+      // Fallback/Override with list-based navigation
+      final currentIdx = allEpisodes.indexWhere((e) => e.episodeNumber == episode.episodeNumber);
       if (currentIdx != -1) {
         if (currentIdx > 0) prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
         if (currentIdx < allEpisodes.length - 1) nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
@@ -443,7 +462,7 @@ class ScrapingService {
         episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
       );
 
-      return Episode(
+       return Episode(
         id: episode.id,
         showId: episode.showId,
         episodeNumber: episode.episodeNumber,
@@ -458,6 +477,7 @@ class ScrapingService {
         prevEpisodeUrl: prevEpisodeUrl,
         nextEpisodeUrl: nextEpisodeUrl,
       );
+
     } catch (e) {
       debugPrint('Error getting Anoboy details: $e');
       return episode;
@@ -466,7 +486,6 @@ class ScrapingService {
 
   List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId) {
     final List<Episode> eps = [];
-    // Enhanced selector to find links in content body as well
     var epLinks = document.querySelectorAll('a[rel="bookmark"]');
     if (epLinks.isEmpty) {
        epLinks = document.querySelectorAll('.entry-content a, .post-body a');
@@ -476,19 +495,23 @@ class ScrapingService {
       final title = link.attributes['title'] ?? link.text.trim();
       final url = link.attributes['href'] ?? '';
 
-      // Strict filtering to ensure it's an episode link
+      // Allow same-page URLs if they look like episodes (for Bulk pages)
       if (url.isNotEmpty && (title.contains('Episode') || title.contains('Ep ')) && !url.contains('#') && !url.contains('facebook') && !url.contains('twitter')) {
         int epNum = 0;
         final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
         if (epMatch != null) epNum = int.tryParse(epMatch.group(1)!) ?? 0;
 
+        // Generate ID using combination to ensure uniqueness
+        final fullUrl = url.startsWith('http') ? url : '$anoboyBaseUrl$url';
+        final uniqueId = (fullUrl + title + epNum.toString()).hashCode;
+
         eps.add(Episode(
-          id: url.hashCode,
+          id: uniqueId,
           showId: showId,
           episodeNumber: epNum,
           title: title,
           videoUrl: '',
-          originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
+          originalUrl: fullUrl,
         ));
       }
     }
@@ -748,14 +771,14 @@ class ScrapingService {
         final imgElement = element.querySelector('img');
 
         if (title.isNotEmpty && url.isNotEmpty) {
-          final thumb = imgElement?.attributes['src'] ?? '';
+          final thumb = _extractImageUrl(imgElement);
 
           shows.add(Show(
             id: url.hashCode,
             title: title.split(' Episode')[0].split(' Ep ')[0],
             type: 'anime',
             status: 'ongoing',
-            coverImageUrl: thumb.isEmpty ? '' : (thumb.startsWith('http') ? thumb : '$anoboyBaseUrl$thumb'),
+            coverImageUrl: thumb,
             originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
             genres: [],
           ));

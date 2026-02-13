@@ -7,6 +7,7 @@ import 'package:anidong/screens/video_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/glass_card.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -250,8 +251,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: show.coverImageUrl != null
-                        ? Image.network(show.coverImageUrl!, width: 60, height: 80, fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(color: AppColors.surface, width: 60, height: 80, child: const Icon(Icons.movie)),
+                        ? CachedNetworkImage(
+                            imageUrl: show.coverImageUrl!,
+                            width: 60,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            httpHeaders: const {
+                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                              'Referer': 'https://ww1.anoboy.boo/',
+                            },
+                            errorWidget: (context, url, error) => Container(color: AppColors.surface, width: 60, height: 80, child: const Icon(Icons.movie)),
+                            placeholder: (context, url) => Container(color: AppColors.surface, width: 60, height: 80, child: const Center(child: CircularProgressIndicator(strokeWidth: 2))),
                           )
                         : Container(color: AppColors.surface, width: 60, height: 80, child: const Icon(Icons.movie)),
                   ),
