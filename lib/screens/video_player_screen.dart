@@ -5,6 +5,7 @@ import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/providers/local_data_provider.dart';
 import 'package:anidong/screens/download/download_options_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
+import 'package:anidong/widgets/star_rating.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -229,7 +230,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                     const SizedBox(width: 12),
                                     Text(_detailedEpisode.show?.status ?? 'Ongoing', style: const TextStyle(color: AppColors.secondaryText, fontSize: 13)),
                                     const Spacer(),
-                                    const Icon(Icons.star, color: AppColors.yellow400, size: 18),
+                                    StarRating(rating: _detailedEpisode.show?.rating ?? 0.0),
                                     const SizedBox(width: 4),
                                     Text(_detailedEpisode.show?.rating?.toString() ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
                                   ],
