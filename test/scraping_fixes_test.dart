@@ -87,6 +87,7 @@ void main() {
       String? showUrl;
       // Primary logic (mocked fail)
       // Fallback 1
+      // ignore: unnecessary_null_comparison
       if (showUrl == null) {
           final bc = document.querySelectorAll('.breadcrumbs a, .breadcrumb a');
           for (var b in bc) {
@@ -109,6 +110,7 @@ void main() {
 
       String? showUrl;
       // Fallback 2
+      // ignore: unnecessary_null_comparison
        if (showUrl == null) {
           try {
             final allEpLink = document.querySelectorAll('a').firstWhere(
@@ -147,6 +149,7 @@ void main() {
       String? showUrl;
       // Primary (fail)
       // Fallback
+      // ignore: unnecessary_null_comparison
       if (showUrl == null) {
          final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
          for (var b in bcs) {
