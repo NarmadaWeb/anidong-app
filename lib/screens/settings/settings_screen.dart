@@ -12,7 +12,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedQuality = 'Auto';
-  bool _newEpisodesNotification = true;
   bool _wifiOnlyDownload = true;
   bool _autoDownload = false;
 
@@ -70,8 +69,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         _buildVideoQualityCard(),
                         const SizedBox(height: 24),
-                        _buildNotificationsCard(),
-                        const SizedBox(height: 24),
                         _buildDownloadSettingsCard(),
                         const SizedBox(height: 100),
                       ],
@@ -118,34 +115,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationsCard() {
-    return GlassCard(
-      child: SwitchListTile(
-        title: const Text(
-          'New Episodes',
-          style: TextStyle(
-            fontSize: 16,
-            color: AppColors.primaryText,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        value: _newEpisodesNotification,
-        onChanged: (bool value) {
-          setState(() {
-            _newEpisodesNotification = value;
-          });
-        },
-        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.accent;
-          }
-          return null;
-        }),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
   }
