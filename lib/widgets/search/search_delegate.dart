@@ -79,7 +79,14 @@ class AnidongSearchDelegate extends SearchDelegate {
     }
 
     return FutureBuilder<List<Show>>(
-      future: _apiService.searchShows(context, query), // ApiService search doesn't really use context now
+      future: Future.wait([
+        _apiService.searchAnimeLocal(query),
+        _apiService.searchShows(context, query),
+      ]).then((results) {
+        final animeResults = results[0];
+        final donghuaResults = results[1].where((s) => s.type == 'donghua').toList();
+        return [...animeResults, ...donghuaResults];
+      }),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: AppColors.accent));

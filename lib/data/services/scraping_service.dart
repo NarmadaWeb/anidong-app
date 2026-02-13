@@ -40,7 +40,7 @@ class ScrapingService {
         if (title.isNotEmpty && url.isNotEmpty) {
           final thumb = imgElement?.attributes['src'] ?? '';
           int epNum = 0;
-          final epMatch = RegExp(r'Episode\s+(\d+)').firstMatch(title);
+          final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
           if (epMatch != null) {
             epNum = int.tryParse(epMatch.group(1)!) ?? 0;
           }
@@ -233,7 +233,16 @@ class ScrapingService {
       final document = parse(response.body);
 
       final hasPlayer = document.querySelector('#mediaplayer') != null || document.querySelector('iframe') != null;
-      final isShowPage = !hasPlayer && document.querySelectorAll('a[rel="bookmark"]').isNotEmpty;
+
+      // Improved Show Page detection: check for content body links if no player
+      var isShowPage = !hasPlayer && document.querySelectorAll('a[rel="bookmark"]').isNotEmpty;
+      if (!hasPlayer && !isShowPage) {
+         // Fallback: Check if there are many links in entry-content which usually indicates an episode list
+         final contentLinks = document.querySelectorAll('.entry-content a, .post-body a');
+         if (contentLinks.length > 5) {
+            isShowPage = true;
+         }
+      }
 
       List<Episode> allEpisodes = [];
       String? showUrl;
@@ -245,6 +254,18 @@ class ScrapingService {
       if (isShowPage) {
         allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId);
         showUrl = episode.originalUrl;
+
+        // Extract Cover Image for Series Page
+        String coverImage = episode.thumbnailUrl ?? '';
+        if (coverImage.isEmpty) {
+           final imgEl = document.querySelector('.entry-content img, .post-body img');
+           if (imgEl != null) {
+              final src = imgEl.attributes['src'];
+              if (src != null && src.startsWith('http')) {
+                 coverImage = src;
+              }
+           }
+        }
 
         if (allEpisodes.isNotEmpty) {
           final targetEp = allEpisodes.firstWhere(
@@ -260,7 +281,7 @@ class ScrapingService {
             type: 'anime',
             status: 'ongoing',
             genres: [],
-            coverImageUrl: episode.thumbnailUrl,
+            coverImageUrl: coverImage.isNotEmpty ? coverImage : episode.thumbnailUrl,
             originalUrl: showUrl,
           );
 
@@ -383,6 +404,26 @@ class ScrapingService {
       String? prevEpisodeUrl;
       String? nextEpisodeUrl;
 
+      // Scrape Prev/Next directly (Target specific containers first for performance)
+      var navLinks = document.querySelectorAll('.naveps a, .entry-content a, .post-body a');
+      if (navLinks.isEmpty) {
+         navLinks = document.querySelectorAll('a'); // Fallback to all links
+      }
+
+      for (var link in navLinks) {
+         final text = link.text.trim().toLowerCase();
+         final href = link.attributes['href'];
+         if (href == null || href.isEmpty || href == '#') continue;
+
+         // Check for specific keywords or classes if needed
+         if (text == 'episode sebelumnya' || text == 'prev' || text == 'sebelumnya' || text.contains('<< previous')) {
+             prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+         } else if (text == 'episode selanjutnya' || text == 'next' || text == 'selanjutnya' || text.contains('next >>')) {
+             nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+         }
+      }
+
+      // Fallback/Override with list-based navigation if available (usually more reliable for sequence)
       final currentIdx = allEpisodes.indexWhere((e) => e.originalUrl == episode.originalUrl);
       if (currentIdx != -1) {
         if (currentIdx > 0) prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
@@ -425,13 +466,20 @@ class ScrapingService {
 
   List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId) {
     final List<Episode> eps = [];
-    final epLinks = document.querySelectorAll('a[rel="bookmark"]');
+    // Enhanced selector to find links in content body as well
+    var epLinks = document.querySelectorAll('a[rel="bookmark"]');
+    if (epLinks.isEmpty) {
+       epLinks = document.querySelectorAll('.entry-content a, .post-body a');
+    }
+
     for (var link in epLinks) {
       final title = link.attributes['title'] ?? link.text.trim();
       final url = link.attributes['href'] ?? '';
-      if (url.isNotEmpty && (title.contains('Episode') || title.contains('Ep '))) {
+
+      // Strict filtering to ensure it's an episode link
+      if (url.isNotEmpty && (title.contains('Episode') || title.contains('Ep ')) && !url.contains('#') && !url.contains('facebook') && !url.contains('twitter')) {
         int epNum = 0;
-        final epMatch = RegExp(r'Episode\s+(\d+)').firstMatch(title);
+        final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
         if (epMatch != null) epNum = int.tryParse(epMatch.group(1)!) ?? 0;
 
         eps.add(Episode(
@@ -455,6 +503,20 @@ class ScrapingService {
       if (response.statusCode != 200) return episode;
 
       final document = parse(response.body);
+
+      // Extract real episode number if it was 0 (loaded from URL)
+      int realEpNum = episode.episodeNumber;
+      if (realEpNum == 0) {
+        final titleText = document.querySelector('.entry-title')?.text ??
+                          document.querySelector('.ts-breadcrumb li:last-child')?.text ??
+                          '';
+        if (titleText.isNotEmpty) {
+           final match = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(titleText);
+           if (match != null) {
+              realEpNum = int.tryParse(match.group(1)!) ?? 0;
+           }
+        }
+      }
 
       // Check if this is a Show Page (no video player, has episode list)
       final isShowPage = document.querySelector('.eplister') != null && document.querySelector('iframe') == null;
@@ -577,14 +639,31 @@ class ScrapingService {
 
       String? prevUrl;
       String? nextUrl;
-      for (var a in dlElements) {
+
+      // Better scraping for nav links
+      final navLinks = document.querySelectorAll('.lm .nav-links a, .naveps a, a.btn');
+      for (var a in navLinks) {
          final text = a.text.trim().toLowerCase();
-         if (text == 'prev' || text == 'sebelumnya' || text.contains('prev')) {
-           prevUrl = a.attributes['href'];
+         final href = a.attributes['href'];
+         if (href == null || href.isEmpty) continue;
+
+         if (text.contains('prev') || text.contains('sebelumnya')) {
+           prevUrl = href;
+         } else if (text.contains('next') || text.contains('selanjutnya')) {
+           nextUrl = href;
          }
-         if (text == 'next' || text == 'selanjutnya' || text.contains('next')) {
-           nextUrl = a.attributes['href'];
-         }
+      }
+      // Fallback to all links if specific containers not found
+      if (prevUrl == null && nextUrl == null) {
+        for (var a in dlElements) {
+           final text = a.text.trim().toLowerCase();
+           if (text == 'prev' || text == 'sebelumnya' || text.contains('prev')) {
+             prevUrl = a.attributes['href'];
+           }
+           if (text == 'next' || text == 'selanjutnya' || text.contains('next')) {
+             nextUrl = a.attributes['href'];
+           }
+        }
       }
 
       List<Episode> allEpisodes = [];
@@ -631,7 +710,7 @@ class ScrapingService {
       return Episode(
         id: episode.id,
         showId: episode.showId,
-        episodeNumber: episode.episodeNumber,
+        episodeNumber: realEpNum,
         title: episode.title,
         videoUrl: episode.videoUrl,
         iframeUrl: videoServers.isNotEmpty ? videoServers[0]['url'] : primaryIframe,
