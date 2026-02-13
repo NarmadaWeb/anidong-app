@@ -170,18 +170,11 @@ class TrendingScreen extends StatelessWidget {
           const SizedBox(width: 16),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(show.title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                Text(show.title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                 Text(genreText, style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Boxicons.bxs_star, color: AppColors.yellow400, size: 16),
-                    const SizedBox(width: 4),
-                    Text(show.rating.toString(), style: const TextStyle(fontSize: 14, color: AppColors.primaryText)),
-                  ],
-                ),
               ],
             ),
           )

@@ -130,7 +130,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.accent,
+              color: Colors.white,
             ),
           ),
         ),
