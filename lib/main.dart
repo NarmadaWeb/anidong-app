@@ -2,11 +2,11 @@
 
 import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/providers/local_data_provider.dart';
+import 'package:anidong/providers/theme_provider.dart';
 import 'package:anidong/providers/trending_provider.dart';
 import 'package:anidong/screens/splash_screen.dart';
-import 'package:anidong/utils/app_colors.dart';
+import 'package:anidong/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
@@ -24,46 +24,19 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => TrendingProvider()),
         ChangeNotifierProvider(create: (_) => LocalDataProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        title: 'AniDong',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          scaffoldBackgroundColor: AppColors.background,
-          brightness: Brightness.dark,
-          primaryColor: AppColors.accent,
-          hintColor: AppColors.secondaryText,
-          cardColor: AppColors.darkSurface,
-          dividerColor: AppColors.surface,
-          textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme)
-              .apply(
-                bodyColor: AppColors.primaryText,
-                displayColor: AppColors.primaryText,
-              ),
-          iconTheme: const IconThemeData(color: AppColors.secondaryText),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            foregroundColor: AppColors.primaryText,
-          ),
-          colorScheme: ColorScheme.fromSwatch(
-            primarySwatch: MaterialColor(AppColors.accent.toARGB32(), {
-              50: AppColors.accent.withValues(alpha: 0.1),
-              100: AppColors.accent.withValues(alpha: 0.2),
-              200: AppColors.accent.withValues(alpha: 0.3),
-              300: AppColors.accent.withValues(alpha: 0.4),
-              400: AppColors.accent.withValues(alpha: 0.6),
-              500: AppColors.accent.withValues(alpha: 0.8),
-              600: AppColors.accent,
-              700: AppColors.accent,
-              800: AppColors.accent,
-              900: AppColors.accent,
-            }),
-            brightness: Brightness.dark,
-            backgroundColor: AppColors.background,
-          ).copyWith(secondary: AppColors.accent),
-        ),
-        home: const SplashScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'AniDong',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeProvider.themeMode,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            home: const SplashScreen(),
+          );
+        },
       ),
     );
   }

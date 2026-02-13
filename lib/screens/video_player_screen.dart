@@ -4,7 +4,6 @@ import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/providers/local_data_provider.dart';
 import 'package:anidong/screens/download/download_options_screen.dart';
-import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/star_rating.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -135,13 +134,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         _toggleFullScreen();
       },
       child: Scaffold(
-        backgroundColor: _isFullScreen ? Colors.black : AppColors.background,
+        backgroundColor: _isFullScreen ? Colors.black : Theme.of(context).scaffoldBackgroundColor,
         body: _isFullScreen
             ? Stack(
                 children: [
                   Center(child: WebViewWidget(controller: _controller)),
                   if (_isLoading)
-                    const Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                    Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
                   Positioned(
                     bottom: 20,
                     right: 20,
@@ -158,10 +157,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   SliverAppBar(
                     expandedHeight: 220,
                     pinned: true,
-                    backgroundColor: AppColors.background,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     flexibleSpace: FlexibleSpaceBar(
                       background: _isDataLoading
-                          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+                          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
                           : AspectRatio(
                               aspectRatio: 16 / 9,
                               child: _currentIframeUrl != null
@@ -169,7 +168,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                       children: [
                                         WebViewWidget(controller: _controller),
                                         if (_isLoading)
-                                          const Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                                          Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
                                         Positioned(
                                           bottom: 10,
                                           right: 10,
@@ -199,7 +198,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                             return IconButton(
                               icon: Icon(
                                 isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                                color: isBookmarked ? AppColors.accent : Colors.white,
+                                color: isBookmarked ? Theme.of(context).primaryColor : Colors.white,
                               ),
                               onPressed: () => localData.toggleBookmark(_detailedEpisode.show!),
                             );
@@ -209,7 +208,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   ),
                   SliverToBoxAdapter(
                     child: _isDataLoading
-                        ? const SizedBox(height: 200, child: Center(child: CircularProgressIndicator(color: AppColors.accent)))
+                        ? SizedBox(height: 200, child: Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)))
                         : Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
@@ -217,18 +216,18 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                               children: [
                                 Text(
                                   _detailedEpisode.show?.title ?? _detailedEpisode.title ?? 'No Title',
-                                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryText),
+                                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color),
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
-                                      child: Text('Episode ${_detailedEpisode.episodeNumber}', style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 12)),
+                                      decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
+                                      child: Text('Episode ${_detailedEpisode.episodeNumber}', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold, fontSize: 12)),
                                     ),
                                     const SizedBox(width: 12),
-                                    Text(_detailedEpisode.show?.status ?? 'Ongoing', style: const TextStyle(color: AppColors.secondaryText, fontSize: 13)),
+                                    Text(_detailedEpisode.show?.status ?? 'Ongoing', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
                                     const Spacer(),
                                     StarRating(rating: _detailedEpisode.show?.rating ?? 0.0),
                                     const SizedBox(width: 4),
@@ -247,10 +246,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                             ? () => _playEpisodeFromUrl(_detailedEpisode.prevEpisodeUrl!)
                                             : null,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.surface,
-                                          foregroundColor: Colors.white,
-                                          disabledBackgroundColor: AppColors.surface.withValues(alpha: 0.5),
-                                          disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
+                                          backgroundColor: Theme.of(context).cardColor,
+                                          foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
+                                          disabledBackgroundColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
+                                          disabledForegroundColor: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.3),
                                         ),
                                       ),
                                     ),
@@ -263,9 +262,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                             ? () => _playEpisodeFromUrl(_detailedEpisode.nextEpisodeUrl!)
                                             : null,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.accent,
+                                          backgroundColor: Theme.of(context).primaryColor,
                                           foregroundColor: Colors.white,
-                                          disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.5),
+                                          disabledBackgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.5),
                                           disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
                                         ),
                                       ),
@@ -291,9 +290,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                             label: Text(server['name'] ?? 'Server ${index + 1}'),
                                             selected: isSelected,
                                             onSelected: (selected) => _changeServer(server['url']!),
-                                            selectedColor: AppColors.accent,
-                                            labelStyle: TextStyle(color: isSelected ? Colors.white : AppColors.primaryText, fontSize: 12),
-                                            backgroundColor: AppColors.surface,
+                                            selectedColor: Theme.of(context).primaryColor,
+                                            labelStyle: TextStyle(color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12),
+                                            backgroundColor: Theme.of(context).cardColor,
                                           ),
                                         );
                                       },
@@ -323,8 +322,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                     icon: const Icon(Icons.download),
                                     label: const Text('Download Episode'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.surface,
-                                      foregroundColor: AppColors.primaryText,
+                                      backgroundColor: Theme.of(context).cardColor,
+                                      foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
                                       padding: const EdgeInsets.symmetric(vertical: 12),
                                     ),
                                   ),
@@ -351,14 +350,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                         onTap: () => _playEpisode(ep),
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            color: isCurrent ? AppColors.accent : AppColors.surface,
+                                            color: isCurrent ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
                                             borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: isCurrent ? AppColors.accent : Colors.white10),
+                                            border: Border.all(color: isCurrent ? Theme.of(context).primaryColor : Theme.of(context).dividerColor),
                                           ),
                                           alignment: Alignment.center,
                                           child: Text(
                                             '${ep.episodeNumber}',
-                                            style: TextStyle(color: isCurrent ? Colors.white : AppColors.primaryText, fontWeight: FontWeight.bold),
+                                            style: TextStyle(color: isCurrent ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                       );
