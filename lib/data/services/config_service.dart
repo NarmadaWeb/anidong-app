@@ -83,7 +83,7 @@ class ConfigService {
               title: item['nama'] ?? 'Unknown',
               type: 'donghua',
               status: 'ongoing',
-              coverImageUrl: item['imageurl'],
+              coverImageUrl: null,
               originalUrl: '', // Intentionally empty as source doesn't provide it
               genres: [],
             ));
