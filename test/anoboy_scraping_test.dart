@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/services/scraping_service.dart';
