@@ -24,7 +24,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -127,10 +126,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
           child: Text(
             day, // Capitalized 'Senin', 'Selasa', etc.
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).textTheme.titleLarge?.color,
             ),
           ),
         ),
@@ -141,8 +140,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             children: [
               Text(
                 '${show.id}. ', // Use show.id which corresponds to 'no' from JSON
-                style: const TextStyle(
-                  color: AppColors.secondaryText,
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),
@@ -150,8 +149,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               Expanded(
                 child: Text(
                   show.title,
-                  style: const TextStyle(
-                    color: AppColors.primaryText,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     fontSize: 15,
                   ),
                 ),

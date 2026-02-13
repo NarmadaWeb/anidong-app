@@ -17,12 +17,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+        title: Text('Notifications', style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primaryText),
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -34,7 +33,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               child: Text(
                 'PREFERENCES',
                 style: TextStyle(
-                  color: AppColors.secondaryText,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.1,
@@ -50,14 +49,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     _newEpisodes,
                     (val) => setState(() => _newEpisodes = val),
                   ),
-                  Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+                  Divider(color: Theme.of(context).dividerColor, height: 1),
                   _buildSwitchTile(
                     'App Updates',
                     'Receive updates about new features',
                     _appUpdates,
                     (val) => setState(() => _appUpdates = val),
                   ),
-                  Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+                  Divider(color: Theme.of(context).dividerColor, height: 1),
                   _buildSwitchTile(
                     'Promotions',
                     'Get offers and special events',
@@ -75,8 +74,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildSwitchTile(String title, String subtitle, bool value, ValueChanged<bool> onChanged) {
     return SwitchListTile(
-      title: Text(title, style: const TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.w600, fontSize: 16)),
-      subtitle: Text(subtitle, style: const TextStyle(color: AppColors.secondaryText, fontSize: 13)),
+      title: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w600, fontSize: 16)),
+      subtitle: Text(subtitle, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13)),
       value: value,
       onChanged: onChanged,
       thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {

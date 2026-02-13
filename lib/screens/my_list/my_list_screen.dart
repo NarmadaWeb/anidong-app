@@ -36,7 +36,6 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // Background
@@ -103,97 +102,105 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
   }
 
   Widget _buildListItems(List<Show> shows) {
-    if (shows.isEmpty) {
-      return const Center(
-        child: Text('No bookmarks yet.', style: TextStyle(color: AppColors.secondaryText)),
-      );
-    }
+    return Builder(
+      builder: (context) {
+        if (shows.isEmpty) {
+          return Center(
+            child: Text('No bookmarks yet.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+          );
+        }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: shows.length,
-      itemBuilder: (context, index) {
-        final show = shows[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          child: _buildListItem(show),
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: shows.length,
+          itemBuilder: (context, index) {
+            final show = shows[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: _buildListItem(show),
+            );
+          },
         );
-      },
+      }
     );
   }
 
   Widget _buildListItem(Show show) {
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 70, height: 90,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: show.coverImageUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: show.coverImageUrl!,
-                      width: 70,
-                      height: 90,
-                      fit: BoxFit.cover,
-                      httpHeaders: const {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Referer': 'https://ww1.anoboy.boo/',
-                      },
-                      placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                      errorWidget: (context, url, error) => const Icon(Icons.movie),
-                    )
-                  : const Icon(Icons.movie),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(show.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-                const SizedBox(height: 4),
-                Text(show.type.toUpperCase(), style: const TextStyle(fontSize: 13, color: AppColors.secondaryText)),
-              ],
-            ),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Builder(
+      builder: (context) {
+        return GlassCard(
+          padding: const EdgeInsets.all(12),
+          child: Row(
             children: [
-              IconButton(
-                onPressed: () {
-                  final episode = Episode(
-                    id: show.id,
-                    showId: show.id,
-                    episodeNumber: 1,
-                    title: show.title,
-                    videoUrl: '',
-                    originalUrl: show.originalUrl,
-                    show: show,
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => VideoPlayerScreen(episode: episode)),
-                  );
-                },
-                icon: const Icon(Boxicons.bx_play_circle, color: AppColors.accent, size: 28),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              SizedBox(
+                width: 70, height: 90,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: show.coverImageUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: show.coverImageUrl!,
+                          width: 70,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          httpHeaders: const {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Referer': 'https://ww1.anoboy.boo/',
+                          },
+                          placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
+                          errorWidget: (context, url, error) => Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
+                        )
+                      : Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
+                ),
               ),
-              IconButton(
-                onPressed: () {
-                  Provider.of<LocalDataProvider>(context, listen: false).toggleBookmark(show);
-                },
-                icon: const Icon(Boxicons.bx_x, color: AppColors.secondaryText, size: 24),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(show.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                    const SizedBox(height: 4),
+                    Text(show.type.toUpperCase(), style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
+                  ],
+                ),
               ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      final episode = Episode(
+                        id: show.id,
+                        showId: show.id,
+                        episodeNumber: 1,
+                        title: show.title,
+                        videoUrl: '',
+                        originalUrl: show.originalUrl,
+                        show: show,
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => VideoPlayerScreen(episode: episode)),
+                      );
+                    },
+                    icon: const Icon(Boxicons.bx_play_circle, color: AppColors.accent, size: 28),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Provider.of<LocalDataProvider>(context, listen: false).toggleBookmark(show);
+                    },
+                    icon: Icon(Boxicons.bx_x, color: Theme.of(context).iconTheme.color, size: 24),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              )
             ],
-          )
-        ],
-      ),
+          ),
+        );
+      }
     );
   }
 }

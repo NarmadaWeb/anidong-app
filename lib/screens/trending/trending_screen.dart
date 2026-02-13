@@ -15,7 +15,6 @@ class TrendingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -73,38 +72,42 @@ class TrendingScreen extends StatelessWidget {
   }
 
   Widget _buildCategoryCards() {
-    return Row(
-      children: [
-        Expanded(
-          child: GlassCard(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Column(
-              children: [
-                const Icon(Boxicons.bxs_crown, size: 40, color: AppColors.yellow400),
-                const SizedBox(height: 8),
-                const Text('Top Rated', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-                const SizedBox(height: 2),
-                Text('Best shows ever', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
-              ],
+    return Builder(
+      builder: (context) {
+        return Row(
+          children: [
+            Expanded(
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    const Icon(Boxicons.bxs_crown, size: 40, color: AppColors.yellow400),
+                    const SizedBox(height: 8),
+                    Text('Top Rated', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                    const SizedBox(height: 2),
+                    Text('Best shows ever', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: GlassCard(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Column(
-              children: [
-                const Icon(Boxicons.bxs_time, size: 40, color: AppColors.green500),
-                const SizedBox(height: 8),
-                const Text('This Week', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-                const SizedBox(height: 2),
-                Text('Weekly favorites', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    const Icon(Boxicons.bxs_time, size: 40, color: AppColors.green500),
+                    const SizedBox(height: 8),
+                    Text('This Week', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                    const SizedBox(height: 2),
+                    Text('Weekly favorites', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      }
     );
   }
 
@@ -145,41 +148,45 @@ class TrendingScreen extends StatelessWidget {
 
   Widget _buildTrendingItem({required int rank, required Show show}) {
     final genreText = show.genres.map((g) => g.name).join(' • ');
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 60,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text('#$rank', textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.accent)),
-            ),
+    return Builder(
+      builder: (context) {
+        return GlassCard(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 60,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('#$rank', textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.accent)),
+                ),
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: show.coverImageUrl ?? '',
+                  width: 64,
+                  height: 80,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: Theme.of(context).cardColor),
+                  errorWidget: (context, url, error) => Center(child: Icon(Icons.image_not_supported, color: Theme.of(context).iconTheme.color)),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(show.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                    Text(genreText, style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
+                  ],
+                ),
+              )
+            ],
           ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: CachedNetworkImage(
-              imageUrl: show.coverImageUrl ?? '',
-              width: 64,
-              height: 80,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(color: AppColors.surface),
-              errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported)),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(show.title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-                Text(genreText, style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
-              ],
-            ),
-          )
-        ],
-      ),
+        );
+      }
     );
   }
 }

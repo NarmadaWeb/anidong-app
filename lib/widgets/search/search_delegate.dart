@@ -16,18 +16,14 @@ class AnidongSearchDelegate extends SearchDelegate {
   // Mengubah tampilan tema agar sesuai dengan aplikasi
   @override
   ThemeData appBarTheme(BuildContext context) {
-    return Theme.of(context).copyWith(
-      scaffoldBackgroundColor: AppColors.background,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.surface,
+    final theme = Theme.of(context);
+    return theme.copyWith(
+      scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
+      appBarTheme: theme.appBarTheme.copyWith(
         elevation: 0,
       ),
       inputDecorationTheme: const InputDecorationTheme(
-        hintStyle: TextStyle(color: AppColors.secondaryText),
         border: InputBorder.none,
-      ),
-      textTheme: const TextTheme(
-        titleLarge: TextStyle(color: AppColors.primaryText, fontSize: 18),
       ),
     );
   }
@@ -37,7 +33,7 @@ class AnidongSearchDelegate extends SearchDelegate {
   List<Widget>? buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: const Icon(Icons.clear, color: AppColors.secondaryText),
+        icon: Icon(Icons.clear, color: Theme.of(context).iconTheme.color),
         onPressed: () {
           query = '';
         },
@@ -49,7 +45,7 @@ class AnidongSearchDelegate extends SearchDelegate {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.arrow_back, color: AppColors.secondaryText),
+      icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
       onPressed: () {
         close(context, null);
       },
@@ -70,10 +66,10 @@ class AnidongSearchDelegate extends SearchDelegate {
 
   Widget _buildSearchResults(BuildContext context) {
     if (query.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'Search for Anime or Donghua',
-          style: TextStyle(color: AppColors.secondaryText, fontSize: 16),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16),
         ),
       );
     }
@@ -96,7 +92,7 @@ class AnidongSearchDelegate extends SearchDelegate {
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
-              style: const TextStyle(color: AppColors.secondaryText),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
             ),
           );
         }
@@ -107,7 +103,7 @@ class AnidongSearchDelegate extends SearchDelegate {
           return Center(
             child: Text(
               'No results found for "$query"',
-              style: const TextStyle(color: AppColors.secondaryText, fontSize: 16),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16),
             ),
           );
         }
@@ -159,8 +155,8 @@ class AnidongSearchDelegate extends SearchDelegate {
                   errorWidget: (context, url, error) => Container(
                     width: 60,
                     height: 80,
-                    color: AppColors.surface,
-                    child: const Icon(Icons.image_outlined, color: AppColors.secondaryText),
+                    color: Theme.of(context).cardColor,
+                    child: Icon(Icons.image_outlined, color: Theme.of(context).iconTheme.color),
                   ),
                 ),
               ),
@@ -171,8 +167,8 @@ class AnidongSearchDelegate extends SearchDelegate {
                   children: [
                     Text(
                       show.title,
-                      style: const TextStyle(
-                        color: AppColors.primaryText,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -180,15 +176,15 @@ class AnidongSearchDelegate extends SearchDelegate {
                     const SizedBox(height: 4),
                     Text(
                       show.type.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.secondaryText,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 14,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Boxicons.bx_chevron_right, color: AppColors.secondaryText),
+              Icon(Boxicons.bx_chevron_right, color: Theme.of(context).iconTheme.color),
             ],
           ),
         ),

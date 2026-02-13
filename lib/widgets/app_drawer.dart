@@ -12,7 +12,6 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.background,
       // SafeArea memastikan seluruh konten Drawer tidak tertimpa UI sistem
       child: SafeArea(
         child: Column(
@@ -48,12 +47,12 @@ class AppDrawer extends StatelessWidget {
             // Grup Bawah: Settings
             Column(
               children: [
-                const Divider(color: AppColors.surface, height: 1, indent: 16, endIndent: 16),
+                Divider(color: Theme.of(context).dividerColor, height: 1, indent: 16, endIndent: 16),
                 _buildDrawerItem(
                   icon: Boxicons.bxs_cog,
                   text: 'Settings',
                   onTap: () => onPageSelected(4),
-                  iconColor: AppColors.secondaryText,
+                  iconColor: Theme.of(context).iconTheme.color,
                 ),
               ],
             ),
@@ -92,17 +91,21 @@ class AppDrawer extends StatelessWidget {
     required GestureTapCallback onTap,
     Color? iconColor,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor ?? AppColors.accent, size: 26),
-      title: Text(
-        text,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          color: AppColors.primaryText,
-          fontSize: 16,
-        ),
-      ),
-      onTap: onTap,
+    return Builder(
+      builder: (context) {
+        return ListTile(
+          leading: Icon(icon, color: iconColor ?? AppColors.accent, size: 26),
+          title: Text(
+            text,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+              fontSize: 16,
+            ),
+          ),
+          onTap: onTap,
+        );
+      }
     );
   }
 }

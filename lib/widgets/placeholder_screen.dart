@@ -1,4 +1,3 @@
-import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class PlaceholderScreen extends StatelessWidget {
@@ -8,15 +7,13 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(title),
-        backgroundColor: AppColors.surface,
       ),
       body: Center(
         child: Text(
           '$title Page',
-          style: const TextStyle(color: AppColors.primaryText, fontSize: 24),
+          style: TextStyle(color: Theme.of(context).textTheme.headlineSmall?.color, fontSize: 24),
         ),
       ),
     );
