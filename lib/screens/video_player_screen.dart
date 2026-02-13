@@ -3,12 +3,12 @@
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/providers/local_data_provider.dart';
+import 'package:anidong/screens/download/download_options_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final Episode episode;
@@ -123,16 +123,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       show: _detailedEpisode.show,
     );
     _fetchDetails(nextEp);
-  }
-
-  Future<void> _launchUrl(String url) async {
-    if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not launch $url')),
-        );
-      }
-    }
   }
 
   @override
@@ -311,6 +301,35 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                   const SizedBox(height: 24),
                                 ],
 
+                                const Text('Download Section', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: (_detailedEpisode.downloadLinks != null && _detailedEpisode.downloadLinks!.isNotEmpty)
+                                        ? () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => DownloadOptionsScreen(
+                                                  downloadLinks: _detailedEpisode.downloadLinks!,
+                                                  title: _detailedEpisode.show?.title ?? 'Episode',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        : null,
+                                    icon: const Icon(Icons.download),
+                                    label: const Text('Download Episode'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.surface,
+                                      foregroundColor: AppColors.primaryText,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+
                                 if (_detailedEpisode.show?.episodes != null) ...[
                                   const Text('Episodes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 12),
@@ -346,30 +365,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                   ),
                                   const SizedBox(height: 24),
                                 ],
-
-                                const Text('Download Section', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 12),
-                                if (_detailedEpisode.downloadLinks != null && _detailedEpisode.downloadLinks!.isNotEmpty)
-                                  ..._detailedEpisode.downloadLinks!.map((dl) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 8.0),
-                                    child: InkWell(
-                                      onTap: () => _launchUrl(dl['url'] ?? ''),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.download_for_offline, color: AppColors.accent),
-                                            const SizedBox(width: 12),
-                                            Expanded(child: Text(dl['name'] ?? 'Download', style: const TextStyle(fontWeight: FontWeight.w500))),
-                                            const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.secondaryText),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ))
-                                else
-                                  const Text('No download links available.', style: TextStyle(color: AppColors.secondaryText)),
 
                                 const SizedBox(height: 100),
                               ],

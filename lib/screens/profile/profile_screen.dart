@@ -1,6 +1,6 @@
 import 'package:anidong/screens/settings/settings_screen.dart';
+import 'package:anidong/screens/settings/sub_screens.dart';
 import 'package:anidong/utils/app_colors.dart';
-import 'package:anidong/widgets/placeholder_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 
@@ -35,7 +35,7 @@ class ProfileScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PlaceholderScreen(title: 'Privacy Policy'),
+                          builder: (context) => const PrivacyPolicyScreen(),
                         ),
                       );
                     }),
@@ -43,7 +43,7 @@ class ProfileScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PlaceholderScreen(title: 'Help Center'),
+                          builder: (context) => const HelpCenterScreen(),
                         ),
                       );
                     }),
@@ -51,7 +51,7 @@ class ProfileScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PlaceholderScreen(title: 'Feedback'),
+                          builder: (context) => const FeedbackScreen(),
                         ),
                       );
                     }),

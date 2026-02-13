@@ -1,12 +1,29 @@
 // lib/screens/download/download_screen.dart
 
+import 'package:anidong/data/models/show_model.dart';
+import 'package:anidong/data/services/api_service.dart';
+import 'package:anidong/screens/video_player_screen.dart';
+import 'package:anidong/data/models/episode_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/glass_card.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class DownloadScreen extends StatelessWidget {
+class DownloadScreen extends StatefulWidget {
   const DownloadScreen({super.key});
+
+  @override
+  State<DownloadScreen> createState() => _DownloadScreenState();
+}
+
+class _DownloadScreenState extends State<DownloadScreen> {
+  late Future<Map<String, List<Show>>> _scheduleFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleFuture = ApiService().getSchedule();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,20 +62,39 @@ class DownloadScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('🗓️ Jadwal Rilis', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                        const Text('🗓️ Jadwal Donghua', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
                         const SizedBox(height: 4),
-                        Text('Jadwal update anime & donghua terbaru', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
+                        Text('Jadwal rilis episode terbaru', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),
                   // Konten Utama
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      children: [
-                        _buildScheduleList(),
-                        const SizedBox(height: 100),
-                      ],
+                    child: FutureBuilder<Map<String, List<Show>>>(
+                      future: _scheduleFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                        }
+                        if (snapshot.hasError) {
+                          return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: AppColors.secondaryText)));
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('No schedule available.', style: TextStyle(color: AppColors.secondaryText)));
+                        }
+
+                        final schedule = snapshot.data!;
+                        // Order days? Ideally API returns ordered map or we enforce order.
+                        // Map iteration order is insertion order in Dart (mostly).
+                        // Let's rely on that since scraper iterates days.
+
+                        return Column(
+                          children: schedule.entries.map((entry) {
+                            return _buildDaySection(context, entry.key, entry.value);
+                          }).toList() + [const SizedBox(height: 100)],
+                        );
+                      },
                     ),
                   )
                 ],
@@ -70,34 +106,72 @@ class DownloadScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScheduleList() {
-    final days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-
+  Widget _buildDaySection(BuildContext context, String day, List<Show> shows) {
     return Column(
-      children: days.map((day) => _buildScheduleDayItem(day)).toList(),
-    );
-  }
-
-  Widget _buildScheduleDayItem(String day) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: GlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              day,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryText,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: Text(
+            day,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.accent,
+            ),
+          ),
+        ),
+        ...shows.map((show) => Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: InkWell(
+            onTap: () {
+               // Similar logic to Explore Screen
+               final episode = Episode(
+                id: show.id,
+                showId: show.id,
+                episodeNumber: 1, // Placeholder
+                title: show.title,
+                videoUrl: '',
+                originalUrl: show.originalUrl,
+                show: show,
+              );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerScreen(episode: episode),
+                ),
+              );
+            },
+            child: GlassCard(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: show.coverImageUrl != null && show.coverImageUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: show.coverImageUrl!,
+                            width: 50,
+                            height: 70,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(color: AppColors.surface),
+                            errorWidget: (context, url, error) => const Icon(Icons.movie, color: AppColors.secondaryText),
+                          )
+                        : Container(color: AppColors.surface, width: 50, height: 70, child: const Icon(Icons.movie)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      show.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primaryText),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const Icon(Boxicons.bx_chevron_right, color: AppColors.accent),
-          ],
-        ),
-      ),
+          ),
+        )),
+      ],
     );
   }
 }
