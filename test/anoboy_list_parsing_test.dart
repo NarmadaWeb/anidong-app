@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:anidong/data/services/scraping_service.dart';
 
@@ -15,7 +16,7 @@ void main() {
       if (shows.isEmpty) {
         // Warning instead of failure if it's just a network glitch?
         // No, for verification we want to know if it works.
-        print('Warning: Anime list is empty. Check network or selector.');
+        debugPrint('Warning: Anime list is empty. Check network or selector.');
       } else {
         expect(shows.length, greaterThan(10));
 
@@ -23,8 +24,8 @@ void main() {
         expect(firstShow.title, isNotEmpty);
         expect(firstShow.originalUrl, contains('anoboy.boo'));
 
-        print('Fetched ${shows.length} anime.');
-        print('First anime: ${firstShow.title} -> ${firstShow.originalUrl}');
+        debugPrint('Fetched ${shows.length} anime.');
+        debugPrint('First anime: ${firstShow.title} -> ${firstShow.originalUrl}');
       }
     });
   });
