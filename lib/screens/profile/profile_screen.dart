@@ -1,3 +1,4 @@
+import 'package:anidong/screens/settings/notification_screen.dart';
 import 'package:anidong/screens/settings/settings_screen.dart';
 import 'package:anidong/screens/settings/sub_screens.dart';
 import 'package:anidong/utils/app_colors.dart';
@@ -23,11 +24,19 @@ class ProfileScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSettingsSection('General', [
-                    _buildSettingsItem('Notifications', () {
+                    _buildSettingsItem('Player & Downloads', () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    }),
+                    _buildSettingsItem('Notifications', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationScreen(),
                         ),
                       );
                     }),
