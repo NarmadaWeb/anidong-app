@@ -1,5 +1,6 @@
 // lib/screens/splash_screen.dart
 
+import 'package:anidong/data/services/config_service.dart';
 import 'package:anidong/screens/main_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +20,11 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigateToHome() async {
-    // Tahan selama 3 detik untuk menampilkan splash screen
-    await Future.delayed(const Duration(milliseconds: 3000), () {});
+    // Fetch configuration and wait for minimum splash duration in parallel
+    final minSplashTime = Future.delayed(const Duration(milliseconds: 3000));
+    final configFetch = ConfigService().fetchApiConfig();
+
+    await Future.wait([minSplashTime, configFetch]);
 
     // Pindah ke halaman utama dan hapus splash screen dari tumpukan navigasi
     if (mounted) {

@@ -7,8 +7,13 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 
 class ScrapingService {
-  static const String anoboyBaseUrl = 'https://ww1.anoboy.boo';
-  static const String anichinBaseUrl = 'https://anichin.asia';
+  static String anoboyBaseUrl = 'https://ww1.anoboy.boo';
+  static String anichinBaseUrl = 'https://anichin.asia';
+
+  static void updateBaseUrls(String anoboy, String anichin) {
+    if (anoboy.isNotEmpty) anoboyBaseUrl = anoboy;
+    if (anichin.isNotEmpty) anichinBaseUrl = anichin;
+  }
 
   Future<List<Episode>> getAnoboyRecentEpisodes({int page = 1}) async {
     try {
