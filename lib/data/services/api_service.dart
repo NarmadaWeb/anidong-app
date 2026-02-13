@@ -2,6 +2,7 @@
 
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
+import 'package:anidong/data/services/config_service.dart';
 import 'package:anidong/data/services/scraping_service.dart';
 import 'package:flutter/material.dart';
 
@@ -49,6 +50,10 @@ class ApiService {
       combined.shuffle();
       return combined;
     }
+  }
+
+  Future<List<Show>> getTrendingShows() async {
+    return await ConfigService().fetchTrendings();
   }
 
   Future<List<Show>> getPopularShows(BuildContext context, {String type = 'combined'}) async {
