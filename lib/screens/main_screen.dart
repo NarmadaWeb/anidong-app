@@ -10,7 +10,7 @@ import 'package:anidong/widgets/mode_switch.dart';
 import 'package:provider/provider.dart';
 import 'package:anidong/providers/home_provider.dart';
 
-import 'package:anidong/screens/download/download_screen.dart';
+import 'package:anidong/screens/schedule/schedule_screen.dart';
 import 'package:anidong/screens/explore/explore_screen.dart';
 import 'package:anidong/screens/history/history_screen.dart';
 import 'package:anidong/screens/home/home_screen.dart';
@@ -38,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
       const HomeScreen(), // 0
       const TrendingScreen(), // 1
       const HistoryScreen(),  // 2
-      const DownloadScreen(), // 3
+      const ScheduleScreen(), // 3
       const ProfileScreen(),  // 4
       const ExploreScreen(),  // 5
       const MyListScreen(),   // 6
