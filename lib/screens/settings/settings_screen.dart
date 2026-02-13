@@ -1,7 +1,9 @@
 // lib/screens/settings/settings_screen.dart
+import 'package:anidong/providers/theme_provider.dart';
 import 'package:anidong/widgets/glass_card.dart';
 import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
+import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,7 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      // backgroundColor: Removed to allow theme to handle it
       body: Stack(
         children: [
           Container(
@@ -48,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primaryText,
+                            color: Colors.white, // Keep white on gradient
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -56,7 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'Customize your experience',
                           style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.primaryText.withValues(alpha: 0.8),
+                            color: Colors.white.withValues(alpha: 0.8), // Keep white on gradient
                           ),
                         ),
                       ],
@@ -67,9 +69,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildVideoQualityCard(),
+                        _buildAppearanceCard(context),
                         const SizedBox(height: 24),
-                        _buildDownloadSettingsCard(),
+                        _buildVideoQualityCard(context),
+                        const SizedBox(height: 24),
+                        _buildDownloadSettingsCard(context),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -83,20 +87,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildVideoQualityCard() {
+  Widget _buildAppearanceCard(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Video Quality',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryText,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+            child: Text(
+              'Appearance',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
             ),
           ),
-          const SizedBox(height: 8),
+          _buildSwitchTile(
+            context: context,
+            title: 'Dark Mode',
+            subtitle: 'Use dark theme',
+            value: themeProvider.isDarkMode,
+            onChanged: (bool value) {
+              themeProvider.toggleTheme(value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideoQualityCard(BuildContext context) {
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Video Quality',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+            ),
+          ),
           RadioGroup<String>(
             groupValue: _selectedQuality,
             onChanged: (String? newValue) {
@@ -119,23 +154,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildDownloadSettingsCard() {
+  Widget _buildDownloadSettingsCard(BuildContext context) {
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
             child: Text(
               'Download Settings',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryText,
-              ),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
             ),
           ),
           _buildSwitchTile(
+            context: context,
             title: 'WiFi only',
             subtitle: 'Download only on WiFi',
             value: _wifiOnlyDownload,
@@ -145,8 +180,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               });
             },
           ),
-          Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+          Divider(color: Theme.of(context).dividerColor, height: 1),
           _buildSwitchTile(
+            context: context,
             title: 'Auto Download',
             subtitle: 'Automatically download new episodes',
             value: _autoDownload,
@@ -162,6 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSwitchTile({
+    required BuildContext context,
     required String title,
     required String subtitle,
     required bool value,
@@ -177,16 +214,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: AppColors.primaryText,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                        fontSize: 13,
+                      ),
                 ),
               ],
             ),
@@ -219,7 +257,7 @@ class _QualityRadioTile extends StatelessWidget {
     return RadioListTile<String>(
       title: Text(
         value,
-        style: const TextStyle(color: AppColors.primaryText),
+        style: Theme.of(context).textTheme.bodyLarge,
       ),
       value: value,
       // Tidak perlu groupValue dan onChanged → ditangani oleh RadioGroup ancestor

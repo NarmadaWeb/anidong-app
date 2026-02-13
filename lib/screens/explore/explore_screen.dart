@@ -76,7 +76,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget build(BuildContext context) {
     // PERBAIKAN: Menggunakan Scaffold TANPA AppBar
     return Scaffold(
-      backgroundColor: AppColors.background,
+      // backgroundColor: AppColors.background, // Removed to let theme handle it
       body: Stack(
         children: [
           // Background Gradien
@@ -104,9 +104,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('🔍 Search & Explore', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                        const Text('🔍 Search & Explore', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
                         const SizedBox(height: 4),
-                        Text('Find your favorite Anime & Donghua', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
+                        Text('Find your favorite Anime & Donghua', style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),
@@ -119,15 +119,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: TextField(
                             controller: _searchController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Search title...',
                               border: InputBorder.none,
-                              icon: Icon(Icons.search, color: AppColors.secondaryText),
+                              icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
                             ),
                             onSubmitted: _handleSearch,
                           ),
@@ -187,13 +187,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent : AppColors.surface,
+          color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.secondaryText,
+            color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -203,14 +203,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _buildSearchResults() {
     if (_isSearching) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+      return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
     }
 
     if (_searchResults.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: Text('No results found.', style: TextStyle(color: AppColors.secondaryText)),
+          padding: const EdgeInsets.all(32.0),
+          child: Text('No results found.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
         ),
       );
     }
@@ -260,13 +260,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(show.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(show.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color)),
                         const SizedBox(height: 4),
-                        Text(show.status, style: const TextStyle(color: AppColors.secondaryText, fontSize: 13)),
+                        Text(show.status, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right, color: AppColors.secondaryText),
+                  Icon(Icons.chevron_right, color: Theme.of(context).iconTheme.color),
                 ],
               ),
             ),
@@ -354,7 +354,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         children: [
           Text(emoji, style: const TextStyle(fontSize: 28)),
           const SizedBox(height: 8),
-          Text(title, style: const TextStyle(color: AppColors.primaryText, fontSize: 14, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+          Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 14, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
         ],
       ),
     );

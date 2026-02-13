@@ -24,7 +24,7 @@ class HomeScreen extends StatelessWidget {
               provider.fetchHomePageData(context);
             }
           });
-          return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+          return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
         }
 
         if (provider.state == HomeState.error) {
@@ -34,15 +34,15 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Error: ${provider.errorMessage}', textAlign: TextAlign.center, style: const TextStyle(color: AppColors.secondaryText)),
+                  Text('Error: ${provider.errorMessage}', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
                     onPressed: () => provider.fetchHomePageData(context),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Try Again'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      foregroundColor: AppColors.primaryText
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
                     ),
                   )
                 ],
@@ -60,8 +60,8 @@ class HomeScreen extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () => provider.fetchHomePageData(context),
-          backgroundColor: AppColors.surface,
-          color: AppColors.accent,
+          backgroundColor: Theme.of(context).cardColor,
+          color: Theme.of(context).primaryColor,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
@@ -83,10 +83,16 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
-      child: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-    );
+    // Need context, but StatelessWidget methods don't have it unless passed or widget built in build.
+    // _buildSectionTitle is called from build, so I need to update signature or use Builder.
+    // Since this method is simple, I'll assume I can access Theme via context passed or available.
+    // Wait, the caller is `_buildSectionTitle('Title')`. I need to pass context.
+    return Builder(builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
+        child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.bold)),
+      );
+    });
   }
 
   // --- PERBAIKAN DI SINI ---
@@ -101,7 +107,7 @@ class HomeScreen extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
         alignment: Alignment.center,
-        child: const Text('No new episodes available for this mode.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.secondaryText)),
+        child: Text('No new episodes available for this mode.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
       );
     }
 
@@ -141,8 +147,8 @@ class HomeScreen extends StatelessWidget {
                           child: CachedNetworkImage(
                             imageUrl: episode.thumbnailUrl ?? '',
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: AppColors.surface),
-                            errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
+                            placeholder: (context, url) => Container(color: Theme.of(context).cardColor),
+                            errorWidget: (context, url, error) => Center(child: Icon(Icons.image_not_supported, color: Theme.of(context).iconTheme.color)),
                           ),
                         ),
 
@@ -152,7 +158,7 @@ class HomeScreen extends StatelessWidget {
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(4)),
+                                decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(4)),
                                 child: Text('Ep ${episode.episodeNumber}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
                               ),
                               const Spacer(),
@@ -172,7 +178,7 @@ class HomeScreen extends StatelessWidget {
                     displayTitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, color: AppColors.primaryText, fontWeight: FontWeight.w500),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -182,14 +188,14 @@ class HomeScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: provider.isLoadingMore
-              ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+              ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
               : SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () => provider.loadMoreEpisodes(context),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.accent),
-                      foregroundColor: AppColors.accent,
+                      side: BorderSide(color: Theme.of(context).primaryColor),
+                      foregroundColor: Theme.of(context).primaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: const Text('Load More Episodes'),
@@ -206,7 +212,7 @@ class HomeScreen extends StatelessWidget {
         height: MediaQuery.of(context).size.height * 0.25,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: const Text('No recommendations available for this mode.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.secondaryText)),
+        child: Text('No recommendations available for this mode.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
       );
     }
 
@@ -252,8 +258,8 @@ class HomeScreen extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: show.coverImageUrl ?? '',
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(color: AppColors.surface),
-                          errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: AppColors.secondaryText)),
+                          placeholder: (context, url) => Container(color: Theme.of(context).cardColor),
+                          errorWidget: (context, url, error) => Center(child: Icon(Icons.image_not_supported, color: Theme.of(context).iconTheme.color)),
                         ),
                       ),
                     ),
@@ -262,7 +268,7 @@ class HomeScreen extends StatelessWidget {
                       show.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primaryText),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
