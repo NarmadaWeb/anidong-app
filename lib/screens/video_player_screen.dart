@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final Episode episode;
@@ -124,16 +123,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       show: _detailedEpisode.show,
     );
     _fetchDetails(nextEp);
-  }
-
-  Future<void> _launchUrl(String url) async {
-    if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not launch $url')),
-        );
-      }
-    }
   }
 
   @override
