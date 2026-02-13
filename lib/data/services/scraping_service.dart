@@ -240,6 +240,52 @@ class ScrapingService {
       if (isShowPage) {
         allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId);
         showUrl = episode.originalUrl;
+
+        if (allEpisodes.isNotEmpty) {
+          final targetEp = allEpisodes.firstWhere(
+            (e) => e.episodeNumber == episode.episodeNumber,
+            orElse: () => allEpisodes.first,
+          );
+
+          final detailedEp = await getAnoboyEpisodeDetails(targetEp);
+
+          final fullShow = detailedEp.show ?? Show(
+            id: episode.showId,
+            title: episode.title ?? 'Anime',
+            type: 'anime',
+            status: 'ongoing',
+            genres: [],
+            coverImageUrl: episode.thumbnailUrl,
+            originalUrl: showUrl,
+          );
+
+          final updatedShow = Show(
+            id: fullShow.id,
+            title: fullShow.title,
+            type: fullShow.type,
+            status: fullShow.status,
+            genres: fullShow.genres,
+            originalUrl: fullShow.originalUrl ?? showUrl,
+            coverImageUrl: fullShow.coverImageUrl,
+            episodes: allEpisodes,
+          );
+
+          return Episode(
+            id: detailedEp.id,
+            showId: detailedEp.showId,
+            episodeNumber: detailedEp.episodeNumber,
+            title: detailedEp.title,
+            videoUrl: detailedEp.videoUrl,
+            iframeUrl: detailedEp.iframeUrl,
+            videoServers: detailedEp.videoServers,
+            originalUrl: detailedEp.originalUrl,
+            downloadLinks: detailedEp.downloadLinks,
+            thumbnailUrl: detailedEp.thumbnailUrl,
+            show: updatedShow,
+            prevEpisodeUrl: detailedEp.prevEpisodeUrl,
+            nextEpisodeUrl: detailedEp.nextEpisodeUrl,
+          );
+        }
       } else {
         final iframeElement = document.querySelector('iframe#mediaplayer') ?? document.querySelector('iframe');
         if (iframeElement != null) {
@@ -421,8 +467,11 @@ class ScrapingService {
           }
 
           if (allEpisodes.isNotEmpty) {
-             // Pick the latest (first in list)
-             final targetEp = allEpisodes.first;
+             // Pick the target episode (matching number or first)
+             final targetEp = allEpisodes.firstWhere(
+                (e) => e.episodeNumber == episode.episodeNumber,
+                orElse: () => allEpisodes.first,
+             );
              // Fetch details for this target episode
              final detailedEp = await getAnichinEpisodeDetails(targetEp);
 
