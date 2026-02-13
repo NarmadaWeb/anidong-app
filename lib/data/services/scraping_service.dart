@@ -272,6 +272,7 @@ class ScrapingService {
             genres: fullShow.genres,
             originalUrl: fullShow.originalUrl ?? showUrl,
             coverImageUrl: fullShow.coverImageUrl,
+            rating: fullShow.rating,
             episodes: allEpisodes,
           );
 
@@ -370,6 +371,13 @@ class ScrapingService {
         }
       }
 
+      // Extract rating from #score
+      double? extractedRating;
+      final scoreElement = document.querySelector('#score');
+      if (scoreElement != null) {
+        extractedRating = double.tryParse(scoreElement.text.trim());
+      }
+
       allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
 
       String? prevEpisodeUrl;
@@ -390,6 +398,7 @@ class ScrapingService {
         genres: show.genres,
         originalUrl: show.originalUrl ?? showUrl,
         coverImageUrl: show.coverImageUrl,
+        rating: extractedRating ?? show.rating,
         episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
       );
 
@@ -489,6 +498,7 @@ class ScrapingService {
                genres: fullShow.genres,
                originalUrl: fullShow.originalUrl ?? episode.originalUrl,
                coverImageUrl: fullShow.coverImageUrl,
+               rating: fullShow.rating,
                episodes: allEpisodes,
              );
 
@@ -508,6 +518,21 @@ class ScrapingService {
                 nextEpisodeUrl: detailedEp.nextEpisodeUrl,
              );
           }
+      }
+
+      // Extract rating from meta or strong tag
+      double? extractedRating;
+      final metaContent = document.querySelector('meta[itemprop="ratingValue"]')?.attributes['content'];
+      if (metaContent != null) {
+        extractedRating = double.tryParse(metaContent);
+      } else {
+        final strongText = document.querySelector('.rating strong')?.text.trim();
+        if (strongText != null) {
+          final match = RegExp(r'Rating\s+(\d+\.?\d*)').firstMatch(strongText);
+          if (match != null) {
+            extractedRating = double.tryParse(match.group(1)!);
+          }
+        }
       }
 
       final List<Map<String, String>> videoServers = [];
@@ -599,6 +624,7 @@ class ScrapingService {
         genres: show.genres,
         originalUrl: show.originalUrl ?? showUrl,
         coverImageUrl: show.coverImageUrl,
+        rating: extractedRating ?? show.rating,
         episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
       );
 
