@@ -46,12 +46,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     });
 
     try {
+      // Use live search for both to ensure images are present
+      // We search all and filter by type
+      final allResults = await _apiService.searchShows(context, query);
       List<Show> results = [];
+
       if (_searchType == 'anime') {
-        results = await _apiService.searchAnimeLocal(query);
+        results = allResults.where((s) => s.type == 'anime').toList();
       } else {
-        // Fallback for donghua (remote search)
-        final allResults = await _apiService.searchShows(context, query);
         results = allResults.where((s) => s.type == 'donghua').toList();
       }
 
