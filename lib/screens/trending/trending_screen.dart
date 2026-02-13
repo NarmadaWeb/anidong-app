@@ -150,8 +150,11 @@ class TrendingScreen extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 40,
-            child: Text('#$rank', textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.accent)),
+            width: 60,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('#$rank', textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.accent)),
+            ),
           ),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
