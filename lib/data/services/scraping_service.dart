@@ -275,6 +275,24 @@ class ScrapingService {
       // If no player, it's definitely a Show Page.
       bool isShowPage = !hasPlayer;
 
+      // Fix for episode number if 0
+      int currentEpisodeNumber = episode.episodeNumber;
+      if (currentEpisodeNumber == 0) {
+          // Try from title
+          String titleText = document.querySelector('title')?.text ?? '';
+          var match = RegExp(r'(?:Episode|Ep)\s+(\d+)', caseSensitive: false).firstMatch(titleText);
+          if (match != null) {
+             currentEpisodeNumber = int.tryParse(match.group(1)!) ?? 0;
+          } else {
+             // Try from breadcrumbs
+             final breadcrumb = document.querySelector('.anime > span');
+             if (breadcrumb != null) {
+                 match = RegExp(r'Episode\s+(\d+)', caseSensitive: false).firstMatch(breadcrumb.text);
+                 if (match != null) currentEpisodeNumber = int.tryParse(match.group(1)!) ?? 0;
+             }
+          }
+      }
+
       String? showUrl = episode.originalUrl;
       final List<Map<String, String>> videoServers = [];
       String? primaryIframe;
@@ -453,18 +471,18 @@ class ScrapingService {
          final href = link.attributes['href'];
          if (href == null || href.isEmpty || href == '#') continue;
 
-         if (text == 'episode sebelumnya' || text == 'prev' || text == 'sebelumnya' || text.contains('<< previous')) {
+         // Check for specific keywords first
+         if (text == 'episode sebelumnya' || text == 'prev' || text == 'sebelumnya' || text.contains('<< previous') || text.contains('previous episode')) {
              prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-         } else if (text == 'episode selanjutnya' || text == 'next' || text == 'selanjutnya' || text.contains('next >>')) {
+         } else if (text == 'episode selanjutnya' || text == 'next' || text == 'selanjutnya' || text.contains('next >>') || text.contains('next episode')) {
              nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
          } else {
-             // Heuristic: Check if text matches "Title Episode X" where X is current +/- 1
-             // Clean title from "Episode ..."
-             final cleanTitle = episode.title?.split(' Episode')[0].toLowerCase() ?? '';
-             if (cleanTitle.isNotEmpty && text.contains(cleanTitle)) {
-                 if (text.contains('episode ${episode.episodeNumber - 1}')) {
+             // Heuristic: specific episode links in nav area
+             // Often links like "Title Episode X"
+             if (currentEpisodeNumber > 0) {
+                 if (text.contains('episode ${currentEpisodeNumber - 1}')) {
                      prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-                 } else if (text.contains('episode ${episode.episodeNumber + 1}')) {
+                 } else if (text.contains('episode ${currentEpisodeNumber + 1}')) {
                      nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
                  }
              }
@@ -472,9 +490,14 @@ class ScrapingService {
       }
 
       // Fallback/Override with list-based navigation
-      final currentIdx = allEpisodes.indexWhere((e) => e.episodeNumber == episode.episodeNumber);
+      // Ensure we use the possibly corrected currentEpisodeNumber
+      final currentIdx = allEpisodes.indexWhere((e) => e.episodeNumber == currentEpisodeNumber);
       if (currentIdx != -1) {
+        // Since the list is sorted by Episode Number (ascending),
+        // idx-1 is PREVIOUS episode (smaller number) if we are at idx > 0
         if (currentIdx > 0) prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
+
+        // idx+1 is NEXT episode (larger number)
         if (currentIdx < allEpisodes.length - 1) nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
       }
 
@@ -494,7 +517,7 @@ class ScrapingService {
        return Episode(
         id: episode.id,
         showId: episode.showId,
-        episodeNumber: episode.episodeNumber,
+        episodeNumber: currentEpisodeNumber, // Use the extracted number
         title: episode.title,
         videoUrl: episode.videoUrl,
         iframeUrl: videoServers.isNotEmpty ? videoServers[0]['url'] : primaryIframe,
@@ -515,33 +538,57 @@ class ScrapingService {
 
   List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId) {
     final List<Episode> eps = [];
-    var epLinks = document.querySelectorAll('a[rel="bookmark"]');
-    if (epLinks.isEmpty) {
-       epLinks = document.querySelectorAll('.entry-content a, .post-body a');
+
+    // Strategy 1: Look for "Episode List" section specifically?
+    // Usually contained in entry-content.
+    // We broaden the search to all 'a' tags inside valid content containers
+    // because rel="bookmark" is often missing on Show Pages.
+    var contentContainers = document.querySelectorAll('.entry-content, .post-body, .episodelist, #content');
+
+    List<Element> epLinks = [];
+    if (contentContainers.isNotEmpty) {
+      for (var container in contentContainers) {
+        epLinks.addAll(container.querySelectorAll('a'));
+      }
+    } else {
+      epLinks = document.querySelectorAll('a');
     }
+
+    final seenUrls = <String>{};
 
     for (var link in epLinks) {
       final title = link.attributes['title'] ?? link.text.trim();
       final url = link.attributes['href'] ?? '';
 
-      // Allow same-page URLs if they look like episodes (for Bulk pages)
-      if (url.isNotEmpty && (title.contains('Episode') || title.contains('Ep ')) && !url.contains('#') && !url.contains('facebook') && !url.contains('twitter')) {
+      if (url.isEmpty || url.contains('#') || url.contains('facebook') || url.contains('twitter') || url.contains('whatsapp')) continue;
+      if (!url.contains('anoboy')) continue; // Strict domain check for safety
+      if (seenUrls.contains(url)) continue;
+
+      // Filter: Must look like an episode link
+      // e.g. "Title Episode 1", "Vol 1", etc.
+      // Anoboy consistently uses "Episode X" in text or title.
+      if (title.contains('Episode') || title.contains('Ep ')) {
         int epNum = 0;
         final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
-        if (epMatch != null) epNum = int.tryParse(epMatch.group(1)!) ?? 0;
 
-        // Generate ID using combination to ensure uniqueness
-        final fullUrl = url.startsWith('http') ? url : '$anoboyBaseUrl$url';
-        final uniqueId = (fullUrl + title + epNum.toString()).hashCode;
+        if (epMatch != null) {
+          epNum = int.tryParse(epMatch.group(1)!) ?? 0;
 
-        eps.add(Episode(
-          id: uniqueId,
-          showId: showId,
-          episodeNumber: epNum,
-          title: title,
-          videoUrl: '',
-          originalUrl: fullUrl,
-        ));
+          // Generate ID using combination to ensure uniqueness
+          final fullUrl = url.startsWith('http') ? url : '$anoboyBaseUrl$url';
+          final uniqueId = (fullUrl + title + epNum.toString()).hashCode;
+
+          seenUrls.add(url);
+
+          eps.add(Episode(
+            id: uniqueId,
+            showId: showId,
+            episodeNumber: epNum,
+            title: title,
+            videoUrl: '',
+            originalUrl: fullUrl,
+          ));
+        }
       }
     }
     return eps;
