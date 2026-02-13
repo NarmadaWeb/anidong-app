@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 class ApiService {
   final ScrapingService _scrapingService = ScrapingService();
+  List<Show> _cachedAnimeList = [];
 
   // Endpoint: GET /episodes/recent
   Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime', int page = 1}) async {
@@ -83,6 +84,24 @@ class ApiService {
     ]);
 
     return [...results[0], ...results[1]];
+  }
+
+  Future<List<Show>> getAnimeList() async {
+    if (_cachedAnimeList.isNotEmpty) return _cachedAnimeList;
+    _cachedAnimeList = await _scrapingService.getAnoboyAnimeList();
+    return _cachedAnimeList;
+  }
+
+  Future<List<Show>> searchAnimeLocal(String query) async {
+    if (query.isEmpty) return [];
+    if (_cachedAnimeList.isEmpty) {
+      await getAnimeList();
+    }
+
+    final lowerQuery = query.toLowerCase();
+    return _cachedAnimeList.where((show) =>
+      show.title.toLowerCase().contains(lowerQuery)
+    ).toList();
   }
 
   Future<Episode> getEpisodeDetails(Episode episode) async {
