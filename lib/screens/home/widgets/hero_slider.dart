@@ -119,7 +119,7 @@ class _HeroSlideItem extends StatelessWidget {
         children: [
           Text(
             // Menggunakan title dari objek Show
-            show.title,
+            show.title.length > 40 ? '${show.title.substring(0, 40)}...' : show.title,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 28,

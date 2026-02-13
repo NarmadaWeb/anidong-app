@@ -92,4 +92,8 @@ class ApiService {
       return await _scrapingService.getAnichinEpisodeDetails(episode);
     }
   }
+
+  Future<Map<String, List<Show>>> getSchedule() async {
+    return await _scrapingService.getAnichinSchedule();
+  }
 }
