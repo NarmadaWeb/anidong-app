@@ -29,7 +29,7 @@ jobs:
         run: flutter test
 
       - name: Build APKs (Split per ABI)
-        run: flutter build apk --split-per-abi --release
+        run: flutter build apk --split-per-abi --target-platform android-arm,android-arm64,android-x64 --release
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
