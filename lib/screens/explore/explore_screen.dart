@@ -23,6 +23,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _isSearching = false;
   bool _hasSearched = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // Preload anime list for faster local search
+    _apiService.getAnimeList();
+  }
+
   Future<void> _handleSearch(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -38,11 +45,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
     });
 
     try {
-      // In a real app, we might want to filter by type in ApiService
-      // but searchShows currently returns both. We can filter here.
-      final results = await _apiService.searchShows(context, query);
+      List<Show> results = [];
+      if (_searchType == 'anime') {
+        results = await _apiService.searchAnimeLocal(query);
+      } else {
+        // Fallback for donghua (remote search)
+        final allResults = await _apiService.searchShows(context, query);
+        results = allResults.where((s) => s.type == 'donghua').toList();
+      }
+
       setState(() {
-        _searchResults = results.where((s) => s.type == _searchType).toList();
+        _searchResults = results;
       });
     } catch (e) {
       debugPrint('Search error: $e');

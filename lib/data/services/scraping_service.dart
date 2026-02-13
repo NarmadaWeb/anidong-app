@@ -659,6 +659,63 @@ class ScrapingService {
     }
   }
 
+  Future<List<Show>> getAnoboyAnimeList() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$anoboyBaseUrl/anime-list/'),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      );
+      if (response.statusCode != 200) return [];
+
+      final document = parse(response.body);
+      final List<Show> shows = [];
+
+      // Robust selector strategy:
+      // 1. Try finding links in the specific "A-Z" container if identifiable (e.g., #ada or .entry-content)
+      // 2. Fallback to all bookmark links which usually denote posts/anime.
+
+      var content = document.querySelector('#ada') ?? document.querySelector('.entry-content') ?? document.querySelector('.post-body');
+
+      final links = content != null ? content.querySelectorAll('a') : document.querySelectorAll('a[rel="bookmark"]');
+
+      for (var link in links) {
+        final title = link.attributes['title'] ?? link.text.trim();
+        final url = link.attributes['href'] ?? '';
+
+        // Basic validation
+        if (title.isEmpty || title.length < 2) continue;
+        if (!url.contains('anoboy')) continue; // Ensure it's an internal link
+
+        // Exclude known non-anime sections/pages
+        if (url.contains('/page/') || url.contains('wp-json') || url.contains('feed') || url.contains('comment-page')) continue;
+        if (url.endsWith('#') || url.contains('#')) continue; // Skip anchors like #A
+
+        // Filter out menu items
+        if (['Home', 'Jadwal', 'AnimeList', 'DonghuaList', 'Movie', 'Tokusatsu', 'Live Action', 'Studio Ghibli', 'One Piece', 'Rekomendasi', 'Lapor Eror', 'Advertise'].contains(title)) continue;
+
+        // Dedup based on URL
+        if (shows.any((s) => s.originalUrl == url)) continue;
+
+        shows.add(Show(
+          id: url.hashCode,
+          title: title,
+          type: 'anime',
+          status: 'ongoing', // Default, difficult to know from list without parsing text
+          genres: [],
+          originalUrl: url,
+          coverImageUrl: '', // List usually doesn't have images for all items
+        ));
+      }
+
+      return shows;
+    } catch (e) {
+      debugPrint('Error getting Anoboy Anime List: $e');
+      return [];
+    }
+  }
+
   Future<List<Show>> searchAnichin(String query) async {
     try {
       final response = await http.get(Uri.parse('$anichinBaseUrl/?s=${Uri.encodeComponent(query)}'));
