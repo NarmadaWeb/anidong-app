@@ -88,7 +88,8 @@ class ScrapingService {
         final epElement = element.querySelector('.epx');
 
         if (titleElement != null && linkElement != null) {
-          final rawTitle = titleElement.text.trim();
+          final h2 = titleElement.querySelector('h2');
+          final rawTitle = h2 != null ? h2.text.trim() : titleElement.text.trim();
           final url = linkElement.attributes['href'] ?? '';
           final thumb = imgElement?.attributes['src'] ?? '';
           final epText = epElement?.text.trim() ?? '';
@@ -148,7 +149,8 @@ class ScrapingService {
         final imgElement = element.querySelector('img');
 
         if (titleElement != null && linkElement != null) {
-          final title = titleElement.text.trim();
+          final h2 = titleElement.querySelector('h2');
+          final title = h2 != null ? h2.text.trim() : titleElement.text.trim();
           final url = linkElement.attributes['href'] ?? '';
           final thumb = imgElement?.attributes['src'] ?? '';
 
@@ -189,7 +191,8 @@ class ScrapingService {
         final imgElement = element.querySelector('img');
 
         if (titleElement != null && linkElement != null) {
-          final title = titleElement.text.trim();
+          final h2 = titleElement.querySelector('h2');
+          final title = h2 != null ? h2.text.trim() : titleElement.text.trim();
           final url = linkElement.attributes['href'] ?? '';
           final thumb = imgElement?.attributes['src'] ?? '';
 
@@ -622,7 +625,8 @@ class ScrapingService {
         final imgElement = element.querySelector('img');
 
         if (titleElement != null && linkElement != null) {
-          final title = titleElement.text.trim();
+          final h2 = titleElement.querySelector('h2');
+          final title = h2 != null ? h2.text.trim() : titleElement.text.trim();
           final url = linkElement.attributes['href'] ?? '';
           final thumb = imgElement?.attributes['src'] ?? '';
 
