@@ -501,18 +501,10 @@ class ScrapingService {
       if (currentIdx != -1) {
         // Since the list is sorted by Episode Number (ascending),
         // idx-1 is PREVIOUS episode (smaller number) if we are at idx > 0
-        if (currentIdx > 0) {
-          prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
-        } else {
-          prevEpisodeUrl = null;
-        }
+        if (currentIdx > 0) prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
 
         // idx+1 is NEXT episode (larger number)
-        if (currentIdx < allEpisodes.length - 1) {
-          nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
-        } else {
-          nextEpisodeUrl = null;
-        }
+        if (currentIdx < allEpisodes.length - 1) nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
       }
 
       final show = episode.show ?? Show(id: episode.showId, title: episode.title ?? 'Anime', type: 'anime', status: 'ongoing', genres: []);
