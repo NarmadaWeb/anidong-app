@@ -725,13 +725,15 @@ class ScrapingService {
       }
 
       final List<Map<String, String>> videoServers = [];
-      var iframeElement = document.querySelector('iframe[src*="anichin.stream"]');
-      iframeElement ??= document.querySelector('.video-content iframe');
-      iframeElement ??= document.querySelector('iframe');
+      var iframeElement = document.querySelector('iframe[src*="anichin.stream"]') ??
+                          document.querySelector('.video-content iframe') ??
+                          document.querySelector('iframe');
 
       String? primaryIframe = iframeElement?.attributes['src'];
       if (primaryIframe != null && primaryIframe.isNotEmpty) {
         videoServers.add({'name': 'Primary Server', 'url': primaryIframe});
+      } else {
+        primaryIframe = null; // No-op to silence analyzer if needed, though ??= is suggested
       }
 
       final serverElements = document.querySelectorAll('.mirror option');
