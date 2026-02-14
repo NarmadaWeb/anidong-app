@@ -1,4 +1,4 @@
-name: Flutter Release
+name: Flutter Release (arm64 only)
 
 on:
   release:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build and Release
+    name: Build and Release (arm64-v8a)
     runs-on: ubuntu-latest
 
     steps:
@@ -22,21 +22,26 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK (arm64-v8a)
+      - name: Build APK (split per ABI - arm64 only)
         run: |
           flutter build apk \
             --release \
+            --split-per-abi \
             --target-platform android-arm64 \
             --obfuscate \
             --split-debug-info=build/app/outputs/symbols
 
-      - name: Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/anidong-arm64.apk
+      - name: Rename APK (arm64-v8a)
+        run: |
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+             build/app/outputs/flutter-apk/anidong-arm64-v8a-release.apk
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/app/outputs/flutter-apk/anidong-arm64.apk
+            build/app/outputs/flutter-apk/anidong-arm64-v8a-release.apk
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
