@@ -1,8 +1,9 @@
 // lib/screens/explore/explore_screen.dart
 
+import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/api_service.dart';
-import 'package:anidong/screens/show_details_screen.dart';
+import 'package:anidong/screens/video_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/glass_card.dart';
@@ -229,23 +230,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
           padding: const EdgeInsets.only(bottom: 12.0),
           child: InkWell(
             onTap: () {
-              if (show.type == 'anime') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ShowDetailsScreen(show: show),
-                  ),
-                );
-              } else {
-                // For Donghua, or if ShowDetailsScreen is preferred for all
-                // The user specifically asked to fix Anime search navigation
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ShowDetailsScreen(show: show),
-                  ),
-                );
-              }
+              // Convert Show to a placeholder Episode for the player screen
+              final episode = Episode(
+                id: show.id,
+                showId: show.id,
+                episodeNumber: 1,
+                title: show.title,
+                videoUrl: '',
+                originalUrl: show.originalUrl,
+                show: show,
+              );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerScreen(episode: episode),
+                ),
+              );
             },
             child: GlassCard(
               padding: const EdgeInsets.all(12),

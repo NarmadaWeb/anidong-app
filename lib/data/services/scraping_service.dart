@@ -20,20 +20,14 @@ class ScrapingService {
     if (imgElement == null) return '';
     String thumb = imgElement.attributes['data-src'] ??
                    imgElement.attributes['data-lazy-src'] ??
-                   imgElement.attributes['data-original'] ??
                    imgElement.attributes['src'] ?? '';
 
     if (thumb.startsWith('//')) {
-      thumb = 'https:$thumb';
-    } else if (thumb.isNotEmpty && !thumb.startsWith('http')) {
-      thumb = '$anoboyBaseUrl$thumb';
+      return 'https:$thumb';
     }
-
-    // Handle spaces in URL by encoding them
-    if (thumb.contains(' ')) {
-       thumb = Uri.encodeFull(thumb);
+    if (thumb.isNotEmpty && !thumb.startsWith('http')) {
+      return '$anoboyBaseUrl$thumb';
     }
-
     return thumb;
   }
 
@@ -889,8 +883,7 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      // Broaden selector to catch various search result layouts
-      final elements = document.querySelectorAll('.home_index a[rel="bookmark"], .column-content a[rel="bookmark"], a[rel="bookmark"]');
+      final elements = document.querySelectorAll('a[rel="bookmark"]');
       for (var element in elements) {
         final title = element.attributes['title'] ?? element.querySelector('h3.ibox1')?.text.trim() ?? '';
         final url = element.attributes['href'] ?? '';
@@ -1031,128 +1024,6 @@ class ScrapingService {
     } catch (e) {
       return [];
     }
-  }
-
-  Future<Show> getAnoboyShowDetails(Show show) async {
-    if (show.originalUrl == null || show.originalUrl!.isEmpty) return show;
-
-    try {
-      final response = await http.get(
-        Uri.parse(show.originalUrl!),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-      );
-      if (response.statusCode != 200) return show;
-
-      final document = parse(response.body);
-      String? seriesUrl;
-
-      // 1. Try to find "Parent" URL (Series Page) if this is an episode page
-      // Usually breadcrumbs: Home > Anime > Title > Episode X
-      final breadcrumbs = document.querySelectorAll('.anime > a');
-      if (breadcrumbs.length >= 2) {
-          // Check if the link looks like a category/anime link
-          final href = breadcrumbs[1].attributes['href'];
-          if (href != null && !href.contains('/page/')) {
-             seriesUrl = href;
-          }
-      }
-
-      if (seriesUrl == null) {
-          final bcs = document.querySelectorAll('.breadcrumbs a, .breadcrumb a');
-          for (var b in bcs) {
-             final href = b.attributes['href'];
-             if (href != null && (href.contains('/anime/') || href.contains('category'))) {
-                 seriesUrl = href;
-                 break;
-             }
-          }
-      }
-
-      // But simpler: if the current page HAS a player, it's an episode. Fetch parent.
-      final hasPlayer = document.querySelector('#mediaplayer') != null || document.querySelector('iframe') != null;
-
-      if (hasPlayer && seriesUrl != null && seriesUrl != show.originalUrl) {
-         return await _scrapeAnoboyShowPage(seriesUrl, show);
-      } else {
-         // Current page IS likely the show page (or we can't find parent)
-         return _parseAnoboyShowPageDoc(document, show, show.originalUrl!);
-      }
-    } catch (e) {
-      debugPrint('Error getting Anoboy show details: $e');
-      return show;
-    }
-  }
-
-  Future<Show> _scrapeAnoboyShowPage(String url, Show originalShow) async {
-      try {
-          final response = await http.get(
-            Uri.parse(url),
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-          );
-          if (response.statusCode != 200) return originalShow;
-
-          final document = parse(response.body);
-          return _parseAnoboyShowPageDoc(document, originalShow, url);
-      } catch (e) {
-          return originalShow;
-      }
-  }
-
-  Show _parseAnoboyShowPageDoc(Document document, Show originalShow, String pageUrl) {
-      final episodes = _parseAnoboyEpisodesFromDoc(document, originalShow.id);
-
-      // Sort episodes: Ascending (1, 2, 3...)
-      episodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
-
-      String cover = originalShow.coverImageUrl ?? '';
-      if (cover.isEmpty) {
-         final imgEl = document.querySelector('.entry-content img, .post-body img');
-         cover = _extractImageUrl(imgEl);
-      }
-
-       // Rating
-      double? extractedRating;
-      final scoreElement = document.querySelector('#score');
-      if (scoreElement != null) {
-        extractedRating = double.tryParse(scoreElement.text.trim());
-      }
-
-      // Synopsis (basic)
-      String synopsis = '';
-      final content = document.querySelector('.entry-content, .post-body');
-      if (content != null) {
-         // Extract text, try to exclude the episode list links
-         // A simple way is to take the first few paragraphs
-         final paragraphs = content.querySelectorAll('p');
-         final buffer = StringBuffer();
-         for (var p in paragraphs) {
-            final text = p.text.trim();
-            if (text.contains('Daftar Episode')) break;
-            if (p.querySelector('a') != null && text.length < 50) continue; // Skip likely nav links
-            if (text.isNotEmpty) buffer.writeln(text);
-            if (buffer.length > 1000) break;
-         }
-         synopsis = buffer.toString().trim();
-         if (synopsis.isEmpty) {
-             synopsis = content.text.trim();
-             if (synopsis.length > 500) synopsis = '${synopsis.substring(0, 500)}...';
-         }
-      }
-
-      return Show(
-        id: originalShow.id,
-        title: originalShow.title,
-        synopsis: synopsis,
-        type: 'anime',
-        status: originalShow.status,
-        genres: originalShow.genres,
-        originalUrl: pageUrl,
-        coverImageUrl: cover.isNotEmpty ? cover : originalShow.coverImageUrl,
-        rating: extractedRating ?? originalShow.rating,
-        episodes: episodes,
-      );
   }
 
   Future<Map<String, List<Show>>> getAnichinSchedule() async {
