@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 
 class ApiService {
   final ScrapingService _scrapingService = ScrapingService();
-  List<Show> _cachedAnimeList = [];
 
   // Endpoint: GET /episodes/recent
   Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime', int page = 1}) async {

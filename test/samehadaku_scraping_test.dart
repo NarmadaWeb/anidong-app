@@ -172,7 +172,6 @@ class MockHttpOverrides extends HttpOverrides {
 class MockHttpClient implements HttpClient {
   @override
   dynamic noSuchMethod(Invocation invocation) {
-    print('MockHttpClient.noSuchMethod: ${invocation.memberName}');
     return null;
   }
 
@@ -203,7 +202,6 @@ class MockHttpClientRequest implements HttpClientRequest {
     if (invocation.memberName == #addStream) {
       return Future.value();
     }
-    print('MockHttpClientRequest.noSuchMethod: ${invocation.memberName}');
     return null;
   }
 

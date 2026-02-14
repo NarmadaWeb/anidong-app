@@ -264,7 +264,7 @@ class ScrapingService {
         final epList = document.querySelectorAll('.lstepsiode.listeps ul li');
         for (var li in epList) {
            final a = li.querySelector('.epsright .eps a');
-           final date = li.querySelector('.epsleft .date')?.text.trim();
+           // final date = li.querySelector('.epsleft .date')?.text.trim();
            final titleEp = li.querySelector('.epsleft .lchx a')?.text.trim(); // "Title Episode X"
 
            if (a != null) {
@@ -361,7 +361,7 @@ class ScrapingService {
       String? nextUrl;
 
       // Usually .naveps or similar
-      final navs = document.querySelectorAll('.naveps a');
+      // final navs = document.querySelectorAll('.naveps a');
       // Or check specific classes
       for (var a in document.querySelectorAll('a[rel="prev"]')) {
          prevUrl = a.attributes['href'];
