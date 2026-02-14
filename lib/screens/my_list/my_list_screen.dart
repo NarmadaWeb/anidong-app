@@ -24,7 +24,8 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    // 3 Tabs: Ongoing, Completed, Movie
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -75,19 +76,48 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white70,
                   tabs: const [
-                    Tab(text: 'Anime'),
-                    Tab(text: 'Donghua'),
+                    Tab(text: 'Ongoing'),
+                    Tab(text: 'Completed'),
+                    Tab(text: 'Movie'),
                   ],
                 ),
                 // Tab Views
                 Expanded(
                   child: Consumer<LocalDataProvider>(
                     builder: (context, localData, child) {
+                      // Combine all bookmarks
+                      final allBookmarks = [
+                        ...localData.animeBookmarks,
+                        ...localData.donghuaBookmarks,
+                      ];
+
+                      // Remove duplicates if any (based on ID or URL)
+                      final uniqueBookmarks = <int, Show>{};
+                      for (var s in allBookmarks) {
+                        uniqueBookmarks[s.id] = s;
+                      }
+                      final List<Show> shows = uniqueBookmarks.values.toList();
+
+                      // Filter logic
+                      final ongoing = shows.where((s) =>
+                        s.type.toLowerCase() != 'movie' &&
+                        !s.status.toLowerCase().contains('completed') &&
+                        !s.status.toLowerCase().contains('tamat')
+                      ).toList();
+
+                      final completed = shows.where((s) =>
+                        s.type.toLowerCase() != 'movie' &&
+                        (s.status.toLowerCase().contains('completed') || s.status.toLowerCase().contains('tamat'))
+                      ).toList();
+
+                      final movies = shows.where((s) => s.type.toLowerCase().contains('movie')).toList();
+
                       return TabBarView(
                         controller: _tabController,
                         children: [
-                          _buildListItems(localData.animeBookmarks),
-                          _buildListItems(localData.donghuaBookmarks),
+                          _buildListItems(ongoing),
+                          _buildListItems(completed),
+                          _buildListItems(movies),
                         ],
                       );
                     },
@@ -106,7 +136,7 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
       builder: (context) {
         if (shows.isEmpty) {
           return Center(
-            child: Text('No bookmarks yet.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+            child: Text('No bookmarks in this category.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
           );
         }
 
@@ -128,76 +158,100 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
   Widget _buildListItem(Show show) {
     return Builder(
       builder: (context) {
-        return GlassCard(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 70, height: 90,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: show.coverImageUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: show.coverImageUrl!,
-                          width: 70,
-                          height: 90,
-                          fit: BoxFit.cover,
-                          httpHeaders: const {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                            'Referer': 'https://ww1.anoboy.boo/',
-                          },
-                          placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
-                          errorWidget: (context, url, error) => Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
-                        )
-                      : Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
+        return InkWell(
+          onTap: () {
+            // Navigate to VideoPlayerScreen which acts as Details Screen
+            // Pass episodeNumber 1 as default, but pointing to Show URL
+            // The scraping logic will detect Show URL and load full episode list
+            final episode = Episode(
+              id: show.id,
+              showId: show.id,
+              episodeNumber: 1, // Default, will be ignored if Show URL logic kicks in
+              title: show.title,
+              videoUrl: '',
+              originalUrl: show.originalUrl,
+              show: show,
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => VideoPlayerScreen(episode: episode)),
+            );
+          },
+          child: GlassCard(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 70, height: 90,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: show.coverImageUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: show.coverImageUrl!,
+                            width: 70,
+                            height: 90,
+                            fit: BoxFit.cover,
+                            httpHeaders: const {
+                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            },
+                            placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
+                            errorWidget: (context, url, error) => Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
+                          )
+                        : Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(show.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                      const SizedBox(height: 4),
+                      Text(show.type.toUpperCase(), style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
+                      if (show.status.isNotEmpty) ...[
+                         const SizedBox(height: 2),
+                         Text(show.status, style: TextStyle(fontSize: 11, color: Theme.of(context).primaryColor)),
+                      ]
+                    ],
+                  ),
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(show.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color)),
-                    const SizedBox(height: 4),
-                    Text(show.type.toUpperCase(), style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
+                    IconButton(
+                      onPressed: () {
+                        // Play button also does the same navigation
+                        final episode = Episode(
+                          id: show.id,
+                          showId: show.id,
+                          episodeNumber: 1,
+                          title: show.title,
+                          videoUrl: '',
+                          originalUrl: show.originalUrl,
+                          show: show,
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => VideoPlayerScreen(episode: episode)),
+                        );
+                      },
+                      icon: const Icon(Boxicons.bx_play_circle, color: AppColors.accent, size: 28),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Provider.of<LocalDataProvider>(context, listen: false).toggleBookmark(show);
+                      },
+                      icon: Icon(Boxicons.bx_x, color: Theme.of(context).iconTheme.color, size: 24),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ],
-                ),
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      final episode = Episode(
-                        id: show.id,
-                        showId: show.id,
-                        episodeNumber: 1,
-                        title: show.title,
-                        videoUrl: '',
-                        originalUrl: show.originalUrl,
-                        show: show,
-                      );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => VideoPlayerScreen(episode: episode)),
-                      );
-                    },
-                    icon: const Icon(Boxicons.bx_play_circle, color: AppColors.accent, size: 28),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      Provider.of<LocalDataProvider>(context, listen: false).toggleBookmark(show);
-                    },
-                    icon: Icon(Boxicons.bx_x, color: Theme.of(context).iconTheme.color, size: 24),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              )
-            ],
+                )
+              ],
+            ),
           ),
         );
       }

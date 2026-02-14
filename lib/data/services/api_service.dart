@@ -13,13 +13,13 @@ class ApiService {
   // Endpoint: GET /episodes/recent
   Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime', int page = 1}) async {
     if (type == 'anime') {
-      return await _scrapingService.getAnoboyRecentEpisodes(page: page);
+      return await _scrapingService.getSamehadakuLatestEpisodes(page: page);
     } else if (type == 'donghua') {
       return await _scrapingService.getAnichinRecentEpisodes(page: page);
     } else {
       // Combined mode
       final results = await Future.wait([
-        _scrapingService.getAnoboyRecentEpisodes(page: page),
+        _scrapingService.getSamehadakuLatestEpisodes(page: page),
         _scrapingService.getAnichinRecentEpisodes(page: page),
       ]);
       final combined = [...results[0], ...results[1]];
@@ -31,20 +31,20 @@ class ApiService {
   // Endpoint: GET /shows/top-rated (Recommendations)
   Future<List<Show>> getTopRatedShows(BuildContext context, {String type = 'combined'}) async {
     if (type == 'anime') {
-      final eps = await _scrapingService.getAnoboyRecentEpisodes();
-      return eps.map((e) => e.show!).toList();
+      // Use Movies for Anime recommendations as requested
+      return await _scrapingService.getSamehadakuMovies();
     } else if (type == 'donghua') {
       return await _scrapingService.getAnichinRecommendations();
     } else {
       // Combined mode
       final results = await Future.wait([
-        _scrapingService.getAnoboyRecentEpisodes(),
+        _scrapingService.getSamehadakuMovies(),
         _scrapingService.getAnichinRecommendations(),
       ]);
-      final anoboyEps = results[0] as List<Episode>;
-      final anichinShows = results[1] as List<Show>;
+      final samehadakuMovies = results[0];
+      final anichinShows = results[1];
       final combined = [
-        ...anoboyEps.map((e) => e.show!),
+        ...samehadakuMovies,
         ...anichinShows
       ];
       combined.shuffle();
@@ -58,20 +58,20 @@ class ApiService {
 
   Future<List<Show>> getPopularShows(BuildContext context, {String type = 'combined'}) async {
     if (type == 'anime') {
-      // Anoboy doesn't have a clear popular section, using recent as placeholder
-      final eps = await _scrapingService.getAnoboyRecentEpisodes();
+      // Samehadaku doesn't have a clear popular section exposed in service yet, using recent as placeholder
+      final eps = await _scrapingService.getSamehadakuLatestEpisodes();
       return eps.map((e) => e.show!).toList();
     } else if (type == 'donghua') {
       return await _scrapingService.getAnichinPopularToday();
     } else {
       final results = await Future.wait([
-        _scrapingService.getAnoboyRecentEpisodes(),
+        _scrapingService.getSamehadakuLatestEpisodes(),
         _scrapingService.getAnichinPopularToday(),
       ]);
-      final anoboyEps = results[0] as List<Episode>;
+      final samehadakuEps = results[0] as List<Episode>;
       final anichinShows = results[1] as List<Show>;
       final combined = [
-        ...anoboyEps.map((e) => e.show!),
+        ...samehadakuEps.map((e) => e.show!),
         ...anichinShows
       ];
       combined.shuffle();
@@ -84,7 +84,7 @@ class ApiService {
     if (query.isEmpty) return [];
 
     final results = await Future.wait([
-      _scrapingService.searchAnoboy(query),
+      _scrapingService.searchSamehadaku(query),
       _scrapingService.searchAnichin(query),
     ]);
 
@@ -92,26 +92,20 @@ class ApiService {
   }
 
   Future<List<Show>> getAnimeList() async {
-    if (_cachedAnimeList.isNotEmpty) return _cachedAnimeList;
-    _cachedAnimeList = await _scrapingService.getAnoboyAnimeList();
-    return _cachedAnimeList;
+    // Samehadaku doesn't have a single-page list API implemented.
+    // Returning empty to force live search or use cached if available.
+    return [];
   }
 
   Future<List<Show>> searchAnimeLocal(String query) async {
-    if (query.isEmpty) return [];
-    if (_cachedAnimeList.isEmpty) {
-      await getAnimeList();
-    }
-
-    final lowerQuery = query.toLowerCase();
-    return _cachedAnimeList.where((show) =>
-      show.title.toLowerCase().contains(lowerQuery)
-    ).toList();
+    // Local search deprecated in favor of live search for Samehadaku
+    // But keeping method signature for compatibility
+    return [];
   }
 
   Future<Episode> getEpisodeDetails(Episode episode) async {
-    if (episode.show?.type == 'anime') {
-      return await _scrapingService.getAnoboyEpisodeDetails(episode);
+    if (episode.show?.type == 'anime' || (episode.originalUrl?.contains('samehadaku') ?? false)) {
+      return await _scrapingService.getSamehadakuEpisodeDetails(episode);
     } else {
       return await _scrapingService.getAnichinEpisodeDetails(episode);
     }

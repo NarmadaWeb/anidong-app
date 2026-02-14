@@ -83,4 +83,36 @@ class Show {
       'episodes': episodes?.map((e) => e.toJson()).toList(),
     };
   }
+
+  Show copyWith({
+    int? id,
+    String? title,
+    String? synopsis,
+    String? type,
+    String? status,
+    String? coverImageUrl,
+    String? bannerImageUrl,
+    double? rating,
+    int? releaseYear,
+    List<Genre>? genres,
+    DateTime? createdAt,
+    String? originalUrl,
+    List<Episode>? episodes,
+  }) {
+    return Show(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      synopsis: synopsis ?? this.synopsis,
+      type: type ?? this.type,
+      status: status ?? this.status,
+      coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      bannerImageUrl: bannerImageUrl ?? this.bannerImageUrl,
+      rating: rating ?? this.rating,
+      releaseYear: releaseYear ?? this.releaseYear,
+      genres: genres ?? this.genres,
+      createdAt: createdAt ?? this.createdAt,
+      originalUrl: originalUrl ?? this.originalUrl,
+      episodes: episodes ?? this.episodes,
+    );
+  }
 }
