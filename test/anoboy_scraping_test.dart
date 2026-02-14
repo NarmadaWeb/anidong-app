@@ -10,32 +10,34 @@ import 'package:flutter_test/flutter_test.dart';
 class MockHttpOverrides extends HttpOverrides {
   final String? showPageHtml;
   final String? episodePageHtml;
+  final String? searchPageHtml;
 
-  MockHttpOverrides({this.showPageHtml, this.episodePageHtml});
+  MockHttpOverrides({this.showPageHtml, this.episodePageHtml, this.searchPageHtml});
 
   @override
   HttpClient createHttpClient(SecurityContext? context) {
-    return MockHttpClient(showPageHtml: showPageHtml, episodePageHtml: episodePageHtml);
+    return MockHttpClient(showPageHtml: showPageHtml, episodePageHtml: episodePageHtml, searchPageHtml: searchPageHtml);
   }
 }
 
 class MockHttpClient extends Fake implements HttpClient {
   final String? showPageHtml;
   final String? episodePageHtml;
+  final String? searchPageHtml;
 
-  MockHttpClient({this.showPageHtml, this.episodePageHtml});
+  MockHttpClient({this.showPageHtml, this.episodePageHtml, this.searchPageHtml});
 
   @override
   bool autoUncompress = true;
 
   @override
   Future<HttpClientRequest> getUrl(Uri url) async {
-    return MockHttpClientRequest(url, showPageHtml, episodePageHtml);
+    return MockHttpClientRequest(url, showPageHtml, episodePageHtml, searchPageHtml);
   }
 
   @override
   Future<HttpClientRequest> openUrl(String method, Uri url) async {
-     return MockHttpClientRequest(url, showPageHtml, episodePageHtml);
+     return MockHttpClientRequest(url, showPageHtml, episodePageHtml, searchPageHtml);
   }
 
   @override
@@ -46,15 +48,16 @@ class MockHttpClientRequest extends Fake implements HttpClientRequest {
   final Uri url;
   final String? showPageHtml;
   final String? episodePageHtml;
+  final String? searchPageHtml;
 
-  MockHttpClientRequest(this.url, this.showPageHtml, this.episodePageHtml);
+  MockHttpClientRequest(this.url, this.showPageHtml, this.episodePageHtml, this.searchPageHtml);
 
   @override
   HttpHeaders get headers => MockHttpHeaders();
 
   @override
   Future<HttpClientResponse> close() async {
-    return MockHttpClientResponse(url, showPageHtml, episodePageHtml);
+    return MockHttpClientResponse(url, showPageHtml, episodePageHtml, searchPageHtml);
   }
 
   @override
@@ -76,12 +79,11 @@ class MockHttpClientRequest extends Fake implements HttpClientRequest {
   void writeln([Object? object = ""]) {}
 
   @override
-  Future<HttpClientResponse> get done => Future.value(MockHttpClientResponse(url, showPageHtml, episodePageHtml));
+  Future<HttpClientResponse> get done => Future.value(MockHttpClientResponse(url, showPageHtml, episodePageHtml, searchPageHtml));
 
   @override
   Future<void> flush() async {}
 
-  // Implement missing members that http package might touch
   @override
   bool followRedirects = true;
 
@@ -152,8 +154,9 @@ class MockHttpClientResponse extends Fake implements HttpClientResponse {
   final Uri url;
   final String? showPageHtml;
   final String? episodePageHtml;
+  final String? searchPageHtml;
 
-  MockHttpClientResponse(this.url, this.showPageHtml, this.episodePageHtml);
+  MockHttpClientResponse(this.url, this.showPageHtml, this.episodePageHtml, this.searchPageHtml);
 
   @override
   int get statusCode => 200;
@@ -177,7 +180,7 @@ class MockHttpClientResponse extends Fake implements HttpClientResponse {
   List<RedirectInfo> get redirects => [];
 
   @override
-  bool get persistentConnection => true; // Implemented this
+  bool get persistentConnection => true;
 
   @override
   Stream<S> transform<S>(StreamTransformer<List<int>, S> streamTransformer) {
@@ -192,10 +195,13 @@ class MockHttpClientResponse extends Fake implements HttpClientResponse {
   }
 
   String _getBody() {
-    if (url.toString().contains('hikuidori')) {
+    final urlStr = url.toString();
+    if (urlStr.contains('hikuidori')) {
       return showPageHtml ?? '';
-    } else if (url.toString().contains('hell-mode')) {
+    } else if (urlStr.contains('hell-mode')) {
       return episodePageHtml ?? '';
+    } else if (urlStr.contains('?s=')) {
+      return searchPageHtml ?? '';
     }
     return '';
   }
@@ -239,10 +245,32 @@ void main() {
       </html>
     ''';
 
+    const searchPageHtml = '''
+      <html>
+        <body>
+           <div class="home_index">
+              <a href="https://ww1.anoboy.boo/2026/02/naruto-the-last/" title="The Last: Naruto the Movie" rel="bookmark">
+                 <img src="https://ww1.anoboy.boo/img/upload/01as-The Last Naruto the Movie.jpg" />
+                 <h3>The Last: Naruto the Movie</h3>
+              </a>
+              <a href="https://ww1.anoboy.boo/2026/02/naruto-episode-1/" title="Naruto Episode 1" rel="bookmark">
+                 <img data-original="https://example.com/naruto.jpg" />
+                 <h3>Naruto Episode 1</h3>
+              </a>
+              <a href="https://ww1.anoboy.boo/2026/02/naruto-no-img/" title="Naruto No Img" rel="bookmark">
+                 <!-- No img -->
+                 <h3>Naruto No Img</h3>
+              </a>
+           </div>
+        </body>
+      </html>
+    ''';
+
     setUp(() {
       HttpOverrides.global = MockHttpOverrides(
         showPageHtml: showPageHtml,
         episodePageHtml: episodePageHtml,
+        searchPageHtml: searchPageHtml,
       );
       service = ScrapingService();
     });
@@ -263,16 +291,13 @@ void main() {
 
       final result = await service.getAnoboyEpisodeDetails(episode);
 
-      // Verify episodes were parsed
       expect(result.show, isNotNull);
       expect(result.show!.episodes, isNotNull);
-      // The logic sorts episodes.
       expect(result.show!.episodes!.length, 2);
       expect(result.show!.episodes!.map((e) => e.episodeNumber).toList(), containsAll([3, 4]));
     });
 
     test('getAnoboyEpisodeDetails should extract episode number from Title if input is 0', () async {
-      // Input episode has 0
       final episode = Episode(
         id: 2,
         showId: 200,
@@ -284,11 +309,31 @@ void main() {
 
       final result = await service.getAnoboyEpisodeDetails(episode);
 
-      // Verify extracted number
       expect(result.episodeNumber, 6);
-
-      // Verify Prev link
       expect(result.prevEpisodeUrl, 'https://ww1.anoboy.boo/2026/02/hell-mode-yarikomizuki-no-gamer-episode-5/');
+    });
+
+    test('searchAnoboy should extract thumbnails and ignore items without images if required (logic dependent)', () async {
+      // The current logic adds an item even if image is empty?
+      // "if (title.isNotEmpty && url.isNotEmpty)" -> yes.
+      // But let's check what we get.
+
+      final results = await service.searchAnoboy('naruto');
+
+      expect(results.length, 3); // Based on the mock HTML above (3 items)
+
+      // Item 1: Standard src with spaces
+      expect(results[0].title, 'The Last: Naruto the Movie');
+      // Should encode spaces
+      expect(results[0].coverImageUrl, 'https://ww1.anoboy.boo/img/upload/01as-The%20Last%20Naruto%20the%20Movie.jpg');
+
+      // Item 2: data-original
+      expect(results[1].title, 'Naruto'); // "Naruto Episode 1" split
+      expect(results[1].coverImageUrl, 'https://example.com/naruto.jpg');
+
+      // Item 3: No img
+      expect(results[2].title, 'Naruto No Img');
+      expect(results[2].coverImageUrl, isEmpty);
     });
   });
 }
