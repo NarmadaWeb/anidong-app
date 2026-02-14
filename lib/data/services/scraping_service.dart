@@ -707,43 +707,19 @@ class ScrapingService {
       iframeElement ??= document.querySelector('iframe');
 
       String? primaryIframe = iframeElement?.attributes['src'];
+      if (primaryIframe != null && primaryIframe.isNotEmpty) {
+        videoServers.add({'name': 'Primary Server', 'url': primaryIframe});
+      }
 
       final serverElements = document.querySelectorAll('.mirror option');
       if (serverElements.isNotEmpty) {
+        int serverCount = 1;
         for (var opt in serverElements) {
           final url = opt.attributes['value'];
-          final name = opt.text.trim();
-
           if (url != null && url.isNotEmpty) {
-             // Filter out VIP servers
-             if (name.toLowerCase().contains('vip')) continue;
-
-             videoServers.add({'name': name, 'url': url});
+             videoServers.add({'name': 'Server $serverCount', 'url': url});
+             serverCount++;
           }
-        }
-
-        // Sort servers by priority: Dailymotion, Rumble, OK.ru, GDrive, then others
-        videoServers.sort((a, b) {
-          final nameA = a['name']!.toLowerCase();
-          final nameB = b['name']!.toLowerCase();
-
-          int getPriority(String name) {
-            if (name.contains('dailymotion')) return 1;
-            if (name.contains('rumble')) return 2;
-            if (name.contains('ok.ru')) return 3;
-            if (name.contains('gdrive')) return 4;
-            return 100; // Others
-          }
-
-          return getPriority(nameA).compareTo(getPriority(nameB));
-        });
-      }
-
-      // Add Primary Iframe only if no safe servers found, as a fallback
-      // or if it's unique and we really need it (but risky if it's VIP)
-      if (videoServers.isEmpty) {
-        if (primaryIframe != null && primaryIframe.isNotEmpty) {
-          videoServers.add({'name': 'Primary Server', 'url': primaryIframe});
         }
       }
 
