@@ -312,7 +312,7 @@ class ScrapingService {
            if (targetEp.originalUrl != episode.originalUrl) {
               final deepEp = await getSamehadakuEpisodeDetails(targetEp);
               // Attach the full show info
-              final fullShow = updatedShowStruct!.copyWith(episodes: allEpisodes);
+              final fullShow = updatedShowStruct.copyWith(episodes: allEpisodes);
               return deepEp.copyWith(show: fullShow);
            }
         }
@@ -330,7 +330,7 @@ class ScrapingService {
       for (var iframe in iframes) {
          final src = iframe.attributes['src'];
          if (src != null && src.isNotEmpty && !src.contains('facebook') && !src.contains('twitter')) {
-            if (primaryIframe == null) primaryIframe = src;
+            primaryIframe ??= src;
             videoServers.add({
               'name': 'Server ${videoServers.length + 1}',
               'url': src
