@@ -87,7 +87,6 @@ void main() {
 
        var iframeElement = document.querySelector('iframe');
 
-       final serverElements = document.querySelectorAll('.mirror option');
        // ... logic ...
        if (videoServers.isEmpty) {
           String? primaryIframe = iframeElement?.attributes['src'];

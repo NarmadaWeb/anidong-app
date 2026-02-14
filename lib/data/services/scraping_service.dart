@@ -706,6 +706,8 @@ class ScrapingService {
       iframeElement ??= document.querySelector('.video-content iframe');
       iframeElement ??= document.querySelector('iframe');
 
+      String? primaryIframe = iframeElement?.attributes['src'];
+
       final serverElements = document.querySelectorAll('.mirror option');
       if (serverElements.isNotEmpty) {
         for (var opt in serverElements) {
@@ -740,7 +742,6 @@ class ScrapingService {
       // Add Primary Iframe only if no safe servers found, as a fallback
       // or if it's unique and we really need it (but risky if it's VIP)
       if (videoServers.isEmpty) {
-        String? primaryIframe = iframeElement?.attributes['src'];
         if (primaryIframe != null && primaryIframe.isNotEmpty) {
           videoServers.add({'name': 'Primary Server', 'url': primaryIframe});
         }
