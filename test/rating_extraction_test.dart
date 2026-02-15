@@ -3,6 +3,50 @@ import 'package:html/parser.dart';
 
 void main() {
   group('Rating Extraction Tests', () {
+    test('Anoboy: Extracts score from #score', () {
+      const html = '''
+      <table>
+        <tbody>
+          <tr>
+            <th scope="row">Genre</th>
+            <td id="genre">Adventure, Drama, Fantasy, Romance</td>
+          </tr>
+          <tr>
+            <th scope="row">Score</th>
+            <td id="score">6.9</td>
+          </tr>
+        </tbody>
+      </table>
+      ''';
+      final document = parse(html);
+
+      final scoreElement = document.querySelector('#score');
+      final ratingText = scoreElement?.text.trim();
+      final rating = double.tryParse(ratingText ?? '');
+
+      expect(rating, 6.9);
+    });
+
+    test('Anoboy: Returns null if #score is missing', () {
+      const html = '''
+      <table>
+        <tbody>
+          <tr>
+            <th scope="row">Genre</th>
+            <td id="genre">Adventure, Drama, Fantasy, Romance</td>
+          </tr>
+        </tbody>
+      </table>
+      ''';
+      final document = parse(html);
+
+      final scoreElement = document.querySelector('#score');
+      final ratingText = scoreElement?.text.trim();
+      final rating = double.tryParse(ratingText ?? '');
+
+      expect(rating, isNull);
+    });
+
     test('Anichin: Extracts rating from .rating strong', () {
       const html = '''
       <div class="rating">
