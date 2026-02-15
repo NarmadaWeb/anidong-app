@@ -37,6 +37,42 @@ class Episode {
     this.nextEpisodeUrl,
   });
 
+  Episode copyWith({
+    int? id,
+    int? showId,
+    int? episodeNumber,
+    String? title,
+    String? videoUrl,
+    String? iframeUrl,
+    String? originalUrl,
+    List<Map<String, String>>? downloadLinks,
+    List<Map<String, String>>? videoServers,
+    String? thumbnailUrl,
+    int? durationMinute,
+    DateTime? releaseDate,
+    Show? show,
+    String? prevEpisodeUrl,
+    String? nextEpisodeUrl,
+  }) {
+    return Episode(
+      id: id ?? this.id,
+      showId: showId ?? this.showId,
+      episodeNumber: episodeNumber ?? this.episodeNumber,
+      title: title ?? this.title,
+      videoUrl: videoUrl ?? this.videoUrl,
+      iframeUrl: iframeUrl ?? this.iframeUrl,
+      originalUrl: originalUrl ?? this.originalUrl,
+      downloadLinks: downloadLinks ?? this.downloadLinks,
+      videoServers: videoServers ?? this.videoServers,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      durationMinute: durationMinute ?? this.durationMinute,
+      releaseDate: releaseDate ?? this.releaseDate,
+      show: show ?? this.show,
+      prevEpisodeUrl: prevEpisodeUrl ?? this.prevEpisodeUrl,
+      nextEpisodeUrl: nextEpisodeUrl ?? this.nextEpisodeUrl,
+    );
+  }
+
   factory Episode.fromJson(Map<String, dynamic> json) {
     return Episode(
       id: json['id'] ?? 0,
