@@ -31,6 +31,11 @@ class ApiService {
   // Endpoint: GET /shows/top-rated (Recommendations)
   Future<List<Show>> getTopRatedShows(BuildContext context, {String type = 'combined'}) async {
     if (type == 'anime') {
+      // Anoboy doesn't have a specific "Top Rated" API easily accessible,
+      // so we might use recent episodes as a fallback or if there was a specific method like getAnoboyPopular.
+      // For now, let's just fetch recent episodes and map to shows to ensure content.
+      // Or we can leave it empty if strictly "Top Rated" is required but unavailable.
+      // Better fallback: Use recent episodes to populate the list.
       final eps = await _scrapingService.getAnoboyRecentEpisodes();
       return eps.map((e) => e.show!).toList();
     } else if (type == 'donghua') {

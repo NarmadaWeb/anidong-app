@@ -25,8 +25,9 @@ class ScrapingService {
     if (thumb.startsWith('//')) {
       return 'https:$thumb';
     }
+    // For Anoboy, relative paths often need the base URL
     if (thumb.isNotEmpty && !thumb.startsWith('http')) {
-      return '$anoboyBaseUrl$thumb';
+       return '$anoboyBaseUrl$thumb';
     }
     return thumb;
   }
@@ -87,355 +88,6 @@ class ScrapingService {
     }
   }
 
-<<<<<<< HEAD
-  Future<List<Show>> getSamehadakuMovies() async {
-    try {
-      // Try specifically scraping the movie category
-      String url = '$samehadakuBaseUrl/anime-movie/';
-      var response = await http.get(
-        Uri.parse(url),
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-      );
-
-      // Fallback if 404 or redirect to home
-      if (response.statusCode != 200) {
-         url = '$samehadakuBaseUrl/movie/'; // Alternative slug
-         response = await http.get(Uri.parse(url));
-      }
-
-      if (response.statusCode != 200) {
-        // Ultimate fallback: Scrape home page and filter?
-        // Or just return nothing.
-        return [];
-      }
-
-      final document = parse(response.body);
-      final List<Show> shows = [];
-
-      // Selectors for lists usually .animpost or .animposx
-      var elements = document.querySelectorAll('.animpost');
-      if (elements.isEmpty) elements = document.querySelectorAll('.animposx');
-
-      for (var element in elements) {
-         final linkEl = element.querySelector('a');
-         final imgEl = element.querySelector('img');
-         final titleEl = element.querySelector('.title') ?? element.querySelector('h4');
-         final typeEl = element.querySelector('.type');
-
-         if (linkEl != null && titleEl != null) {
-            final title = titleEl.text.trim();
-            final href = linkEl.attributes['href'] ?? '';
-            final thumb = _extractImageUrl(imgEl);
-            final type = typeEl?.text.trim().toLowerCase() ?? 'movie';
-
-            // Ensure it's likely a movie
-            if (type.contains('tv') || type.contains('series')) continue;
-            if (!type.contains('movie') && !url.contains('movie')) continue;
-
-            shows.add(Show(
-              id: href.hashCode,
-              title: title,
-              type: 'movie', // Explicitly movie
-              status: 'completed', // Movies are usually completed
-              genres: [],
-              coverImageUrl: thumb,
-              originalUrl: href,
-            ));
-         }
-      }
-      return shows;
-
-    } catch (e) {
-      debugPrint('Error scraping Samehadaku Movies: $e');
-      return [];
-    }
-  }
-
-  Future<List<Show>> searchSamehadaku(String query) async {
-    try {
-      final url = '$samehadakuBaseUrl/?s=${Uri.encodeComponent(query)}';
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-      );
-      if (response.statusCode != 200) return [];
-
-      final document = parse(response.body);
-      final List<Show> shows = [];
-
-      var elements = document.querySelectorAll('.animpost');
-      if (elements.isEmpty) elements = document.querySelectorAll('.animposx');
-
-      for (var element in elements) {
-         final linkEl = element.querySelector('a');
-         final imgEl = element.querySelector('img');
-         final titleEl = element.querySelector('.title') ?? element.querySelector('h4');
-         final typeEl = element.querySelector('.type');
-         final scoreEl = element.querySelector('.score');
-
-         if (linkEl != null && titleEl != null) {
-            final title = titleEl.text.trim();
-            final href = linkEl.attributes['href'] ?? '';
-            final thumb = _extractImageUrl(imgEl);
-            String typeRaw = typeEl?.text.trim().toLowerCase() ?? 'anime';
-            String type = 'anime';
-            if (typeRaw.contains('movie')) type = 'movie';
-
-            String status = 'ongoing'; // Default
-            // Status sometimes in .data .type or similar
-            // We can try to parse from text or just default.
-            // Samehadaku usually has status in details, not always on card.
-
-            shows.add(Show(
-              id: href.hashCode,
-              title: title,
-              type: type,
-              status: status,
-              rating: double.tryParse(scoreEl?.text.trim() ?? ''),
-              genres: [],
-              coverImageUrl: thumb,
-              originalUrl: href,
-            ));
-         }
-      }
-      return shows;
-    } catch (e) {
-      debugPrint('Error searching Samehadaku: $e');
-      return [];
-    }
-  }
-
-  Future<Episode> getSamehadakuEpisodeDetails(Episode episode) async {
-    if (episode.originalUrl == null || episode.originalUrl!.isEmpty) return episode;
-
-    try {
-      final response = await http.get(
-        Uri.parse(episode.originalUrl!),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-      );
-      if (response.statusCode != 200) return episode;
-
-      final document = parse(response.body);
-
-      // Detect if this is a Show Page (Info Anime) or Episode Page
-      // Show page usually has .infoanime
-      final isShowPage = document.querySelector('.infoanime') != null || episode.originalUrl!.contains('/anime/');
-
-      List<Episode> allEpisodes = [];
-      String? showUrl = episode.originalUrl;
-      Show? updatedShowStruct;
-
-      if (isShowPage) {
-        // Parse Show Details & Episode List
-        final infoBox = document.querySelector('.infoanime');
-        String title = infoBox?.querySelector('.entry-title')?.text.trim() ?? episode.title ?? 'Unknown';
-        String thumb = _extractImageUrl(infoBox?.querySelector('.thumb img'));
-        String synopsis = infoBox?.querySelector('.desc')?.text.trim() ?? '';
-
-        // Parse Episodes
-        final epList = document.querySelectorAll('.lstepsiode.listeps ul li');
-        for (var li in epList) {
-           final a = li.querySelector('.epsright .eps a');
-           // final date = li.querySelector('.epsleft .date')?.text.trim();
-           final titleEp = li.querySelector('.epsleft .lchx a')?.text.trim(); // "Title Episode X"
-
-           if (a != null) {
-             final href = a.attributes['href'] ?? '';
-             final epNumText = a.text.trim(); // "12" or "Episode 12"
-             int epNum = int.tryParse(epNumText) ?? int.tryParse(epNumText.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-
-             allEpisodes.add(Episode(
-               id: href.hashCode,
-               showId: episode.showId,
-               episodeNumber: epNum,
-               title: titleEp ?? 'Episode $epNum',
-               videoUrl: '',
-               originalUrl: href,
-               show: null, // Will link later
-             ));
-           }
-        }
-
-        // Sort episodes (usually they are descending)
-        allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
-
-        updatedShowStruct = Show(
-           id: episode.showId,
-           title: title,
-           synopsis: synopsis,
-           type: 'anime', // Or parse from genre
-           status: 'ongoing', // Need to parse status field if available
-           genres: [],
-           coverImageUrl: thumb,
-           originalUrl: showUrl,
-           episodes: allEpisodes,
-        );
-
-        // If we are on Show Page, we need to return an Episode to play/display.
-        // We pick the first one (lowest number) or the specific requested number?
-        // Since input is "Episode", if it was a Show bookmark, epNum might be 1.
-
-        Episode? targetEp;
-        if (allEpisodes.isNotEmpty) {
-           targetEp = allEpisodes.firstWhere((e) => e.episodeNumber == episode.episodeNumber, orElse: () => allEpisodes.first);
-
-           // If we are just resolving the Show Details but need to play content, we must fetch the episode details of the target episode.
-           // Recurse!
-           if (targetEp.originalUrl != episode.originalUrl) {
-              final deepEp = await getSamehadakuEpisodeDetails(targetEp);
-              // Attach the full show info
-              final fullShow = updatedShowStruct!.copyWith(episodes: allEpisodes);
-              return deepEp.copyWith(show: fullShow);
-           }
-        }
-      }
-
-      // --- Episode Page Logic ---
-
-      // Parse Video Player (iframe)
-      final List<Map<String, String>> videoServers = [];
-      String? primaryIframe;
-
-      // Selectors based on scraping repo
-      // Typically iframes are directly embedded or in tabs
-      final iframes = document.querySelectorAll('iframe');
-      for (var iframe in iframes) {
-         final src = iframe.attributes['src'];
-         if (src != null && src.isNotEmpty && !src.contains('facebook') && !src.contains('twitter')) {
-            if (primaryIframe == null) primaryIframe = src;
-            videoServers.add({
-              'name': 'Server ${videoServers.length + 1}',
-              'url': src
-            });
-         }
-      }
-
-      // Download Links
-      final List<Map<String, String>> downloadLinks = [];
-      final dlSections = document.querySelectorAll('.download-eps ul li');
-      for (var li in dlSections) {
-         final quality = li.querySelector('strong')?.text.trim() ?? 'Unknown';
-         final links = li.querySelectorAll('a');
-         for (var link in links) {
-            final href = link.attributes['href'];
-            final host = link.text.trim();
-            if (href != null && href.isNotEmpty) {
-               downloadLinks.add({
-                 'name': '$quality - $host',
-                 'url': href
-               });
-            }
-         }
-      }
-
-      // Prev/Next Links
-      String? prevUrl;
-      String? nextUrl;
-
-      // Usually .naveps or similar
-      // final navs = document.querySelectorAll('.naveps a');
-      // Or check specific classes
-      for (var a in document.querySelectorAll('a[rel="prev"]')) {
-         prevUrl = a.attributes['href'];
-      }
-      for (var a in document.querySelectorAll('a[rel="next"]')) {
-         nextUrl = a.attributes['href'];
-      }
-
-      // If we are on Episode Page, we might want to populate show.episodes if missing
-      // We can try to find "See all episodes" link
-      if (allEpisodes.isEmpty) {
-         final breadcrumbs = document.querySelectorAll('.breadcrumbs a, .breadcrumb a');
-         for (var b in breadcrumbs) {
-            final href = b.attributes['href'];
-            if (href != null && href.contains('/anime/')) {
-               showUrl = href;
-               // We could fetch showUrl here to populate episodes list if critical
-               // For now, let's just link it.
-               break;
-            }
-         }
-
-         // If we have showUrl and list is empty, fetch it?
-         // User wants "Show all episodes". So yes, we should fetch it.
-         if (showUrl != null && showUrl != episode.originalUrl) {
-             try {
-                final showResp = await http.get(Uri.parse(showUrl));
-                if (showResp.statusCode == 200) {
-                   final showDoc = parse(showResp.body);
-                   final epList = showDoc.querySelectorAll('.lstepsiode.listeps ul li');
-                   for (var li in epList) {
-                       final a = li.querySelector('.epsright .eps a');
-                       final titleEp = li.querySelector('.epsleft .lchx a')?.text.trim();
-                       if (a != null) {
-                           final href = a.attributes['href'] ?? '';
-                           final epNumText = a.text.trim();
-                           int epNum = int.tryParse(epNumText) ?? int.tryParse(epNumText.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-                           allEpisodes.add(Episode(
-                               id: href.hashCode,
-                               showId: episode.showId,
-                               episodeNumber: epNum,
-                               title: titleEp ?? 'Episode $epNum',
-                               videoUrl: '',
-                               originalUrl: href,
-                           ));
-                       }
-                   }
-                   allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
-                }
-             } catch(e) { /* ignore */ }
-         }
-      }
-
-      final currentShow = episode.show ?? Show(
-        id: episode.showId,
-        title: episode.title ?? 'Anime',
-        type: 'anime',
-        status: 'ongoing',
-        genres: [],
-        originalUrl: showUrl,
-      );
-
-      final updatedShow = Show(
-         id: currentShow.id,
-         title: currentShow.title,
-         type: currentShow.type,
-         status: currentShow.status,
-         genres: currentShow.genres,
-         originalUrl: showUrl ?? currentShow.originalUrl,
-         coverImageUrl: currentShow.coverImageUrl,
-         episodes: allEpisodes.isNotEmpty ? allEpisodes : currentShow.episodes,
-      );
-
-      return Episode(
-        id: episode.id,
-        showId: episode.showId,
-        episodeNumber: episode.episodeNumber, // Should be correct from input or extracted
-        title: episode.title,
-        videoUrl: episode.videoUrl,
-        iframeUrl: videoServers.isNotEmpty ? videoServers[0]['url'] : primaryIframe,
-        videoServers: videoServers,
-        originalUrl: episode.originalUrl,
-        downloadLinks: downloadLinks,
-        thumbnailUrl: episode.thumbnailUrl,
-        show: updatedShow,
-        prevEpisodeUrl: prevUrl,
-        nextEpisodeUrl: nextUrl,
-      );
-
-    } catch (e) {
-      debugPrint('Error getting Samehadaku details: $e');
-      return episode;
-    }
-  }
-
-  // --- Anichin Methods (Preserved) ---
-=======
->>>>>>> parent of 5c62105 (Merge pull request #45 from NarmadaWeb/feat-samehadaku-scraping-6896598997330523008)
   Future<List<Episode>> getAnichinRecentEpisodes({int page = 1}) async {
     try {
       final url = page > 1 ? '$anichinBaseUrl/page/$page/' : anichinBaseUrl;
@@ -686,7 +338,6 @@ class ScrapingService {
                     episodes: allEpisodes,
                 );
 
-                // Manually copyWith since Episode model might not have it
                 return Episode(
                   id: detailedEp.id,
                   showId: detailedEp.showId,
@@ -839,14 +490,9 @@ class ScrapingService {
       }
 
       // Fallback/Override with list-based navigation
-      // Ensure we use the possibly corrected currentEpisodeNumber
       final currentIdx = allEpisodes.indexWhere((e) => e.episodeNumber == currentEpisodeNumber);
       if (currentIdx != -1) {
-        // Since the list is sorted by Episode Number (ascending),
-        // idx-1 is PREVIOUS episode (smaller number) if we are at idx > 0
         if (currentIdx > 0) prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
-
-        // idx+1 is NEXT episode (larger number)
         if (currentIdx < allEpisodes.length - 1) nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
       }
 
@@ -866,7 +512,7 @@ class ScrapingService {
        return Episode(
         id: episode.id,
         showId: episode.showId,
-        episodeNumber: currentEpisodeNumber, // Use the extracted number
+        episodeNumber: currentEpisodeNumber,
         title: episode.title,
         videoUrl: episode.videoUrl,
         iframeUrl: videoServers.isNotEmpty ? videoServers[0]['url'] : primaryIframe,
@@ -888,10 +534,6 @@ class ScrapingService {
   List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId) {
     final List<Episode> eps = [];
 
-    // Strategy 1: Look for "Episode List" section specifically?
-    // Usually contained in entry-content.
-    // We broaden the search to all 'a' tags inside valid content containers
-    // because rel="bookmark" is often missing on Show Pages.
     var contentContainers = document.querySelectorAll('.entry-content, .post-body, .episodelist, #content');
 
     List<Element> epLinks = [];
@@ -910,12 +552,9 @@ class ScrapingService {
       final url = link.attributes['href'] ?? '';
 
       if (url.isEmpty || url.contains('#') || url.contains('facebook') || url.contains('twitter') || url.contains('whatsapp')) continue;
-      if (!url.contains('anoboy')) continue; // Strict domain check for safety
+      if (!url.contains('anoboy')) continue;
       if (seenUrls.contains(url)) continue;
 
-      // Filter: Must look like an episode link
-      // e.g. "Title Episode 1", "Vol 1", etc.
-      // Anoboy consistently uses "Episode X" in text or title.
       if (title.contains('Episode') || title.contains('Ep ')) {
         int epNum = 0;
         final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
@@ -923,7 +562,6 @@ class ScrapingService {
         if (epMatch != null) {
           epNum = int.tryParse(epMatch.group(1)!) ?? 0;
 
-          // Generate ID using combination to ensure uniqueness
           final fullUrl = url.startsWith('http') ? url : '$anoboyBaseUrl$url';
           final uniqueId = (fullUrl + title + epNum.toString()).hashCode;
 
@@ -952,7 +590,6 @@ class ScrapingService {
 
       final document = parse(response.body);
 
-      // Extract real episode number if it was 0 (loaded from URL)
       int realEpNum = episode.episodeNumber;
       if (realEpNum == 0) {
         final titleText = document.querySelector('.entry-title')?.text ??
@@ -966,13 +603,10 @@ class ScrapingService {
         }
       }
 
-      // Check if this is a Show Page (no video player, has episode list)
-      // Enhanced check
       final hasList = document.querySelector('.eplister') != null || document.querySelector('.lstep') != null || document.querySelector('.episodelist') != null;
       final isShowPage = hasList && document.querySelector('iframe') == null;
 
       if (isShowPage) {
-         // Parse episodes
          List<Episode> allEpisodes = [];
          var epElements = document.querySelectorAll('.eplister li a');
          if (epElements.isEmpty) epElements = document.querySelectorAll('.lstep li a');
@@ -996,12 +630,10 @@ class ScrapingService {
           }
 
           if (allEpisodes.isNotEmpty) {
-             // Pick the target episode (matching number or first)
              final targetEp = allEpisodes.firstWhere(
                 (e) => e.episodeNumber == episode.episodeNumber,
                 orElse: () => allEpisodes.first,
              );
-             // Fetch details for this target episode
              final detailedEp = await getAnichinEpisodeDetails(targetEp);
 
              final fullShow = detailedEp.show ?? Show(id: episode.showId, title: episode.title ?? 'Donghua', type: 'donghua', status: 'ongoing', genres: []);
@@ -1035,7 +667,6 @@ class ScrapingService {
           }
       }
 
-      // Extract rating from meta or strong tag
       double? extractedRating;
       final metaContent = document.querySelector('meta[itemprop="ratingValue"]')?.attributes['content'];
       if (metaContent != null) {
@@ -1093,7 +724,6 @@ class ScrapingService {
       String? prevUrl;
       String? nextUrl;
 
-      // Better scraping for nav links
       final navLinks = document.querySelectorAll('.lm .nav-links a, .naveps a, a.btn');
       for (var a in navLinks) {
          final text = a.text.trim().toLowerCase();
@@ -1106,7 +736,6 @@ class ScrapingService {
            nextUrl = href;
          }
       }
-      // Fallback to all links if specific containers not found
       if (prevUrl == null && nextUrl == null) {
         for (var a in dlElements) {
            final text = a.text.trim().toLowerCase();
@@ -1122,14 +751,13 @@ class ScrapingService {
       List<Episode> allEpisodes = [];
       String? showUrl = document.querySelector('.breadcrumb a:nth-child(2)')?.attributes['href'];
 
-      // Fallback
       if (showUrl == null) {
          final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
          for (var b in bcs) {
             final href = b.attributes['href'];
             if (href != null && (href.contains('/donghua/') || href.contains('/anime/'))) {
                showUrl = href;
-               break; // Usually the show link is the parent
+               break;
             }
          }
       }
@@ -1254,10 +882,6 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      // Robust selector strategy:
-      // 1. Try finding links in the specific "A-Z" container if identifiable (e.g., #ada or .entry-content)
-      // 2. Fallback to all bookmark links which usually denote posts/anime.
-
       var content = document.querySelector('#ada') ?? document.querySelector('.entry-content') ?? document.querySelector('.post-body');
 
       final links = content != null ? content.querySelectorAll('a') : document.querySelectorAll('a[rel="bookmark"]');
@@ -1266,18 +890,14 @@ class ScrapingService {
         final title = link.attributes['title'] ?? link.text.trim();
         final url = link.attributes['href'] ?? '';
 
-        // Basic validation
         if (title.isEmpty || title.length < 2) continue;
-        if (!url.contains('anoboy')) continue; // Ensure it's an internal link
+        if (!url.contains('anoboy')) continue;
 
-        // Exclude known non-anime sections/pages
         if (url.contains('/page/') || url.contains('wp-json') || url.contains('feed') || url.contains('comment-page')) continue;
-        if (url.endsWith('#') || url.contains('#')) continue; // Skip anchors like #A
+        if (url.endsWith('#') || url.contains('#')) continue;
 
-        // Filter out menu items
         if (['Home', 'Jadwal', 'AnimeList', 'DonghuaList', 'Movie', 'Tokusatsu', 'Live Action', 'Studio Ghibli', 'One Piece', 'Rekomendasi', 'Lapor Eror', 'Advertise'].contains(title)) continue;
 
-        // Dedup based on URL
         if (shows.any((s) => s.originalUrl == url)) continue;
 
         String status = 'ongoing';
@@ -1292,7 +912,7 @@ class ScrapingService {
           status: status,
           genres: [],
           originalUrl: url,
-          coverImageUrl: '', // List usually doesn't have images for all items
+          coverImageUrl: '',
         ));
       }
 
@@ -1359,19 +979,16 @@ class ScrapingService {
       final document = parse(response.body);
       final Map<String, List<Show>> schedule = {};
 
-      // Look for tab-content structure which is common
       final tabContent = document.querySelector('.tab-content');
       if (tabContent != null) {
-        // usually days are in tab panes
         final panes = tabContent.children;
-        // Need to map pane index to day name. Usually tabs are above.
         final tabs = document.querySelectorAll('.nav-tabs li a');
         for (int i=0; i < tabs.length && i < panes.length; i++) {
            final dayName = tabs[i].text.trim();
            final pane = panes[i];
            final shows = <Show>[];
 
-           final items = pane.querySelectorAll('.bs'); // .bs is common item class
+           final items = pane.querySelectorAll('.bs');
            for (var item in items) {
              final title = item.querySelector('.tt')?.text.trim() ?? '';
              final link = item.querySelector('a')?.attributes['href'] ?? '';
@@ -1393,20 +1010,17 @@ class ScrapingService {
         }
       }
 
-      // Fallback: Linear scan for H2/H3 headers
       if (schedule.isEmpty) {
          final days = ['Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu', 'Minggu'];
          final content = document.querySelector('.entry-content') ?? document.body;
          if (content != null) {
             String currentDay = '';
-            // Iterate all elements in content
             for (var element in content.children) {
                final text = element.text.trim();
                if (days.any((d) => text.contains(d) && text.length < 20)) {
                   currentDay = text;
                   schedule[currentDay] = [];
                } else if (currentDay.isNotEmpty && schedule.containsKey(currentDay)) {
-                  // Check if this element contains links or is a link
                   final links = element.localName == 'a' ? [element] : element.querySelectorAll('a');
                   for (var link in links) {
                       final title = link.text.trim();
