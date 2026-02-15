@@ -458,37 +458,9 @@ class ScrapingService {
 
       allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
 
-      String? prevEpisodeUrl;
-      String? nextEpisodeUrl;
-
-      // Enhanced Prev/Next Scrape
-      var navLinks = document.querySelectorAll('.naveps a, .entry-content a, .post-body a');
-      if (navLinks.isEmpty) {
-         navLinks = document.querySelectorAll('a');
-      }
-
-      for (var link in navLinks) {
-         final text = link.text.trim().toLowerCase();
-         final href = link.attributes['href'];
-         if (href == null || href.isEmpty || href == '#') continue;
-
-         // Check for specific keywords first
-         if (text == 'episode sebelumnya' || text == 'prev' || text == 'sebelumnya' || text.contains('<< previous') || text.contains('previous episode')) {
-             prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-         } else if (text == 'episode selanjutnya' || text == 'next' || text == 'selanjutnya' || text.contains('next >>') || text.contains('next episode')) {
-             nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-         } else {
-             // Heuristic: specific episode links in nav area
-             // Often links like "Title Episode X"
-             if (currentEpisodeNumber > 0) {
-                 if (text.contains('episode ${currentEpisodeNumber - 1}')) {
-                     prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-                 } else if (text.contains('episode ${currentEpisodeNumber + 1}')) {
-                     nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-                 }
-             }
-         }
-      }
+      final navResult = findAnoboyNavigationLinks(document, currentEpisodeNumber, episode.title ?? '');
+      String? prevEpisodeUrl = navResult['prev'];
+      String? nextEpisodeUrl = navResult['next'];
 
       // Fallback/Override with list-based navigation
       final currentIdx = allEpisodes.indexWhere((e) => e.episodeNumber == currentEpisodeNumber);
@@ -530,6 +502,57 @@ class ScrapingService {
       debugPrint('Error getting Anoboy details: $e');
       return episode;
     }
+  }
+
+  @visibleForTesting
+  Map<String, String?> findAnoboyNavigationLinks(Document document, int currentEpisodeNumber, String showTitle) {
+    String? prevEpisodeUrl;
+    String? nextEpisodeUrl;
+
+    String cleanTitle = showTitle.toLowerCase();
+    // Remove "episode ..." suffix to get base title for matching
+    final epMatch = RegExp(r'(?:episode|ep)\s+\d+').firstMatch(cleanTitle);
+    if (epMatch != null) {
+      cleanTitle = cleanTitle.substring(0, epMatch.start).trim();
+    }
+
+    // Enhanced Prev/Next Scrape
+    var navLinks = document.querySelectorAll('.naveps a, .entry-content a, .post-body a');
+    if (navLinks.isEmpty) {
+      navLinks = document.querySelectorAll('a');
+    }
+
+    for (var link in navLinks) {
+      final text = link.text.trim().toLowerCase();
+      final href = link.attributes['href'];
+      if (href == null || href.isEmpty || href == '#') continue;
+
+      // Check for specific keywords first
+      if (text == 'episode sebelumnya' || text == 'prev' || text == 'sebelumnya' || text.contains('<< previous') || text.contains('previous episode')) {
+        prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+      } else if (text == 'episode selanjutnya' || text == 'next' || text == 'selanjutnya' || text.contains('next >>') || text.contains('next episode')) {
+        nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+      } else {
+        // Heuristic: specific episode links in nav area
+        // Often links like "Title Episode X"
+        if (currentEpisodeNumber > 0) {
+          final isGenericButton = RegExp(r'^(?:episode|ep)\s+\d+$').hasMatch(text);
+
+          if (text.contains('episode ${currentEpisodeNumber - 1}')) {
+             // Validate context: Must be generic button OR contain show title
+             if (isGenericButton || (cleanTitle.isNotEmpty && text.contains(cleanTitle))) {
+                prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+             }
+          } else if (text.contains('episode ${currentEpisodeNumber + 1}')) {
+             // Validate context
+             if (isGenericButton || (cleanTitle.isNotEmpty && text.contains(cleanTitle))) {
+                nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+             }
+          }
+        }
+      }
+    }
+    return {'prev': prevEpisodeUrl, 'next': nextEpisodeUrl};
   }
 
   List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId) {
