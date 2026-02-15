@@ -688,7 +688,11 @@ class ScrapingService {
                 (e) => e.episodeNumber == episode.episodeNumber,
                 orElse: () => allEpisodes.first,
              );
-             final detailedEp = await getAnichinEpisodeDetails(targetEp);
+
+             Episode detailedEp = targetEp;
+             if (targetEp.originalUrl != episode.originalUrl) {
+                detailedEp = await getAnichinEpisodeDetails(targetEp);
+             }
 
              final fullShow = detailedEp.show ?? Show(id: episode.showId, title: episode.title ?? 'Donghua', type: 'donghua', status: 'ongoing', genres: []);
              final updatedShow = Show(
