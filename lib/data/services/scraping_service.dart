@@ -1,5 +1,6 @@
 // lib/data/services/scraping_service.dart
 
+import 'dart:convert';
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:flutter/foundation.dart';
@@ -599,10 +600,29 @@ class ScrapingService {
     final serverElements = document.querySelectorAll('.mirror option');
     if (serverElements.isNotEmpty) {
       for (var opt in serverElements) {
-        final url = opt.attributes['value'];
+        String? url = opt.attributes['value'];
         final name = opt.text.trim();
+
         if (url != null && url.isNotEmpty) {
-           videoServers.add({'name': name.isNotEmpty ? name : 'Server ${videoServers.length + 1}', 'url': url});
+          // Check for Base64 encoding (Anichin uses this often now)
+          if (url.startsWith('PG')) {
+            try {
+              final decoded = utf8.decode(base64.decode(url));
+              // The decoded string is typically an HTML fragment like <iframe src="..."></iframe>
+              final decodedDoc = parse(decoded);
+              final src = decodedDoc.querySelector('iframe')?.attributes['src'];
+              if (src != null) {
+                url = src;
+              }
+            } catch (e) {
+              debugPrint('Error decoding Anichin server: $e');
+            }
+          }
+
+          videoServers.add({
+            'name': name.isNotEmpty ? name : 'Server ${videoServers.length + 1}',
+            'url': url!
+          });
         }
       }
     }
