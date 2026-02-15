@@ -15,7 +15,7 @@ import 'package:anidong/screens/explore/explore_screen.dart';
 import 'package:anidong/screens/history/history_screen.dart';
 import 'package:anidong/screens/home/home_screen.dart';
 import 'package:anidong/screens/my_list/my_list_screen.dart';
-import 'package:anidong/screens/profile/profile_screen.dart';
+import 'package:anidong/screens/scan/scan_screen.dart';
 import 'package:anidong/screens/settings/settings_screen.dart';
 import 'package:anidong/screens/trending/trending_screen.dart';
 
@@ -39,10 +39,9 @@ class _MainScreenState extends State<MainScreen> {
       const TrendingScreen(), // 1
       const HistoryScreen(),  // 2
       const ScheduleScreen(), // 3
-      const ProfileScreen(),  // 4
+      const SettingsScreen(), // 4
       const ExploreScreen(),  // 5
       const MyListScreen(),   // 6
-      const SettingsScreen(), // 7
     ];
   }
 
@@ -68,7 +67,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final Set<int> noAppBarPages = {
-      1, 2, 3, 4, 7
+      1, 2, 3, 4
     };
 
     return Scaffold(
@@ -124,6 +123,17 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(
         index: _currentPageIndex,
         children: _pages,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ScanScreen()),
+          );
+        },
+        backgroundColor: AppColors.accent,
+        elevation: 4,
+        child: const Icon(Boxicons.bx_qr_scan, color: Colors.white, size: 28),
       ),
       bottomNavigationBar: Container(
         height: 80,
