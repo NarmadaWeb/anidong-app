@@ -98,7 +98,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           },
         ),
       )
-      ..loadRequest(Uri.parse(url));
+      ..loadRequest(
+        Uri.parse(url),
+        headers: {
+          'Referer': 'https://anichin.asia/',
+        },
+      );
   }
 
   void _changeServer(String url) {
