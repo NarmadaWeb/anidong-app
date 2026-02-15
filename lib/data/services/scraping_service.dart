@@ -581,6 +581,60 @@ class ScrapingService {
     return eps;
   }
 
+  @visibleForTesting
+  List<Map<String, String>> extractAnichinServers(Document document) {
+    final List<Map<String, String>> videoServers = [];
+
+    // Default iframe extraction
+    var iframeElement = document.querySelector('iframe[src*="anichin.stream"]');
+    iframeElement ??= document.querySelector('.video-content iframe');
+    iframeElement ??= document.querySelector('iframe');
+
+    String? primaryIframe = iframeElement?.attributes['src'];
+    if (primaryIframe != null && primaryIframe.isNotEmpty) {
+      videoServers.add({'name': 'Primary Server', 'url': primaryIframe});
+    }
+
+    // Mirror extraction
+    final serverElements = document.querySelectorAll('.mirror option');
+    if (serverElements.isNotEmpty) {
+      for (var opt in serverElements) {
+        final url = opt.attributes['value'];
+        final name = opt.text.trim();
+        if (url != null && url.isNotEmpty) {
+           videoServers.add({'name': name.isNotEmpty ? name : 'Server ${videoServers.length + 1}', 'url': url});
+        }
+      }
+    }
+
+    // Priority Sorting Logic
+    videoServers.sort((a, b) {
+      final nameA = a['name']!.toLowerCase();
+      final nameB = b['name']!.toLowerCase();
+
+      int getPriority(String name) {
+        if (name.contains('dailymotion')) return 1;
+        if (name.contains('rumble')) return 2;
+        if (name.contains('ok.ru')) return 3;
+        if (name.contains('gdrive 1')) return 4;
+        if (name.contains('gdrive 2')) return 5;
+        if (name.contains('vip 1')) return 6;
+        return 99;
+      }
+
+      final pA = getPriority(nameA);
+      final pB = getPriority(nameB);
+
+      if (pA != pB) {
+        return pA.compareTo(pB);
+      }
+
+      return 0;
+    });
+
+    return videoServers;
+  }
+
   Future<Episode> getAnichinEpisodeDetails(Episode episode) async {
     if (episode.originalUrl == null || episode.originalUrl!.isEmpty) return episode;
 
@@ -681,27 +735,7 @@ class ScrapingService {
         }
       }
 
-      final List<Map<String, String>> videoServers = [];
-      var iframeElement = document.querySelector('iframe[src*="anichin.stream"]');
-      iframeElement ??= document.querySelector('.video-content iframe');
-      iframeElement ??= document.querySelector('iframe');
-
-      String? primaryIframe = iframeElement?.attributes['src'];
-      if (primaryIframe != null && primaryIframe.isNotEmpty) {
-        videoServers.add({'name': 'Primary Server', 'url': primaryIframe});
-      }
-
-      final serverElements = document.querySelectorAll('.mirror option');
-      if (serverElements.isNotEmpty) {
-        int serverCount = 1;
-        for (var opt in serverElements) {
-          final url = opt.attributes['value'];
-          if (url != null && url.isNotEmpty) {
-             videoServers.add({'name': 'Server $serverCount', 'url': url});
-             serverCount++;
-          }
-        }
-      }
+      final List<Map<String, String>> videoServers = extractAnichinServers(document);
 
       final List<Map<String, String>> downloadLinks = [];
       final dlElements = document.querySelectorAll('a');
@@ -808,7 +842,7 @@ class ScrapingService {
         episodeNumber: realEpNum,
         title: episode.title,
         videoUrl: episode.videoUrl,
-        iframeUrl: videoServers.isNotEmpty ? videoServers[0]['url'] : primaryIframe,
+        iframeUrl: videoServers.isNotEmpty ? videoServers[0]['url'] : null,
         videoServers: videoServers,
         originalUrl: episode.originalUrl,
         downloadLinks: downloadLinks,
