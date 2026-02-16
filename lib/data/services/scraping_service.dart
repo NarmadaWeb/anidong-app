@@ -105,8 +105,26 @@ class ScrapingService {
       final List<Episode> episodes = [];
 
       var latestSection = document.querySelectorAll('.listupd').firstWhere(
-          (e) => e.previousElementSibling?.text.contains('Rilisan Terbaru') ?? false,
-          orElse: () => document.querySelectorAll('.listupd').length > 1 ? document.querySelectorAll('.listupd')[1] : document.querySelector('.listupd')!
+          (e) {
+            final headerText = e.previousElementSibling?.text.toLowerCase() ?? '';
+            return headerText.contains('rilisan terbaru') ||
+                   headerText.contains('latest') ||
+                   headerText.contains('update');
+          },
+          orElse: () {
+             // Fallback: Try to find a list that has .epx (episode indicators), which usually distinguishes Recent from Popular
+             try {
+                return document.querySelectorAll('.listupd').firstWhere((section) {
+                   return section.querySelectorAll('.bs .epx').isNotEmpty;
+                });
+             } catch (_) {
+                // Final fallback: 2nd list if available, else 1st
+                final lists = document.querySelectorAll('.listupd');
+                if (lists.length > 1) return lists[1];
+                if (lists.isNotEmpty) return lists[0];
+                throw Exception('No listupd found');
+             }
+          }
       );
 
       final elements = latestSection.querySelectorAll('.bs');
@@ -446,10 +464,22 @@ class ScrapingService {
       // Try "Semua Episode" link
       if (parentShowUrl == null) {
         try {
-          final allEpLink = document.querySelectorAll('a').firstWhere(
-                (a) => a.text.toLowerCase().contains('semua episode') || a.text.toLowerCase().contains('list episode'),
-          ).attributes['href'];
-          if (allEpLink != null && allEpLink.isNotEmpty) parentShowUrl = allEpLink;
+          // Check metadata table first
+          final rows = document.querySelectorAll('.entry-content table tr, .post-body table tr');
+          for (var row in rows) {
+             final th = row.querySelector('th');
+             if (th != null && th.text.toLowerCase().contains('semua episode')) {
+                parentShowUrl = row.querySelector('td a')?.attributes['href'];
+                break;
+             }
+          }
+
+          if (parentShowUrl == null) {
+            final allEpLink = document.querySelectorAll('a').firstWhere(
+                  (a) => a.text.toLowerCase().contains('semua episode') || a.text.toLowerCase().contains('list episode'),
+            ).attributes['href'];
+            if (allEpLink != null && allEpLink.isNotEmpty) parentShowUrl = allEpLink;
+          }
         } catch (_) {}
       }
 
@@ -481,7 +511,27 @@ class ScrapingService {
   @visibleForTesting
   Show parseAnoboyShowDetailsFromDoc(Document document, Show show) {
       List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id);
-      allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
+
+      // Advanced Sorting: Handle Seasons
+      allEpisodes.sort((a, b) {
+         // Try to extract season number from title
+         int getSeason(String? title) {
+            if (title == null) return 0;
+            final match = RegExp(r'Season\s+(\d+)', caseSensitive: false).firstMatch(title);
+            if (match != null) {
+               return int.tryParse(match.group(1)!) ?? 0;
+            }
+            return 0;
+         }
+
+         final seasonA = getSeason(a.title);
+         final seasonB = getSeason(b.title);
+
+         if (seasonA != seasonB) {
+            return seasonA.compareTo(seasonB);
+         }
+         return a.episodeNumber.compareTo(b.episodeNumber);
+      });
 
       // Parse details
       double? extractedRating;
