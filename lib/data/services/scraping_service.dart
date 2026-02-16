@@ -104,28 +104,75 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Episode> episodes = [];
 
-      var latestSection = document.querySelectorAll('.listupd').firstWhere(
-          (e) {
-            final headerText = e.previousElementSibling?.text.toLowerCase() ?? '';
-            return headerText.contains('rilisan terbaru') ||
-                   headerText.contains('latest') ||
-                   headerText.contains('update');
-          },
-          orElse: () {
-             // Fallback: Try to find a list that has .epx (episode indicators), which usually distinguishes Recent from Popular
-             try {
-                return document.querySelectorAll('.listupd').firstWhere((section) {
-                   return section.querySelectorAll('.bs .epx').isNotEmpty;
-                });
-             } catch (_) {
-                // Final fallback: 2nd list if available, else 1st
-                final lists = document.querySelectorAll('.listupd');
-                if (lists.length > 1) return lists[1];
-                if (lists.isNotEmpty) return lists[0];
-                throw Exception('No listupd found');
+      Element? latestSection;
+
+      // Strategy 1: Find header with "Rilisan Terbaru" or "Latest"
+      // Look for h3, h2, div, span, p containing the text.
+      var headers = document.querySelectorAll('h3, h2, div, span, p');
+
+      for (var h in headers) {
+         final text = h.text.trim().toLowerCase();
+         // Check if text matches specific headers
+         // "Rilisan Terbaru" is very specific. "Latest" is common. "Update" is common.
+         if (text.contains('rilisan terbaru') || text == 'latest' || (text.contains('update') && text.length < 20)) {
+             // Search siblings forward
+             var sibling = h.nextElementSibling;
+             while (sibling != null) {
+                if (sibling.classes.contains('listupd')) {
+                   latestSection = sibling;
+                   break;
+                }
+                // Also check if sibling contains .listupd (nested)
+                if (sibling.querySelector('.listupd') != null) {
+                   latestSection = sibling.querySelector('.listupd');
+                   break;
+                }
+                sibling = sibling.nextElementSibling;
              }
-          }
-      );
+
+             // Search parent's siblings if not found (in case header is wrapped)
+             if (latestSection == null && h.parent != null) {
+                 var parent = h.parent;
+                 // Limit parent traversal to avoid going up too far (e.g. to body)
+                 int depth = 0;
+                 while (parent != null && parent.localName != 'body' && depth < 3) {
+                     var parentSibling = parent.nextElementSibling;
+                     while (parentSibling != null) {
+                        if (parentSibling.classes.contains('listupd')) {
+                           latestSection = parentSibling;
+                           break;
+                        }
+                        if (parentSibling.querySelector('.listupd') != null) {
+                           latestSection = parentSibling.querySelector('.listupd');
+                           break;
+                        }
+                        parentSibling = parentSibling.nextElementSibling;
+                     }
+                     if (latestSection != null) break;
+                     parent = parent.parent;
+                     depth++;
+                 }
+             }
+         }
+         if (latestSection != null) break;
+      }
+
+      if (latestSection == null) {
+          // Fallback: Try to find a list that has .epx (episode indicators)
+          try {
+            latestSection = document.querySelectorAll('.listupd').firstWhere((section) {
+                return section.querySelectorAll('.bs .epx').isNotEmpty;
+            });
+          } catch (_) {}
+      }
+
+      if (latestSection == null) {
+          // Final fallback: 2nd list if available, else 1st
+          final lists = document.querySelectorAll('.listupd');
+          if (lists.length > 1) latestSection = lists[1];
+          else if (lists.isNotEmpty) latestSection = lists[0];
+          else throw Exception('No listupd found');
+      }
 
       final elements = latestSection.querySelectorAll('.bs');
       for (var element in elements) {

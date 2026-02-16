@@ -134,7 +134,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
                 final shows = snapshot.data!;
                 return GridView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 100.0),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.7,
