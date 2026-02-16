@@ -114,6 +114,14 @@ class ApiService {
     ).toList();
   }
 
+  Future<Show> getShowDetails(Show show) async {
+    if (show.type == 'anime') {
+      return await _scrapingService.getAnoboyShowDetails(show);
+    } else {
+      return await _scrapingService.getAnichinShowDetails(show);
+    }
+  }
+
   Future<Episode> getEpisodeDetails(Episode episode) async {
     if (episode.show?.type == 'anime') {
       return await _scrapingService.getAnoboyEpisodeDetails(episode);

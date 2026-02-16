@@ -13,6 +13,9 @@ class Show {
   final String? bannerImageUrl;
   final double? rating;
   final int? releaseYear;
+  final String? studio;
+  final String? source;
+  final String? duration;
   final List<Genre> genres;
   final DateTime? createdAt;
   final String? originalUrl;
@@ -28,6 +31,9 @@ class Show {
     this.bannerImageUrl,
     this.rating,
     this.releaseYear,
+    this.studio,
+    this.source,
+    this.duration,
     required this.genres,
     this.createdAt,
     this.originalUrl,
@@ -44,6 +50,9 @@ class Show {
     String? bannerImageUrl,
     double? rating,
     int? releaseYear,
+    String? studio,
+    String? source,
+    String? duration,
     List<Genre>? genres,
     DateTime? createdAt,
     String? originalUrl,
@@ -59,6 +68,9 @@ class Show {
       bannerImageUrl: bannerImageUrl ?? this.bannerImageUrl,
       rating: rating ?? this.rating,
       releaseYear: releaseYear ?? this.releaseYear,
+      studio: studio ?? this.studio,
+      source: source ?? this.source,
+      duration: duration ?? this.duration,
       genres: genres ?? this.genres,
       createdAt: createdAt ?? this.createdAt,
       originalUrl: originalUrl ?? this.originalUrl,
@@ -91,6 +103,9 @@ class Show {
       bannerImageUrl: json['banner_image_url'],
       rating: (json['rating'] as num?)?.toDouble(),
       releaseYear: json['release_year'],
+      studio: json['studio'],
+      source: json['source'],
+      duration: json['duration'],
       genres: genreList,
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
       originalUrl: json['original_url'],
@@ -109,6 +124,9 @@ class Show {
       'banner_image_url': bannerImageUrl,
       'rating': rating,
       'release_year': releaseYear,
+      'studio': studio,
+      'source': source,
+      'duration': duration,
       'genres': genres.map((g) => g.toJson()).toList(),
       'created_at': createdAt?.toIso8601String(),
       'original_url': originalUrl,

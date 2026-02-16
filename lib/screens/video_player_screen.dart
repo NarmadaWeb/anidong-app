@@ -4,6 +4,7 @@ import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/providers/local_data_provider.dart';
 import 'package:anidong/screens/download/download_options_screen.dart';
+import 'package:anidong/screens/show_details_screen.dart';
 import 'package:anidong/widgets/star_rating.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -111,10 +112,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       _currentIframeUrl = url;
       _initWebViewController(url);
     });
-  }
-
-  void _playEpisode(Episode episode) {
-    _fetchDetails(episode);
   }
 
   void _playEpisodeFromUrl(String url) {
@@ -276,6 +273,29 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.list),
+                                    label: const Text('Semua Episode'),
+                                    onPressed: _detailedEpisode.show != null
+                                        ? () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => ShowDetailsScreen(show: _detailedEpisode.show!),
+                                              ),
+                                            );
+                                          }
+                                        : null,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                  ),
+                                ),
                                 const SizedBox(height: 24),
 
                                 if (_detailedEpisode.videoServers != null && _detailedEpisode.videoServers!.isNotEmpty) ...[
@@ -335,41 +355,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                 ),
                                 const SizedBox(height: 24),
 
-                                if (_detailedEpisode.show?.episodes != null) ...[
-                                  const Text('Episodes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 12),
-                                  GridView.builder(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 5,
-                                      mainAxisSpacing: 8,
-                                      crossAxisSpacing: 8,
-                                      childAspectRatio: 1,
-                                    ),
-                                    itemCount: _detailedEpisode.show!.episodes!.length,
-                                    itemBuilder: (context, index) {
-                                      final ep = _detailedEpisode.show!.episodes![index];
-                                      final isCurrent = ep.episodeNumber == _detailedEpisode.episodeNumber;
-                                      return InkWell(
-                                        onTap: () => _playEpisode(ep),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: isCurrent ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: isCurrent ? Theme.of(context).primaryColor : Theme.of(context).dividerColor),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            '${ep.episodeNumber}',
-                                            style: TextStyle(color: isCurrent ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 24),
-                                ],
 
                                 const SizedBox(height: 100),
                               ],

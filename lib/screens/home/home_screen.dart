@@ -4,6 +4,7 @@ import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/screens/home/widgets/hero_slider.dart';
+import 'package:anidong/screens/show_details_screen.dart';
 import 'package:anidong/screens/video_player_screen.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -228,20 +229,10 @@ class HomeScreen extends StatelessWidget {
           final itemWidth = itemHeight * (2 / 3);
           return GestureDetector(
             onTap: () {
-              // Convert Show to a placeholder Episode for the player screen
-              final episode = Episode(
-                id: show.id,
-                showId: show.id,
-                episodeNumber: 1,
-                title: show.title,
-                videoUrl: '',
-                originalUrl: show.originalUrl,
-                show: show,
-              );
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => VideoPlayerScreen(episode: episode),
+                  builder: (context) => ShowDetailsScreen(show: show),
                 ),
               );
             },
