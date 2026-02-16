@@ -69,7 +69,7 @@ class HistoryScreen extends StatelessWidget {
                         return const Center(child: Text('No history yet.', style: TextStyle(color: AppColors.secondaryText)));
                       }
                       return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 100.0),
                         itemCount: history.length,
                         itemBuilder: (context, index) {
                           final episode = history[index];
