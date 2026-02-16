@@ -15,7 +15,6 @@ import 'package:anidong/screens/explore/explore_screen.dart';
 import 'package:anidong/screens/history/history_screen.dart';
 import 'package:anidong/screens/home/home_screen.dart';
 import 'package:anidong/screens/my_list/my_list_screen.dart';
-import 'package:anidong/screens/scan/scan_screen.dart';
 import 'package:anidong/screens/settings/settings_screen.dart';
 import 'package:anidong/screens/trending/trending_screen.dart';
 
@@ -123,17 +122,6 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(
         index: _currentPageIndex,
         children: _pages,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ScanScreen()),
-          );
-        },
-        backgroundColor: AppColors.accent,
-        elevation: 4,
-        child: const Icon(Boxicons.bx_qr_scan, color: Colors.white, size: 28),
       ),
       bottomNavigationBar: Container(
         height: 80,

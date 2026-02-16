@@ -94,109 +94,16 @@ class ScrapingService {
   Future<List<Episode>> getAnichinRecentEpisodes({int page = 1}) async {
     try {
       final url = page > 1 ? '$anichinBaseUrl/page/$page/' : anichinBaseUrl;
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-      );
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
       final List<Episode> episodes = [];
 
-      Element? latestSection;
-
-      // Strategy 1: Specific structure for Anichin (based on latest observation)
-      // Look for .releases containing "Rilisan Terbaru" and find its next sibling .listupd
-      try {
-        final releases = document.querySelectorAll('.releases, .latesthome');
-        for (var release in releases) {
-          if (release.text.toLowerCase().contains('rilisan terbaru') || release.text.toLowerCase().contains('latest')) {
-            var sibling = release.nextElementSibling;
-            while (sibling != null) {
-              if (sibling.classes.contains('listupd')) {
-                latestSection = sibling;
-                break;
-              }
-              sibling = sibling.nextElementSibling;
-            }
-          }
-          if (latestSection != null) break;
-        }
-      } catch (_) {}
-
-      // Strategy 2: Find header with "Rilisan Terbaru" or "Latest" (Generic)
-      // Look for h3, h2, div, span, p containing the text.
-      var headers = latestSection == null ? document.querySelectorAll('h3, h2, div, span, p') : <Element>[];
-
-      for (var h in headers) {
-         final text = h.text.trim().toLowerCase();
-         // Check if text matches specific headers
-         // "Rilisan Terbaru" is very specific. "Latest" is common. "Update" is common.
-         if (text.contains('rilisan terbaru') || text == 'latest' || (text.contains('update') && text.length < 20)) {
-             // Search siblings forward
-             var sibling = h.nextElementSibling;
-             while (sibling != null) {
-                if (sibling.classes.contains('listupd')) {
-                   latestSection = sibling;
-                   break;
-                }
-                // Also check if sibling contains .listupd (nested)
-                if (sibling.querySelector('.listupd') != null) {
-                   latestSection = sibling.querySelector('.listupd');
-                   break;
-                }
-                sibling = sibling.nextElementSibling;
-             }
-
-             // Search parent's siblings if not found (in case header is wrapped)
-             if (latestSection == null && h.parent != null) {
-                 var parent = h.parent;
-                 // Limit parent traversal to avoid going up too far (e.g. to body)
-                 int depth = 0;
-                 while (parent != null && parent.localName != 'body' && depth < 3) {
-                     var parentSibling = parent.nextElementSibling;
-                     while (parentSibling != null) {
-                        if (parentSibling.classes.contains('listupd')) {
-                           latestSection = parentSibling;
-                           break;
-                        }
-                        if (parentSibling.querySelector('.listupd') != null) {
-                           latestSection = parentSibling.querySelector('.listupd');
-                           break;
-                        }
-                        parentSibling = parentSibling.nextElementSibling;
-                     }
-                     if (latestSection != null) break;
-                     parent = parent.parent;
-                     depth++;
-                 }
-             }
-         }
-         if (latestSection != null) break;
-      }
-
-      if (latestSection == null) {
-          // Fallback: Try to find a list that has .epx (episode indicators)
-          try {
-            latestSection = document.querySelectorAll('.listupd').firstWhere((section) {
-                return section.querySelectorAll('.bs .epx').isNotEmpty;
-            });
-          } catch (_) {}
-      }
-
-      if (latestSection == null) {
-        // Final fallback: 2nd list if available, else 1st
-        final lists = document.querySelectorAll('.listupd');
-        if (lists.length > 1) {
-          latestSection = lists[1];
-        } else if (lists.isNotEmpty) {
-          latestSection = lists[0];
-        } else {
-          throw Exception('No listupd found');
-        }
-      }
+      var latestSection = document.querySelectorAll('.listupd').firstWhere(
+          (e) => e.previousElementSibling?.text.contains('Rilisan Terbaru') ?? false,
+          orElse: () => document.querySelectorAll('.listupd').length > 1 ? document.querySelectorAll('.listupd')[1] : document.querySelector('.listupd')!
+      );
 
       final elements = latestSection.querySelectorAll('.bs');
       for (var element in elements) {
@@ -249,13 +156,7 @@ class ScrapingService {
 
   Future<List<Show>> getAnichinPopularToday() async {
     try {
-      final response = await http.get(
-        Uri.parse(anichinBaseUrl),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': anichinBaseUrl,
-        },
-      );
+      final response = await http.get(Uri.parse(anichinBaseUrl));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -276,7 +177,7 @@ class ScrapingService {
           final h2 = titleElement.querySelector('h2');
           final title = h2 != null ? h2.text.trim() : titleElement.text.trim();
           final url = linkElement.attributes['href'] ?? '';
-          final thumb = _extractImageUrl(imgElement);
+          final thumb = imgElement?.attributes['src'] ?? '';
 
           String status = 'ongoing';
           final statusEl = element.querySelector('.status') ?? element.querySelector('.sb') ?? element.querySelector('.limit .bt');
@@ -306,13 +207,7 @@ class ScrapingService {
 
   Future<List<Show>> getAnichinRecommendations() async {
     try {
-      final response = await http.get(
-        Uri.parse(anichinBaseUrl),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': anichinBaseUrl,
-        },
-      );
+      final response = await http.get(Uri.parse(anichinBaseUrl));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -333,7 +228,7 @@ class ScrapingService {
           final h2 = titleElement.querySelector('h2');
           final title = h2 != null ? h2.text.trim() : titleElement.text.trim();
           final url = linkElement.attributes['href'] ?? '';
-          final thumb = _extractImageUrl(imgElement);
+          final thumb = imgElement?.attributes['src'] ?? '';
 
           String status = 'ongoing';
           final statusEl = element.querySelector('.status') ?? element.querySelector('.sb') ?? element.querySelector('.limit .bt');
@@ -374,51 +269,6 @@ class ScrapingService {
       if (response.statusCode != 200) return show;
 
       final document = parse(response.body);
-
-      // Check if we are on an episode page (missing list) and try to find the Show Page
-      if (document.querySelectorAll('.eplister li a').isEmpty &&
-          document.querySelectorAll('.lstep li a').isEmpty &&
-          document.querySelectorAll('.episodelist li a').isEmpty) {
-
-        String? parentShowUrl;
-
-        // Try Breadcrumbs
-        final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
-        for (var b in bcs) {
-          final href = b.attributes['href'];
-          if (href != null && (href.contains('/donghua/') || href.contains('/anime/')) && !href.contains('page')) {
-            parentShowUrl = href;
-            break; // Usually the first specific link is the show
-          }
-        }
-
-        // Try "Semua Episode" link
-        if (parentShowUrl == null) {
-          try {
-            final allEp = document.querySelectorAll('a').firstWhere((a) =>
-            a.text.toLowerCase().contains('semua episode') || a.text.toLowerCase().contains('all episode'));
-            parentShowUrl = allEp.attributes['href'];
-          } catch (_) {}
-        }
-
-        if (parentShowUrl != null && parentShowUrl != show.originalUrl) {
-           try {
-             final parentResponse = await http.get(
-               Uri.parse(parentShowUrl),
-               headers: {
-                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-               },
-             );
-             if (parentResponse.statusCode == 200) {
-               final parentDoc = parse(parentResponse.body);
-               return parseAnichinShowDetailsFromDoc(parentDoc, show.copyWith(originalUrl: parentShowUrl));
-             }
-           } catch (e) {
-             debugPrint('Error redirecting to Anichin Show Page: $e');
-           }
-        }
-      }
-
       return parseAnichinShowDetailsFromDoc(document, show);
     } catch (e) {
       debugPrint('Error getting Anichin Show Details: $e');
@@ -1066,9 +916,9 @@ class ScrapingService {
 
       if (seenUrls.contains(url)) continue;
 
-      if (title.contains('Episode') || title.contains('Ep ') || title.contains('Epsiode')) {
+      if (title.contains('Episode') || title.contains('Ep ')) {
         int epNum = 0;
-        final epMatch = RegExp(r'(?:Episode|Epsiode|Ep)\s*(\d+)').firstMatch(title);
+        final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
 
         if (epMatch != null) {
           epNum = int.tryParse(epMatch.group(1)!) ?? 0;
@@ -1493,13 +1343,7 @@ class ScrapingService {
 
   Future<List<Show>> searchAnichin(String query) async {
     try {
-      final response = await http.get(
-        Uri.parse('$anichinBaseUrl/?s=${Uri.encodeComponent(query)}'),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': anichinBaseUrl,
-        },
-      );
+      final response = await http.get(Uri.parse('$anichinBaseUrl/?s=${Uri.encodeComponent(query)}'));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
