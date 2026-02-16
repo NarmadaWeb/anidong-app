@@ -259,65 +259,107 @@ class ScrapingService {
     if (show.originalUrl == null || show.originalUrl!.isEmpty) return show;
 
     try {
-      final response = await http.get(Uri.parse(show.originalUrl!));
+      final response = await http.get(
+        Uri.parse(show.originalUrl!),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      );
       if (response.statusCode != 200) return show;
 
       final document = parse(response.body);
-
-      // Parse details
-      double? extractedRating;
-      final metaContent = document.querySelector('meta[itemprop="ratingValue"]')?.attributes['content'];
-      if (metaContent != null) {
-        extractedRating = double.tryParse(metaContent);
-      } else {
-        final strongText = document.querySelector('.rating strong')?.text.trim();
-        if (strongText != null) {
-          final match = RegExp(r'Rating\s+(\d+\.?\d*)').firstMatch(strongText);
-          if (match != null) {
-            extractedRating = double.tryParse(match.group(1)!);
-          }
-        }
-      }
-
-      String? synopsis;
-      final synEl = document.querySelector('.entry-content p') ?? document.querySelector('.desc');
-      if (synEl != null) {
-        synopsis = synEl.text.trim();
-      }
-
-      // Parse episodes
-      List<Episode> allEpisodes = [];
-      var epElements = document.querySelectorAll('.eplister li a');
-      if (epElements.isEmpty) epElements = document.querySelectorAll('.lstep li a');
-      if (epElements.isEmpty) epElements = document.querySelectorAll('.episodelist li a');
-
-      for (var epEl in epElements) {
-        final url = epEl.attributes['href'] ?? '';
-        final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
-        final title = epEl.querySelector('.epl-title')?.text.trim() ?? '';
-
-        if (url.isNotEmpty) {
-          allEpisodes.add(Episode(
-            id: url.hashCode,
-            showId: show.id,
-            episodeNumber: int.tryParse(numText) ?? 0,
-            title: title,
-            videoUrl: '',
-            originalUrl: url,
-            show: show,
-          ));
-        }
-      }
-
-      return show.copyWith(
-        rating: extractedRating,
-        synopsis: synopsis,
-        episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
-      );
+      return parseAnichinShowDetailsFromDoc(document, show);
     } catch (e) {
       debugPrint('Error getting Anichin Show Details: $e');
       return show;
     }
+  }
+
+  @visibleForTesting
+  Show parseAnichinShowDetailsFromDoc(Document document, Show show) {
+    // Parse details
+    double? extractedRating;
+    final metaContent = document.querySelector('meta[itemprop="ratingValue"]')?.attributes['content'];
+    if (metaContent != null) {
+      extractedRating = double.tryParse(metaContent);
+    } else {
+      final strongText = document.querySelector('.rating strong')?.text.trim();
+      if (strongText != null) {
+        final match = RegExp(r'Rating\s+(\d+\.?\d*)').firstMatch(strongText);
+        if (match != null) {
+          extractedRating = double.tryParse(match.group(1)!);
+        }
+      }
+    }
+
+    String? synopsis;
+    // Enhanced Synopsis Extraction
+    final synEl = document.querySelector('.entry-content[itemprop="description"] p') ??
+        document.querySelector('.entry-content p') ??
+        document.querySelector('.desc');
+
+    if (synEl != null) {
+      synopsis = synEl.text.trim();
+    } else {
+      // Fallback: Try all paragraphs in entry-content and take the longest one
+      final content = document.querySelector('.entry-content');
+      if (content != null) {
+        final paragraphs = content.querySelectorAll('p');
+        String longest = '';
+        for (var p in paragraphs) {
+          final text = p.text.trim();
+          if (text.length > longest.length) {
+            longest = text;
+          }
+        }
+        if (longest.isNotEmpty) synopsis = longest;
+      }
+    }
+
+    // Cover Image Extraction
+    String? coverImage = show.coverImageUrl;
+    final imgEl = document.querySelector('.thumb img') ??
+                 document.querySelector('.ts-post-image') ??
+                 document.querySelector('.wp-post-image') ??
+                 document.querySelector('div[itemprop="image"] img');
+
+    if (imgEl != null) {
+       final extracted = _extractImageUrl(imgEl);
+       if (extracted.isNotEmpty) {
+         coverImage = extracted;
+       }
+    }
+
+    // Parse episodes
+    List<Episode> allEpisodes = [];
+    var epElements = document.querySelectorAll('.eplister li a');
+    if (epElements.isEmpty) epElements = document.querySelectorAll('.lstep li a');
+    if (epElements.isEmpty) epElements = document.querySelectorAll('.episodelist li a');
+
+    for (var epEl in epElements) {
+      final url = epEl.attributes['href'] ?? '';
+      final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
+      final title = epEl.querySelector('.epl-title')?.text.trim() ?? '';
+
+      if (url.isNotEmpty) {
+        allEpisodes.add(Episode(
+          id: url.hashCode,
+          showId: show.id,
+          episodeNumber: int.tryParse(numText) ?? 0,
+          title: title,
+          videoUrl: '',
+          originalUrl: url,
+          show: show,
+        ));
+      }
+    }
+
+    return show.copyWith(
+      rating: extractedRating,
+      synopsis: synopsis,
+      coverImageUrl: coverImage,
+      episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
+    );
   }
 
   Future<Show> getAnoboyShowDetails(Show show) async {
@@ -782,7 +824,18 @@ class ScrapingService {
       final url = link.attributes['href'] ?? '';
 
       if (url.isEmpty || url.contains('#') || url.contains('facebook') || url.contains('twitter') || url.contains('whatsapp')) continue;
-      if (!url.contains('anoboy')) continue;
+
+      // Allow relative URLs that don't explicitly contain 'anoboy' in the href attribute
+      // But verify they are likely internal links (start with / or contain base url)
+      bool isValidUrl = false;
+      if (url.contains('anoboy')) {
+        isValidUrl = true;
+      } else if (url.startsWith('/')) {
+        isValidUrl = true; // Relative path
+      }
+
+      if (!isValidUrl) continue;
+
       if (seenUrls.contains(url)) continue;
 
       if (title.contains('Episode') || title.contains('Ep ')) {
