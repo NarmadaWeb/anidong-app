@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:anidong/data/models/episode_model.dart';
+import 'package:anidong/data/models/genre_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -343,13 +344,91 @@ class ScrapingService {
         extractedRating = double.tryParse(scoreElement.text.trim());
       }
 
-      String? synopsis;
-      final content = document.querySelector('.entry-content, .post-body');
-      if (content != null) {
-          synopsis = content.text.trim();
-          if (synopsis.length > 500) {
-              synopsis = synopsis.substring(0, 500) + '...';
+      String? studio;
+      String? source;
+      String? duration;
+      List<Genre> genres = [];
+
+      // Parse metadata table/text
+      final rows = document.querySelectorAll('.entry-content table tr, .post-body table tr');
+      if (rows.isNotEmpty) {
+        for (var row in rows) {
+          final cols = row.querySelectorAll('td');
+          if (cols.length >= 2) {
+            final key = cols[0].text.trim().toLowerCase();
+            final value = cols.last.text.trim();
+
+            if (key.contains('studio')) {
+              studio = value;
+            } else if (key.contains('source')) {
+              source = value;
+            } else if (key.contains('durasi') || key.contains('duration')) {
+              duration = value;
+            } else if (key.contains('genre')) {
+              final genreNames = value.split(',').map((e) => e.trim()).toList();
+              for (var name in genreNames) {
+                if (name.isNotEmpty) {
+                  genres.add(Genre(id: name.hashCode, name: name));
+                }
+              }
+            } else if ((key.contains('skor') || key.contains('score')) && extractedRating == null) {
+               extractedRating = double.tryParse(value);
+            }
           }
+        }
+      } else {
+         // Fallback: Try parsing text content if no table (less common but possible)
+         final contentText = document.querySelector('.entry-content, .post-body')?.text ?? '';
+         final lines = contentText.split('\n');
+         for (var line in lines) {
+             final parts = line.split(':');
+             if (parts.length >= 2) {
+                final key = parts[0].trim().toLowerCase();
+                final value = parts.sublist(1).join(':').trim();
+
+                if (key ==('studio')) studio = value;
+                else if (key ==('source')) source = value;
+                else if (key ==('durasi')) duration = value;
+                else if (key ==('genre')) {
+                   final genreNames = value.split(',').map((e) => e.trim()).toList();
+                   for (var name in genreNames) {
+                      if (name.isNotEmpty) genres.add(Genre(id: name.hashCode, name: name));
+                   }
+                }
+             }
+         }
+      }
+
+      String? synopsis;
+      // Heuristic: Synopsis is often a paragraph in content, usually strictly text.
+      // We'll take the text of paragraphs that are NOT in the table.
+      final contentEl = document.querySelector('.entry-content, .post-body');
+      if (contentEl != null) {
+         final paragraphs = contentEl.querySelectorAll('p');
+         for (var p in paragraphs) {
+            // Ignore if it's "Download..." or similar
+            if (p.text.toLowerCase().contains('download') || p.text.toLowerCase().contains('mirror')) continue;
+            // Ignore if it looks like metadata line
+            if (p.text.contains(':')) continue;
+
+            final text = p.text.trim();
+            if (text.length > 50) {
+               if (synopsis == null) {
+                 synopsis = text;
+               } else {
+                 synopsis = '$synopsis\n\n$text';
+               }
+            }
+         }
+
+         if (synopsis == null) {
+            // Fallback to full text if no P tags or cleaner found
+            synopsis = contentEl.text.trim();
+         }
+
+         if (synopsis != null && synopsis.length > 500) {
+             synopsis = synopsis.substring(0, 500) + '...';
+         }
       }
 
       String? coverImage = show.coverImageUrl;
@@ -362,6 +441,10 @@ class ScrapingService {
         rating: extractedRating,
         synopsis: synopsis,
         coverImageUrl: coverImage,
+        studio: studio,
+        source: source,
+        duration: duration,
+        genres: genres.isNotEmpty ? genres : null,
         episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
       );
 

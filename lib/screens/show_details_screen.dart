@@ -120,11 +120,45 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                             const SizedBox(height: 8),
                             _buildInfoRow('Status', _show.status),
                             _buildInfoRow('Type', _show.type),
-                            // Add more fields if available in Show model, currently limited
+                            if (_show.releaseYear != null) _buildInfoRow('Released', '${_show.releaseYear}'),
                           ],
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Metadata Table (Studio, Source, Duration, etc.)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        _buildTableRow('Semua Episode', _show.title, isLink: true),
+                        const Divider(height: 16),
+                        if (_show.studio != null) ...[
+                          _buildTableRow('Studio', _show.studio!),
+                          const Divider(height: 16),
+                        ],
+                        if (_show.source != null) ...[
+                          _buildTableRow('Source', _show.source!),
+                          const Divider(height: 16),
+                        ],
+                        if (_show.duration != null) ...[
+                          _buildTableRow('Durasi', _show.duration!),
+                          const Divider(height: 16),
+                        ],
+                         if (_show.genres.isNotEmpty) ...[
+                          _buildTableRow('Genre', _show.genres.map((g) => g.name).join(', ')),
+                          const Divider(height: 16),
+                        ],
+                         if (_show.rating != null)
+                          _buildTableRow('Score', _show.rating.toString()),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -142,21 +176,6 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                         color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
                         height: 1.5,
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Genres (if parsed, currently minimal in scraping)
-                  if (_show.genres.isNotEmpty) ...[
-                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _show.genres.map((genre) {
-                        return Chip(
-                          label: Text(genre.name),
-                          backgroundColor: Theme.of(context).cardColor,
-                        );
-                      }).toList(),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -246,6 +265,30 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTableRow(String label, String value, {bool isLink = false}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: isLink ? Colors.blueAccent : Theme.of(context).textTheme.bodyMedium?.color,
+              fontWeight: isLink ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
