@@ -114,10 +114,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     });
   }
 
-  void _playEpisode(Episode episode) {
-    _fetchDetails(episode);
-  }
-
   void _playEpisodeFromUrl(String url) {
     final nextEp = Episode(
       id: url.hashCode,

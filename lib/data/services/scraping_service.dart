@@ -333,7 +333,16 @@ class ScrapingService {
       if (response.statusCode != 200) return show;
 
       final document = parse(response.body);
+      return parseAnoboyShowDetailsFromDoc(document, show);
 
+    } catch (e) {
+      debugPrint('Error getting Anoboy Show Details: $e');
+      return show;
+    }
+  }
+
+  @visibleForTesting
+  Show parseAnoboyShowDetailsFromDoc(Document document, Show show) {
       List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id);
       allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
 
@@ -386,14 +395,20 @@ class ScrapingService {
                 final key = parts[0].trim().toLowerCase();
                 final value = parts.sublist(1).join(':').trim();
 
-                if (key ==('studio')) studio = value;
-                else if (key ==('source')) source = value;
-                else if (key ==('durasi')) duration = value;
-                else if (key ==('genre')) {
-                   final genreNames = value.split(',').map((e) => e.trim()).toList();
-                   for (var name in genreNames) {
-                      if (name.isNotEmpty) genres.add(Genre(id: name.hashCode, name: name));
-                   }
+                if (key == ('studio')) {
+                  studio = value;
+                } else if (key == ('source')) {
+                  source = value;
+                } else if (key == ('durasi')) {
+                  duration = value;
+                } else if (key == ('genre')) {
+                  final genreNames =
+                      value.split(',').map((e) => e.trim()).toList();
+                  for (var name in genreNames) {
+                    if (name.isNotEmpty) {
+                      genres.add(Genre(id: name.hashCode, name: name));
+                    }
+                  }
                 }
              }
          }
@@ -413,22 +428,18 @@ class ScrapingService {
 
             final text = p.text.trim();
             if (text.length > 50) {
-               if (synopsis == null) {
-                 synopsis = text;
-               } else {
-                 synopsis = '$synopsis\n\n$text';
-               }
+              synopsis ??= text;
+              if (synopsis != text) {
+                synopsis = '$synopsis\n\n$text';
+              }
             }
-         }
+          }
 
-         if (synopsis == null) {
-            // Fallback to full text if no P tags or cleaner found
-            synopsis = contentEl.text.trim();
-         }
+          synopsis ??= contentEl.text.trim();
 
-         if (synopsis != null && synopsis.length > 500) {
-             synopsis = synopsis.substring(0, 500) + '...';
-         }
+          if (synopsis!.length > 500) {
+            synopsis = '${synopsis!.substring(0, 500)}...';
+          }
       }
 
       String? coverImage = show.coverImageUrl;
@@ -447,11 +458,6 @@ class ScrapingService {
         genres: genres.isNotEmpty ? genres : null,
         episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
       );
-
-    } catch (e) {
-      debugPrint('Error getting Anoboy Show Details: $e');
-      return show;
-    }
   }
 
   Future<Episode> getAnoboyEpisodeDetails(Episode episode) async {

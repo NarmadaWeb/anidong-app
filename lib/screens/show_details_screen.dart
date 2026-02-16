@@ -1,4 +1,3 @@
-import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/api_service.dart';
 import 'package:anidong/screens/video_player_screen.dart';
