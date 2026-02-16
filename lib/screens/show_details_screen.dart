@@ -191,18 +191,13 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 5,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                        childAspectRatio: 1,
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 1.5,
                       ),
                       itemCount: _show.episodes!.length,
                       itemBuilder: (context, index) {
-                        // Episodes are typically sorted ascending in scraping service now
-                        // Usually list display is descending (newest first) or ascending.
-                        // User request "tampil semuanya saat melakukan pencarian dan mencari donghua" doesn't specify order.
-                        // But usually users want to find Ep 1 easily or latest.
-                        // Let's stick to the list order.
                         final ep = _show.episodes![index];
                         return InkWell(
                           onTap: () {
@@ -213,19 +208,70 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                               ),
                             );
                           },
+                          borderRadius: BorderRadius.circular(8),
                           child: Container(
                             decoration: BoxDecoration(
                               color: Theme.of(context).cardColor,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Theme.of(context).dividerColor),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              '${ep.episodeNumber}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).textTheme.bodyLarge?.color,
-                              ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                if (ep.thumbnailUrl != null && ep.thumbnailUrl!.isNotEmpty)
+                                  CachedNetworkImage(
+                                    imageUrl: ep.thumbnailUrl!,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(color: Theme.of(context).canvasColor),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: Theme.of(context).canvasColor,
+                                      child: const Icon(Icons.image_not_supported, size: 40),
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    color: Theme.of(context).canvasColor,
+                                    child: const Center(
+                                      child: Icon(Icons.movie_creation_outlined, size: 40, color: Colors.grey),
+                                    ),
+                                  ),
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                        colors: [
+                                          Colors.black.withValues(alpha: 0.8),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Episode ${ep.episodeNumber}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        shadows: [
+                                          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(0, 1)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         );
