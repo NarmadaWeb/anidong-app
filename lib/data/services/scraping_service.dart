@@ -277,6 +277,58 @@ class ScrapingService {
   }
 
   @visibleForTesting
+  String? findAnichinShowUrl(Document document) {
+    // 1. Check Breadcrumbs (Standard)
+    String? showUrl = document.querySelector('.breadcrumb a:nth-child(2)')?.attributes['href'];
+
+    // 2. Check all breadcrumb links if not found
+    if (showUrl == null) {
+       final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
+       for (var b in bcs) {
+          final href = b.attributes['href'];
+          if (href != null && (href.contains('/donghua/') || href.contains('/anime/'))) {
+             showUrl = href;
+             break;
+          }
+       }
+    }
+
+    // 3. Check for specific "All Episodes" / "Semua Episode" links
+    if (showUrl == null) {
+       final allLinks = document.querySelectorAll('a');
+       for (var link in allLinks) {
+          final text = link.text.trim().toLowerCase();
+          final href = link.attributes['href'];
+
+          if (href == null || href.isEmpty || href.startsWith('#')) continue;
+
+          if (text == 'semua episode' ||
+              text == 'all episodes' ||
+              text == 'list episode' ||
+              text == 'detail anime' ||
+              text == 'detail donghua' ||
+              text.contains('lihat semua episode')) {
+
+             if (href.contains('/donghua/') || href.contains('/anime/')) {
+                showUrl = href;
+                break;
+             }
+          }
+       }
+    }
+
+    // 4. Check for class identifiers common in themes
+    if (showUrl == null) {
+       final specificLink = document.querySelector('.all-episodes a, .list-episodes a, .show-info a');
+       if (specificLink != null) {
+          showUrl = specificLink.attributes['href'];
+       }
+    }
+
+    return showUrl;
+  }
+
+  @visibleForTesting
   Show parseAnichinShowDetailsFromDoc(Document document, Show show) {
     // Parse details
     double? extractedRating;
@@ -342,6 +394,9 @@ class ScrapingService {
       final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
       final title = epEl.querySelector('.epl-title')?.text.trim() ?? '';
 
+      String? thumb = epEl.querySelector('img')?.attributes['src'];
+      thumb ??= epEl.querySelector('img')?.attributes['data-src'];
+
       if (url.isNotEmpty) {
         allEpisodes.add(Episode(
           id: url.hashCode,
@@ -350,6 +405,7 @@ class ScrapingService {
           title: title,
           videoUrl: '',
           originalUrl: url,
+          thumbnailUrl: thumb,
           show: show,
         ));
       }
@@ -1167,18 +1223,7 @@ class ScrapingService {
       }
 
       List<Episode> allEpisodes = [];
-      String? showUrl = document.querySelector('.breadcrumb a:nth-child(2)')?.attributes['href'];
-
-      if (showUrl == null) {
-         final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
-         for (var b in bcs) {
-            final href = b.attributes['href'];
-            if (href != null && (href.contains('/donghua/') || href.contains('/anime/'))) {
-               showUrl = href;
-               break;
-            }
-         }
-      }
+      String? showUrl = findAnichinShowUrl(document);
 
       if (showUrl != null) {
         final showResponse = await http.get(Uri.parse(showUrl));
