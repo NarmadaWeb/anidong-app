@@ -167,11 +167,15 @@ class ScrapingService {
       }
 
       if (latestSection == null) {
-          // Final fallback: 2nd list if available, else 1st
-          final lists = document.querySelectorAll('.listupd');
-          if (lists.length > 1) latestSection = lists[1];
-          else if (lists.isNotEmpty) latestSection = lists[0];
-          else throw Exception('No listupd found');
+        // Final fallback: 2nd list if available, else 1st
+        final lists = document.querySelectorAll('.listupd');
+        if (lists.length > 1) {
+          latestSection = lists[1];
+        } else if (lists.isNotEmpty) {
+          latestSection = lists[0];
+        } else {
+          throw Exception('No listupd found');
+        }
       }
 
       final elements = latestSection.querySelectorAll('.bs');
