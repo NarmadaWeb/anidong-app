@@ -102,4 +102,41 @@ class ConfigService {
       return {};
     }
   }
+
+  Future<List<Show>> fetchSlider(String type) async {
+    String url;
+    if (type == 'anime') {
+      url = 'https://raw.githubusercontent.com/rajasunrise/anidong/main/anime-slider.json';
+    } else {
+      url = 'https://raw.githubusercontent.com/rajasunrise/anidong/main/donghua-slider.json';
+    }
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        final List<Show> shows = [];
+
+        for (var item in jsonList) {
+          shows.add(Show(
+            id: item['no'] ?? 0,
+            title: item['nama'] ?? 'Unknown',
+            type: type,
+            status: 'Ongoing',
+            coverImageUrl: item['imageurl'],
+            bannerImageUrl: item['imageurl'],
+            originalUrl: '',
+            genres: [],
+          ));
+        }
+        return shows;
+      } else {
+        debugPrint('Failed to load slider for $type: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching slider for $type: $e');
+      return [];
+    }
+  }
 }
