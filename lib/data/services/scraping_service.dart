@@ -437,8 +437,8 @@ class ScrapingService {
 
           synopsis ??= contentEl.text.trim();
 
-          if (synopsis!.length > 500) {
-            synopsis = '${synopsis!.substring(0, 500)}...';
+          if (synopsis.length > 500) {
+            synopsis = '${synopsis.substring(0, 500)}...';
           }
       }
 
