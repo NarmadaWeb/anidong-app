@@ -3,6 +3,7 @@
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/api_service.dart';
+import 'package:anidong/data/services/config_service.dart';
 import 'package:flutter/material.dart';
 
 // Enum untuk merepresentasikan state dari halaman utama
@@ -15,6 +16,7 @@ class HomeProvider with ChangeNotifier {
   List<Episode> _recentEpisodes = [];
   List<Show> _recommendedShows = [];
   List<Show> _popularToday = [];
+  List<Show> _heroSlides = [];
   HomeState _state = HomeState.initial;
   String _errorMessage = '';
   String _currentMode = 'anime';
@@ -27,6 +29,7 @@ class HomeProvider with ChangeNotifier {
   List<Episode> get recentEpisodes => _recentEpisodes;
   List<Show> get recommendedShows => _recommendedShows;
   List<Show> get popularToday => _popularToday;
+  List<Show> get heroSlides => _heroSlides;
   HomeState get state => _state;
   String get errorMessage => _errorMessage;
   String get currentMode => _currentMode;
@@ -56,12 +59,14 @@ class HomeProvider with ChangeNotifier {
         _apiService.getRecentEpisodes(context, type: _currentMode, page: 1),
         _apiService.getTopRatedShows(context, type: _currentMode), // Recommendations
         _apiService.getPopularShows(context, type: _currentMode),
+        ConfigService().fetchSlider(_currentMode),
       ]);
 
       // Simpan hasil ke properti privat
       _recentEpisodes = results[0] as List<Episode>;
       _recommendedShows = results[1] as List<Show>;
       _popularToday = results[2] as List<Show>;
+      _heroSlides = results[3] as List<Show>;
 
       // --- PRINT UNTUK DEBUGGING ---
       // Ini akan muncul di Debug Console Anda saat aplikasi berjalan

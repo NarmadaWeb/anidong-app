@@ -16,8 +16,8 @@ class HeroSlider extends StatelessWidget {
     // Menggunakan Consumer untuk mendapatkan data dari HomeProvider
     return Consumer<HomeProvider>(
       builder: (context, provider, child) {
-        // Ambil 3 item pertama dari recommendedShows untuk slider
-        final slides = provider.recommendedShows.take(3).toList();
+        // Ambil data slider dari provider
+        final slides = provider.heroSlides;
 
         if (slides.isEmpty) {
           // Tampilkan placeholder jika tidak ada data
