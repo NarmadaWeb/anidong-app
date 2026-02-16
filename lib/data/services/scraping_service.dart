@@ -41,6 +41,7 @@ class ScrapingService {
         Uri.parse(url),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': anichinBaseUrl,
         },
       );
       if (response.statusCode != 200) return [];
@@ -106,9 +107,28 @@ class ScrapingService {
 
       Element? latestSection;
 
-      // Strategy 1: Find header with "Rilisan Terbaru" or "Latest"
+      // Strategy 1: Specific structure for Anichin (based on latest observation)
+      // Look for .releases containing "Rilisan Terbaru" and find its next sibling .listupd
+      try {
+        final releases = document.querySelectorAll('.releases, .latesthome');
+        for (var release in releases) {
+          if (release.text.toLowerCase().contains('rilisan terbaru') || release.text.toLowerCase().contains('latest')) {
+            var sibling = release.nextElementSibling;
+            while (sibling != null) {
+              if (sibling.classes.contains('listupd')) {
+                latestSection = sibling;
+                break;
+              }
+              sibling = sibling.nextElementSibling;
+            }
+          }
+          if (latestSection != null) break;
+        }
+      } catch (_) {}
+
+      // Strategy 2: Find header with "Rilisan Terbaru" or "Latest" (Generic)
       // Look for h3, h2, div, span, p containing the text.
-      var headers = document.querySelectorAll('h3, h2, div, span, p');
+      var headers = latestSection == null ? document.querySelectorAll('h3, h2, div, span, p') : <Element>[];
 
       for (var h in headers) {
          final text = h.text.trim().toLowerCase();
@@ -229,7 +249,13 @@ class ScrapingService {
 
   Future<List<Show>> getAnichinPopularToday() async {
     try {
-      final response = await http.get(Uri.parse(anichinBaseUrl));
+      final response = await http.get(
+        Uri.parse(anichinBaseUrl),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': anichinBaseUrl,
+        },
+      );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -280,7 +306,13 @@ class ScrapingService {
 
   Future<List<Show>> getAnichinRecommendations() async {
     try {
-      final response = await http.get(Uri.parse(anichinBaseUrl));
+      final response = await http.get(
+        Uri.parse(anichinBaseUrl),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': anichinBaseUrl,
+        },
+      );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -1465,6 +1497,7 @@ class ScrapingService {
         Uri.parse('$anichinBaseUrl/?s=${Uri.encodeComponent(query)}'),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': anichinBaseUrl,
         },
       );
       if (response.statusCode != 200) return [];
