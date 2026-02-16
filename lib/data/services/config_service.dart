@@ -139,4 +139,35 @@ class ConfigService {
       return [];
     }
   }
+
+  Future<List<Show>> fetchDailySchedule(String type, String day) async {
+    final String url = 'https://raw.githubusercontent.com/rajasunrise/anidong/main/jadwal/$type/$day.json';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        final List<Show> shows = [];
+
+        for (var item in jsonList) {
+          shows.add(Show(
+            id: item['no'] ?? 0,
+            title: item['nama'] ?? 'Unknown',
+            type: type,
+            status: 'ongoing',
+            coverImageUrl: item['imageurl'],
+            originalUrl: '',
+            genres: [],
+          ));
+        }
+        return shows;
+      } else {
+        debugPrint('Failed to load daily schedule for $type/$day: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching daily schedule for $type/$day: $e');
+      return [];
+    }
+  }
 }

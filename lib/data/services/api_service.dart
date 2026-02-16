@@ -133,4 +133,8 @@ class ApiService {
   Future<Map<String, List<Show>>> getSchedule() async {
     return await ConfigService().fetchSchedule();
   }
+
+  Future<List<Show>> getDailySchedule(String type, String day) async {
+    return await ConfigService().fetchDailySchedule(type, day);
+  }
 }

@@ -1,9 +1,8 @@
-// lib/screens/schedule/schedule_screen.dart
-
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/api_service.dart';
-import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -13,97 +12,142 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  late Future<Map<String, List<Show>>> _scheduleFuture;
+  String _selectedType = 'anime';
+  String _selectedDay = 'Senin';
+  late Future<List<Show>> _scheduleFuture;
+
+  final List<String> _days = [
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+    'Minggu'
+  ];
 
   @override
   void initState() {
     super.initState();
-    _scheduleFuture = ApiService().getSchedule();
+    _selectedDay = _getCurrentDayName();
+    _fetchSchedule();
+  }
+
+  String _getCurrentDayName() {
+    final now = DateTime.now();
+    // weekday 1 = Monday
+    if (now.weekday >= 1 && now.weekday <= 7) {
+      return _days[now.weekday - 1];
+    }
+    return 'Senin';
+  }
+
+  void _fetchSchedule() {
+    setState(() {
+      // API expects lowercase day
+      _scheduleFuture = ApiService().getDailySchedule(
+        _selectedType,
+        _selectedDay.toLowerCase(),
+      );
+    });
+  }
+
+  void _onTypeChanged(String type) {
+    if (_selectedType != type) {
+      setState(() {
+        _selectedType = type;
+      });
+      _fetchSchedule();
+    }
+  }
+
+  void _onDayChanged(String day) {
+    if (_selectedDay != day) {
+      setState(() {
+        _selectedDay = day;
+      });
+      _fetchSchedule();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        title: const Text('Jadwal Rilis', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.background,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.primaryText),
       ),
-      extendBodyBehindAppBar: true,
-      body: Stack(
+      backgroundColor: AppColors.background,
+      body: Column(
         children: [
-          // Background Gradient
-          Container(
-            height: MediaQuery.of(context).size.height * 0.3,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.accent, AppColors.orangeAccent],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+          // Type Selector
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildTypeButton('Anime', 'anime'),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildTypeButton('Donghua', 'donghua'),
+                ),
+              ],
             ),
           ),
+
+          // Day Selector
+          SizedBox(
+            height: 50,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _days.length,
+              itemBuilder: (context, index) {
+                final day = _days[index];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: _buildDayChip(day),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // Content
-          SingleChildScrollView(
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Text
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('🗓️ Jadwal Rilis', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
-                        const SizedBox(height: 4),
-                        Text('Jadwal tayang anime dan donghua', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
-                      ],
-                    ),
+          Expanded(
+            child: FutureBuilder<List<Show>>(
+              future: _scheduleFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: AppColors.secondaryText)));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No schedule available.', style: TextStyle(color: AppColors.secondaryText)));
+                }
+
+                final shows = snapshot.data!;
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.7,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
                   ),
-                  // Main Content
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: FutureBuilder<Map<String, List<Show>>>(
-                      future: _scheduleFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator(color: AppColors.accent));
-                        }
-                        if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: AppColors.secondaryText)));
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(child: Text('No schedule available.', style: TextStyle(color: AppColors.secondaryText)));
-                        }
-
-                        final schedule = snapshot.data!;
-                        final List<String> daysOrder = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-
-                        return Column(
-                          children: daysOrder
-                              .map((day) {
-                                // Try lowercase key first (most likely from JSON)
-                                final dayKey = day.toLowerCase();
-                                if (schedule.containsKey(dayKey)) {
-                                  return _buildDaySection(context, day, schedule[dayKey]!);
-                                }
-                                // Fallback to capitalized if JSON changes
-                                if (schedule.containsKey(day)) {
-                                  return _buildDaySection(context, day, schedule[day]!);
-                                }
-                                return const SizedBox.shrink();
-                              })
-                              .toList() +
-                              [const SizedBox(height: 100)],
-                        );
-                      },
-                    ),
-                  )
-                ],
-              ),
+                  itemCount: shows.length,
+                  itemBuilder: (context, index) {
+                    final show = shows[index];
+                    return _buildShowCard(show);
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -111,54 +155,89 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _buildDaySection(BuildContext context, String day, List<Show> shows) {
-    if (shows.isEmpty) return const SizedBox.shrink();
+  Widget _buildTypeButton(String label, String type) {
+    final isSelected = _selectedType == type;
+    return GestureDetector(
+      onTap: () => _onTypeChanged(type),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accent : AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: isSelected ? null : Border.all(color: AppColors.secondaryText.withValues(alpha: 0.3)),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.secondaryText,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildDayChip(String day) {
+    final isSelected = _selectedDay == day;
+    return GestureDetector(
+      onTap: () => _onDayChanged(day),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accent : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: isSelected ? null : Border.all(color: AppColors.secondaryText.withValues(alpha: 0.3)),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          day,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.secondaryText,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShowCard(Show show) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(vertical: 12.0),
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppColors.accent, width: 2)),
-          ),
-          child: Text(
-            day, // Capitalized 'Senin', 'Selasa', etc.
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.titleLarge?.color,
-            ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: show.coverImageUrl != null && show.coverImageUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: show.coverImageUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    placeholder: (context, url) => Container(color: AppColors.surface),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.surface,
+                      child: const Icon(Icons.error, color: AppColors.secondaryText),
+                    ),
+                  )
+                : Container(
+                    color: AppColors.surface,
+                    child: const Center(
+                      child: Icon(Icons.movie, color: AppColors.secondaryText, size: 40),
+                    ),
+                  ),
           ),
         ),
-        ...shows.map((show) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${show.id}. ', // Use show.id which corresponds to 'no' from JSON
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  show.title,
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ],
+        const SizedBox(height: 8),
+        Text(
+          show.title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
           ),
-        )),
-        const SizedBox(height: 16),
+        ),
       ],
     );
   }
