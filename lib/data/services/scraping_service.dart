@@ -254,6 +254,123 @@ class ScrapingService {
     }
   }
 
+  Future<Show> getAnichinShowDetails(Show show) async {
+    if (show.originalUrl == null || show.originalUrl!.isEmpty) return show;
+
+    try {
+      final response = await http.get(Uri.parse(show.originalUrl!));
+      if (response.statusCode != 200) return show;
+
+      final document = parse(response.body);
+
+      // Parse details
+      double? extractedRating;
+      final metaContent = document.querySelector('meta[itemprop="ratingValue"]')?.attributes['content'];
+      if (metaContent != null) {
+        extractedRating = double.tryParse(metaContent);
+      } else {
+        final strongText = document.querySelector('.rating strong')?.text.trim();
+        if (strongText != null) {
+          final match = RegExp(r'Rating\s+(\d+\.?\d*)').firstMatch(strongText);
+          if (match != null) {
+            extractedRating = double.tryParse(match.group(1)!);
+          }
+        }
+      }
+
+      String? synopsis;
+      final synEl = document.querySelector('.entry-content p') ?? document.querySelector('.desc');
+      if (synEl != null) {
+        synopsis = synEl.text.trim();
+      }
+
+      // Parse episodes
+      List<Episode> allEpisodes = [];
+      var epElements = document.querySelectorAll('.eplister li a');
+      if (epElements.isEmpty) epElements = document.querySelectorAll('.lstep li a');
+      if (epElements.isEmpty) epElements = document.querySelectorAll('.episodelist li a');
+
+      for (var epEl in epElements) {
+        final url = epEl.attributes['href'] ?? '';
+        final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
+        final title = epEl.querySelector('.epl-title')?.text.trim() ?? '';
+
+        if (url.isNotEmpty) {
+          allEpisodes.add(Episode(
+            id: url.hashCode,
+            showId: show.id,
+            episodeNumber: int.tryParse(numText) ?? 0,
+            title: title,
+            videoUrl: '',
+            originalUrl: url,
+            show: show,
+          ));
+        }
+      }
+
+      return show.copyWith(
+        rating: extractedRating,
+        synopsis: synopsis,
+        episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
+      );
+    } catch (e) {
+      debugPrint('Error getting Anichin Show Details: $e');
+      return show;
+    }
+  }
+
+  Future<Show> getAnoboyShowDetails(Show show) async {
+    if (show.originalUrl == null || show.originalUrl!.isEmpty) return show;
+
+    try {
+      final response = await http.get(
+        Uri.parse(show.originalUrl!),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      );
+      if (response.statusCode != 200) return show;
+
+      final document = parse(response.body);
+
+      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id);
+      allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
+
+      // Parse details
+      double? extractedRating;
+      final scoreElement = document.querySelector('#score');
+      if (scoreElement != null) {
+        extractedRating = double.tryParse(scoreElement.text.trim());
+      }
+
+      String? synopsis;
+      final content = document.querySelector('.entry-content, .post-body');
+      if (content != null) {
+          synopsis = content.text.trim();
+          if (synopsis.length > 500) {
+              synopsis = synopsis.substring(0, 500) + '...';
+          }
+      }
+
+      String? coverImage = show.coverImageUrl;
+      if (coverImage == null || coverImage.isEmpty) {
+         final imgEl = document.querySelector('.entry-content img, .post-body img');
+         coverImage = _extractImageUrl(imgEl);
+      }
+
+      return show.copyWith(
+        rating: extractedRating,
+        synopsis: synopsis,
+        coverImageUrl: coverImage,
+        episodes: allEpisodes.isNotEmpty ? allEpisodes : null,
+      );
+
+    } catch (e) {
+      debugPrint('Error getting Anoboy Show Details: $e');
+      return show;
+    }
+  }
+
   Future<Episode> getAnoboyEpisodeDetails(Episode episode) async {
     if (episode.originalUrl == null || episode.originalUrl!.isEmpty) return episode;
 
