@@ -278,22 +278,17 @@ class ScrapingService {
 
   @visibleForTesting
   String? findAnichinShowUrl(Document document) {
-    // 1. Check Breadcrumbs (Standard)
-    String? showUrl = document.querySelector('.breadcrumb a:nth-child(2)')?.attributes['href'];
+    String? showUrl;
 
-    // 2. Check all breadcrumb links if not found
-    if (showUrl == null) {
-       final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
-       for (var b in bcs) {
-          final href = b.attributes['href'];
-          if (href != null && (href.contains('/donghua/') || href.contains('/anime/'))) {
-             showUrl = href;
-             break;
-          }
-       }
+    // 1. Breadcrumbs Strategy (Most reliable)
+    // Structure usually: Home > Show Title > Episode Title
+    final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
+    if (bcs.length > 1) {
+       // Index 1 is usually the Show Title
+       showUrl = bcs[1].attributes['href'];
     }
 
-    // 3. Check for specific "All Episodes" / "Semua Episode" links
+    // 2. "Semua Episode" Link Strategy
     if (showUrl == null) {
        final allLinks = document.querySelectorAll('a');
        for (var link in allLinks) {
@@ -302,6 +297,7 @@ class ScrapingService {
 
           if (href == null || href.isEmpty || href.startsWith('#')) continue;
 
+          // Check if link text strongly indicates "All Episodes" or "Show Detail"
           if (text == 'semua episode' ||
               text == 'all episodes' ||
               text == 'list episode' ||
@@ -309,7 +305,8 @@ class ScrapingService {
               text == 'detail donghua' ||
               text.contains('lihat semua episode')) {
 
-             if (href.contains('/donghua/') || href.contains('/anime/')) {
+             // Basic sanity check: URL should not be just "/" or the current page
+             if (href.startsWith('http') || href.startsWith('/')) {
                 showUrl = href;
                 break;
              }
@@ -317,11 +314,22 @@ class ScrapingService {
        }
     }
 
-    // 4. Check for class identifiers common in themes
+    // 3. Fallback: Check for specific classes
     if (showUrl == null) {
        final specificLink = document.querySelector('.all-episodes a, .list-episodes a, .show-info a');
        if (specificLink != null) {
           showUrl = specificLink.attributes['href'];
+       }
+    }
+
+    // 4. Fallback: Search breadcrumbs for keyword if index 1 failed or wasn't applicable
+    if (showUrl == null && bcs.isNotEmpty) {
+       for (var b in bcs) {
+          final href = b.attributes['href'];
+          if (href != null && (href.contains('/donghua/') || href.contains('/anime/'))) {
+             showUrl = href;
+             break;
+          }
        }
     }
 
