@@ -433,44 +433,8 @@ class ScrapingService {
 
       final document = parse(response.body);
 
-      // Check for breadcrumbs to redirect from Episode Page to Show Page
-      String? parentShowUrl;
-      final breadcrumbs = document.querySelectorAll('.anime > a');
-      if (breadcrumbs.length >= 2) {
-        parentShowUrl = breadcrumbs[1].attributes['href'];
-      }
-
-      if (parentShowUrl == null) {
-        final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
-        for (var b in bcs) {
-          if (b.attributes['href']?.contains('/anime/') ?? false) {
-            parentShowUrl = b.attributes['href'];
-            break;
-          }
-        }
-      }
-
-      // Try "Semua Episode" link
-      if (parentShowUrl == null) {
-        try {
-          // Check metadata table first
-          final rows = document.querySelectorAll('.entry-content table tr, .post-body table tr');
-          for (var row in rows) {
-             final th = row.querySelector('th');
-             if (th != null && th.text.toLowerCase().contains('semua episode')) {
-                parentShowUrl = row.querySelector('td a')?.attributes['href'];
-                break;
-             }
-          }
-
-          if (parentShowUrl == null) {
-            final allEpLink = document.querySelectorAll('a').firstWhere(
-                  (a) => a.text.toLowerCase().contains('semua episode') || a.text.toLowerCase().contains('list episode'),
-            ).attributes['href'];
-            if (allEpLink != null && allEpLink.isNotEmpty) parentShowUrl = allEpLink;
-          }
-        } catch (_) {}
-      }
+      // Check for breadcrumbs or table links to redirect from Episode Page to Show Page
+      String? parentShowUrl = _findAnoboyParentShowUrl(document);
 
       if (parentShowUrl != null && parentShowUrl != show.originalUrl) {
          try {
@@ -495,6 +459,69 @@ class ScrapingService {
       debugPrint('Error getting Anoboy Show Details: $e');
       return show;
     }
+  }
+
+  @visibleForTesting
+  String? findAnoboyParentShowUrl(Document document) {
+    return _findAnoboyParentShowUrl(document);
+  }
+
+  String? _findAnoboyParentShowUrl(Document document) {
+    String? parentShowUrl;
+
+    // 1. Breadcrumbs
+    final breadcrumbs = document.querySelectorAll('.anime > a');
+    if (breadcrumbs.length >= 2) {
+      parentShowUrl = breadcrumbs[1].attributes['href'];
+    }
+
+    if (parentShowUrl == null) {
+      final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
+      if (bcs.isNotEmpty) {
+         // Typical Structure: Home > Show Name > Episode X
+         // Show Name is usually at index 1 (second item) if length > 2
+         // Or check if NOT home and NOT "Episode ..."
+         if (bcs.length > 2) {
+            parentShowUrl = bcs[1].attributes['href'];
+         } else {
+            // Fallback: check for /anime/ if available
+            for (var b in bcs) {
+              if (b.attributes['href']?.contains('/anime/') ?? false) {
+                parentShowUrl = b.attributes['href'];
+                break;
+              }
+            }
+         }
+      }
+    }
+
+    // 2. Metadata Table "Semua Episode"
+    if (parentShowUrl == null) {
+      try {
+        // Check metadata table first
+        // Added .contenttable as it often contains the table outside .entry-content
+        final rows = document.querySelectorAll('.entry-content table tr, .post-body table tr, .contenttable table tr');
+        for (var row in rows) {
+            final th = row.querySelector('th');
+            if (th != null && th.text.toLowerCase().contains('semua episode')) {
+              parentShowUrl = row.querySelector('td a')?.attributes['href'];
+              break;
+            }
+        }
+      } catch (_) {}
+    }
+
+    // 3. Fallback Link Text
+    if (parentShowUrl == null) {
+      try {
+        final allEpLink = document.querySelectorAll('a').firstWhere(
+              (a) => a.text.toLowerCase().contains('semua episode') || a.text.toLowerCase().contains('list episode'),
+        ).attributes['href'];
+        if (allEpLink != null && allEpLink.isNotEmpty) parentShowUrl = allEpLink;
+      } catch (_) {}
+    }
+
+    return parentShowUrl;
   }
 
   @visibleForTesting
@@ -793,31 +820,8 @@ class ScrapingService {
           }
       }
 
-      // Breadcrumbs
-      final breadcrumbs = document.querySelectorAll('.anime > a');
-      if (breadcrumbs.length >= 2) {
-          showUrl = breadcrumbs[1].attributes['href'];
-      }
-
-      // Fallback Breadcrumbs (e.g. standard WP breadcrumbs)
-      if (showUrl == null) {
-          final bc = document.querySelectorAll('.breadcrumbs a, .breadcrumb a');
-          for (var b in bc) {
-             if (b.attributes['href']?.contains('/anime/') ?? false) {
-                 showUrl = b.attributes['href'];
-                 break;
-             }
-          }
-      }
-
-      if (showUrl == null) {
-          try {
-            final allEpLink = document.querySelectorAll('a').firstWhere(
-              (a) => a.text.toLowerCase().contains('semua episode') || a.text.toLowerCase().contains('list episode'),
-            ).attributes['href'];
-            showUrl = allEpLink;
-          } catch (_) {}
-      }
+      // Use shared logic to find parent show URL
+      showUrl = _findAnoboyParentShowUrl(document);
 
       // Fetch episodes from Show Page if not already parsed and we have a Show URL
       if (allEpisodes.isEmpty && showUrl != null && showUrl != episode.originalUrl) {
