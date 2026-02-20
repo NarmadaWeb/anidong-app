@@ -256,7 +256,7 @@ void main() {
         id: 1,
         showId: 100,
         episodeNumber: 1,
-        title: 'Test Show',
+        title: 'Hikuidori',
         videoUrl: '',
         originalUrl: 'https://ww1.anoboy.boo/2026/01/hikuidori-ushuu-boro-tobi-gumi/',
       );
