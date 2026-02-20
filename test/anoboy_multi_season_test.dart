@@ -41,7 +41,7 @@ void main() {
   test('Anoboy: Parses multiple seasons and respects order/sorting', () {
     final service = ScrapingService();
     final document = parse(anoboyHtml);
-    final show = Show(id: 1, title: 'Test', type: 'anime', status: 'ongoing', genres: []);
+    final show = Show(id: 1, title: 'Jigokuraku', type: 'anime', status: 'ongoing', genres: []);
 
     final result = service.parseAnoboyShowDetailsFromDoc(document, show);
 

@@ -534,7 +534,7 @@ class ScrapingService {
 
   @visibleForTesting
   Show parseAnoboyShowDetailsFromDoc(Document document, Show show) {
-      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id);
+      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id, showTitle: show.title);
 
       // Advanced Sorting: Handle Seasons
       allEpisodes.sort((a, b) {
@@ -686,7 +686,13 @@ class ScrapingService {
       final document = parse(response.body);
 
       // Always try to parse episode list first to populate show.episodes
-      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId);
+      String cleanTitle = episode.title ?? '';
+      // Remove "Episode X" suffix
+      final epMatch = RegExp(r'(?:Episode|Ep)\s+\d+').firstMatch(cleanTitle);
+      if (epMatch != null) {
+        cleanTitle = cleanTitle.substring(0, epMatch.start).trim();
+      }
+      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId, showTitle: cleanTitle.isNotEmpty ? cleanTitle : null);
 
       final hasPlayer = document.querySelector('#mediaplayer') != null || document.querySelector('iframe') != null;
 
@@ -839,7 +845,8 @@ class ScrapingService {
           );
           if (showResponse.statusCode == 200) {
             final showDoc = parse(showResponse.body);
-            allEpisodes = _parseAnoboyEpisodesFromDoc(showDoc, episode.showId);
+            // Use same cleanTitle derived earlier
+            allEpisodes = _parseAnoboyEpisodesFromDoc(showDoc, episode.showId, showTitle: cleanTitle.isNotEmpty ? cleanTitle : null);
           }
       }
 
@@ -949,7 +956,7 @@ class ScrapingService {
     return {'prev': prevEpisodeUrl, 'next': nextEpisodeUrl};
   }
 
-  List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId) {
+  List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId, {String? showTitle}) {
     final List<Episode> eps = [];
 
     var contentContainers = document.querySelectorAll('.entry-content, .post-body, .episodelist, #content');
@@ -965,9 +972,16 @@ class ScrapingService {
 
     final seenUrls = <String>{};
 
+    String? normalizedShowTitle;
+    if (showTitle != null && showTitle.isNotEmpty) {
+      // Clean show title: remove (Sub Indo), trim, lowercase, remove special chars to be safe?
+      // Just lowercase and removing brackets seems enough for Anoboy.
+      normalizedShowTitle = showTitle.toLowerCase().replaceAll(RegExp(r'\s*\(.*?\)'), '').trim();
+    }
+
     for (var link in epLinks) {
       final title = link.attributes['title'] ?? link.text.trim();
-      final url = link.attributes['href'] ?? '';
+      String url = link.attributes['href'] ?? '';
 
       if (url.isEmpty || url.contains('#') || url.contains('facebook') || url.contains('twitter') || url.contains('whatsapp')) continue;
 
@@ -978,21 +992,41 @@ class ScrapingService {
         isValidUrl = true;
       } else if (url.startsWith('/')) {
         isValidUrl = true; // Relative path
+        url = '$anoboyBaseUrl$url'; // Normalize to full URL immediately
       }
 
       if (!isValidUrl) continue;
 
+      // Ensure full URL for deduplication if not already
+      if (!url.startsWith('http')) {
+         // Should have been caught above, but safety check
+         if (url.startsWith('//')) {
+            url = 'https:$url';
+         } else {
+            url = '$anoboyBaseUrl$url';
+         }
+      }
+
       if (seenUrls.contains(url)) continue;
 
       if (title.contains('Episode') || title.contains('Ep ')) {
+        // Filter unrelated episodes if showTitle is provided
+        if (normalizedShowTitle != null) {
+          final normalizedTitle = title.toLowerCase();
+          final isGeneric = RegExp(r'^(?:episode|ep)\s+\d+$', caseSensitive: false).hasMatch(normalizedTitle);
+
+          if (!isGeneric && !normalizedTitle.contains(normalizedShowTitle)) {
+             continue;
+          }
+        }
+
         int epNum = 0;
         final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
 
         if (epMatch != null) {
           epNum = int.tryParse(epMatch.group(1)!) ?? 0;
 
-          final fullUrl = url.startsWith('http') ? url : '$anoboyBaseUrl$url';
-          final uniqueId = (fullUrl + title + epNum.toString()).hashCode;
+          final uniqueId = (url + title + epNum.toString()).hashCode;
 
           seenUrls.add(url);
 
@@ -1002,7 +1036,7 @@ class ScrapingService {
             episodeNumber: epNum,
             title: title,
             videoUrl: '',
-            originalUrl: fullUrl,
+            originalUrl: url,
           ));
         }
       }
