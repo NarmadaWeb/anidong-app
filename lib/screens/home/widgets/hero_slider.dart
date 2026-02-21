@@ -5,7 +5,6 @@ import 'package:anidong/providers/home_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:provider/provider.dart';
 
 class HeroSlider extends StatelessWidget {
@@ -107,9 +106,6 @@ class _HeroSlideItem extends StatelessWidget {
   }
 
   Widget _buildSlideContent(BuildContext context) {
-    // Menggabungkan nama genre menjadi satu string
-    final genreText = show.genres.map((g) => g.name).join(' • ');
-
     return Positioned(
       bottom: 60,
       left: 16,
@@ -129,53 +125,8 @@ class _HeroSlideItem extends StatelessWidget {
                   ],
                 ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            genreText,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 14,
-                  shadows: const [Shadow(blurRadius: 5.0, color: Colors.black87)],
-                ),
-          ),
-          const SizedBox(height: 24),
-          _buildActionButtons(context),
         ],
       ),
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ElevatedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Boxicons.bx_play_circle, size: 22),
-          label: const Text('Play'),
-          // --- Perbaikan 6: Style tombol yang lebih modern ---
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.onSurface,
-            foregroundColor: Theme.of(context).colorScheme.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          ),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Boxicons.bx_plus, size: 22),
-          label: const Text('My List'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).cardColor.withValues(alpha: 0.8),
-            foregroundColor: Theme.of(context).colorScheme.onSurface,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            side: BorderSide(color: Theme.of(context).dividerColor),
-            textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          ),
-        ),
-      ],
     );
   }
 }
