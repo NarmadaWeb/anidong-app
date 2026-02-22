@@ -1,6 +1,7 @@
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/api_service.dart';
 import 'package:anidong/screens/video_player_screen.dart';
+import 'package:anidong/services/ad_service.dart';
 import 'package:anidong/widgets/star_rating.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -201,12 +202,14 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                         final ep = _show.episodes![index];
                         return InkWell(
                           onTap: () {
-                             Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VideoPlayerScreen(episode: ep),
-                              ),
-                            );
+                            AdService.instance.showAdIfAvailable(() {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VideoPlayerScreen(episode: ep),
+                                ),
+                              );
+                            });
                           },
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
