@@ -1,5 +1,7 @@
 // lib/screens/video_player_screen.dart
 
+import 'dart:async';
+
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/providers/local_data_provider.dart';
@@ -27,16 +29,20 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   bool _isDataLoading = true;
   String? _currentIframeUrl;
   bool _isFullScreen = false;
+  bool _showControls = true;
+  Timer? _hideTimer;
 
   @override
   void initState() {
     super.initState();
     _detailedEpisode = widget.episode;
     _fetchDetails();
+    _startHideTimer();
   }
 
   @override
   void dispose() {
+    _hideTimer?.cancel();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -44,9 +50,29 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     super.dispose();
   }
 
+  void _startHideTimer() {
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) {
+        setState(() {
+          _showControls = false;
+        });
+      }
+    });
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _showControls = true;
+    });
+    _startHideTimer();
+  }
+
   void _toggleFullScreen() {
     setState(() {
       _isFullScreen = !_isFullScreen;
+      _showControls = true;
+      _startHideTimer();
     });
 
     if (_isFullScreen) {
@@ -141,15 +167,30 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ? Stack(
                 children: [
                   Center(child: WebViewWidget(controller: _controller)),
+                  if (!_showControls)
+                    Positioned.fill(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: _toggleControls,
+                        child: Container(color: Colors.transparent),
+                      ),
+                    ),
                   if (_isLoading)
                     Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
                   Positioned(
                     bottom: 20,
                     right: 20,
-                    child: FloatingActionButton(
-                      backgroundColor: Colors.black54,
-                      onPressed: _toggleFullScreen,
-                      child: const Icon(Icons.fullscreen_exit, color: Colors.white),
+                    child: AnimatedOpacity(
+                      opacity: _showControls ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: IgnorePointer(
+                        ignoring: !_showControls,
+                        child: FloatingActionButton(
+                          backgroundColor: Colors.black54,
+                          onPressed: _toggleFullScreen,
+                          child: const Icon(Icons.fullscreen_exit, color: Colors.white),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -169,16 +210,31 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                   ? Stack(
                                       children: [
                                         WebViewWidget(controller: _controller),
+                                        if (!_showControls)
+                                          Positioned.fill(
+                                            child: GestureDetector(
+                                              behavior: HitTestBehavior.translucent,
+                                              onTap: _toggleControls,
+                                              child: Container(color: Colors.transparent),
+                                            ),
+                                          ),
                                         if (_isLoading)
                                           Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
                                         Positioned(
                                           bottom: 10,
                                           right: 10,
-                                          child: IconButton(
-                                            icon: const Icon(Icons.fullscreen, color: Colors.white, size: 30),
-                                            onPressed: _toggleFullScreen,
-                                            style: IconButton.styleFrom(
-                                              backgroundColor: Colors.black45,
+                                          child: AnimatedOpacity(
+                                            opacity: _showControls ? 1.0 : 0.0,
+                                            duration: const Duration(milliseconds: 300),
+                                            child: IgnorePointer(
+                                              ignoring: !_showControls,
+                                              child: IconButton(
+                                                icon: const Icon(Icons.fullscreen, color: Colors.white, size: 30),
+                                                onPressed: _toggleFullScreen,
+                                                style: IconButton.styleFrom(
+                                                  backgroundColor: Colors.black45,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
