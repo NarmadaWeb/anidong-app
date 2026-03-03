@@ -144,7 +144,7 @@ class _MyListScreenState extends State<MyListScreen> with SingleTickerProviderSt
                           fit: BoxFit.cover,
                           httpHeaders: const {
                             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                            'Referer': 'https://ww1.anoboy.boo/',
+                            'Referer': 'https://v1.samehadaku.how/',
                           },
                           placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
                           errorWidget: (context, url, error) => Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
