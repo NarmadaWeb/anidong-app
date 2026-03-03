@@ -10,11 +10,11 @@ import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 
 class ScrapingService {
-  static String anoboyBaseUrl = 'https://ww1.anoboy.boo';
+  static String samehadakuBaseUrl = 'https://v1.samehadaku.how';
   static String anichinBaseUrl = 'https://anichin.asia';
 
-  static void updateBaseUrls(String anoboy, String anichin) {
-    if (anoboy.isNotEmpty) anoboyBaseUrl = anoboy;
+  static void updateBaseUrls(String samehadaku, String anichin) {
+    if (samehadaku.isNotEmpty) samehadakuBaseUrl = samehadaku;
     if (anichin.isNotEmpty) anichinBaseUrl = anichin;
   }
 
@@ -27,21 +27,20 @@ class ScrapingService {
     if (thumb.startsWith('//')) {
       return 'https:$thumb';
     }
-    // For Anoboy, relative paths often need the base URL
+    // For Samehadaku, relative paths often need the base URL
     if (thumb.isNotEmpty && !thumb.startsWith('http')) {
-       return '$anoboyBaseUrl$thumb';
+       return '$samehadakuBaseUrl$thumb';
     }
     return thumb;
   }
 
-  Future<List<Episode>> getAnoboyRecentEpisodes({int page = 1}) async {
+  Future<List<Episode>> getSamehadakuRecentEpisodes({int page = 1}) async {
     try {
-      final url = page > 1 ? '$anoboyBaseUrl/page/$page/' : anoboyBaseUrl;
+      final url = page > 1 ? 'https://corsproxy.io/?url=${Uri.encodeComponent('$samehadakuBaseUrl/anime-terbaru/page/$page/')}' : 'https://corsproxy.io/?url=${Uri.encodeComponent('$samehadakuBaseUrl/anime-terbaru/')}';
       final response = await http.get(
         Uri.parse(url),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': anichinBaseUrl,
         },
       );
       if (response.statusCode != 200) return [];
@@ -49,33 +48,46 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Episode> episodes = [];
 
-      final elements = document.querySelectorAll('.home_index a[rel="bookmark"]');
+      final elements = document.querySelectorAll('.post-show ul li');
       for (var element in elements) {
-        if (element.querySelector('.amv') == null) continue;
+        final titleElement = element.querySelector('.entry-title a');
+        final title = titleElement?.text.trim() ?? element.querySelector('img')?.attributes['title'] ?? '';
 
-        final title = element.attributes['title'] ?? element.querySelector('h3.ibox1')?.text.trim() ?? '';
-        final url = element.attributes['href'] ?? '';
+        // Use the episode link inside .lstepsiode if available, or fallback to the show link
+        var url = element.querySelector('.epsright a')?.attributes['href'];
+        if (url == null || url.isEmpty) {
+           url = titleElement?.attributes['href'] ?? element.querySelector('a')?.attributes['href'] ?? '';
+        }
+
         final imgElement = element.querySelector('img');
 
         if (title.isNotEmpty && url.isNotEmpty) {
           final thumb = _extractImageUrl(imgElement);
           int epNum = 0;
-          final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
-          if (epMatch != null) {
-            epNum = int.tryParse(epMatch.group(1)!) ?? 0;
+
+          final epAuthor = element.querySelector('author[itemprop="name"]');
+          if (epAuthor != null) {
+            epNum = int.tryParse(epAuthor.text.trim()) ?? 0;
+          } else {
+             final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
+             if (epMatch != null) {
+               epNum = int.tryParse(epMatch.group(1)!) ?? 0;
+             }
           }
+
+          final fullTitle = '$title Episode $epNum';
 
           episodes.add(Episode(
             id: url.hashCode,
             showId: title.hashCode,
             episodeNumber: epNum,
-            title: title,
+            title: fullTitle,
             videoUrl: '',
             thumbnailUrl: thumb,
-            originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
+            originalUrl: url.startsWith('http') ? url : '$samehadakuBaseUrl$url',
             show: Show(
               id: title.hashCode,
-              title: title.split(' Episode')[0],
+              title: title,
               type: 'anime',
               status: 'ongoing',
               genres: [],
@@ -86,7 +98,7 @@ class ScrapingService {
       }
       return episodes;
     } catch (e) {
-      debugPrint('Error scraping Anoboy: $e');
+      debugPrint('Error scraping Samehadaku: $e');
       return [];
     }
   }
@@ -427,12 +439,12 @@ class ScrapingService {
     );
   }
 
-  Future<Show> getAnoboyShowDetails(Show show) async {
+  Future<Show> getSamehadakuShowDetails(Show show) async {
     if (show.originalUrl == null || show.originalUrl!.isEmpty) return show;
 
     try {
       final response = await http.get(
-        Uri.parse(show.originalUrl!),
+        Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent(show.originalUrl!)}'),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
@@ -442,126 +454,76 @@ class ScrapingService {
       final document = parse(response.body);
 
       // Check for breadcrumbs or table links to redirect from Episode Page to Show Page
-      String? parentShowUrl = _findAnoboyParentShowUrl(document);
+      String? parentShowUrl = _findSamehadakuParentShowUrl(document);
 
       if (parentShowUrl != null && parentShowUrl != show.originalUrl) {
          try {
            final parentResponse = await http.get(
-             Uri.parse(parentShowUrl.startsWith('http') ? parentShowUrl : '$anoboyBaseUrl$parentShowUrl'),
+             Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent(parentShowUrl.startsWith('http') ? parentShowUrl : '$samehadakuBaseUrl$parentShowUrl')}'),
              headers: {
                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
              },
            );
            if (parentResponse.statusCode == 200) {
              final parentDoc = parse(parentResponse.body);
-             return parseAnoboyShowDetailsFromDoc(parentDoc, show.copyWith(originalUrl: parentShowUrl));
+             return parseSamehadakuShowDetailsFromDoc(parentDoc, show.copyWith(originalUrl: parentShowUrl));
            }
          } catch (e) {
-           debugPrint('Error redirecting to Anoboy Show Page: $e');
+           debugPrint('Error redirecting to Samehadaku Show Page: $e');
          }
       }
 
-      return parseAnoboyShowDetailsFromDoc(document, show);
+      return parseSamehadakuShowDetailsFromDoc(document, show);
 
     } catch (e) {
-      debugPrint('Error getting Anoboy Show Details: $e');
+      debugPrint('Error getting Samehadaku Show Details: $e');
       return show;
     }
   }
 
   @visibleForTesting
-  String? findAnoboyParentShowUrl(Document document) {
-    return _findAnoboyParentShowUrl(document);
+  String? findSamehadakuParentShowUrl(Document document) {
+    return _findSamehadakuParentShowUrl(document);
   }
 
-  String? _findAnoboyParentShowUrl(Document document) {
+  String? _findSamehadakuParentShowUrl(Document document) {
     String? parentShowUrl;
 
-    // 1. Breadcrumbs
-    final breadcrumbs = document.querySelectorAll('.anime > a');
-    if (breadcrumbs.length >= 2) {
-      parentShowUrl = breadcrumbs[1].attributes['href'];
-    }
-
-    if (parentShowUrl == null) {
-      final bcs = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
-      if (bcs.isNotEmpty) {
-         // Typical Structure: Home > Show Name > Episode X
-         // Show Name is usually at index 1 (second item) if length > 2
-         // Or check if NOT home and NOT "Episode ..."
-         if (bcs.length > 2) {
-            parentShowUrl = bcs[1].attributes['href'];
-         } else {
-            // Fallback: check for /anime/ if available
-            for (var b in bcs) {
-              if (b.attributes['href']?.contains('/anime/') ?? false) {
-                parentShowUrl = b.attributes['href'];
-                break;
-              }
-            }
-         }
+    // Samehadaku usually has breadcrumbs with "Semua Episode" or an "All Episodes" link
+    final allLinks = document.querySelectorAll('a');
+    for (var link in allLinks) {
+      final text = link.text.trim().toLowerCase();
+      if (text == 'semua episode' || text == 'all episodes' || text == 'all episode') {
+        parentShowUrl = link.attributes['href'];
+        break;
       }
     }
 
-    // 2. Metadata Table "Semua Episode"
     if (parentShowUrl == null) {
-      try {
-        // Check metadata table first
-        // Added .contenttable as it often contains the table outside .entry-content
-        final rows = document.querySelectorAll('.entry-content table tr, .post-body table tr, .contenttable table tr');
-        for (var row in rows) {
-            final th = row.querySelector('th');
-            if (th != null && th.text.toLowerCase().contains('semua episode')) {
-              parentShowUrl = row.querySelector('td a')?.attributes['href'];
-              break;
-            }
+      // Look for breadcrumb or `.spe span a` that points to `/anime/`
+      final breadcrumbs = document.querySelectorAll('.spe span a, .infox .spe a');
+      for (var b in breadcrumbs) {
+        if (b.attributes['href']?.contains('/anime/') ?? false) {
+          parentShowUrl = b.attributes['href'];
+          break;
         }
-      } catch (_) {}
-    }
-
-    // 3. Fallback Link Text
-    if (parentShowUrl == null) {
-      try {
-        final allEpLink = document.querySelectorAll('a').firstWhere(
-              (a) => a.text.toLowerCase().contains('semua episode') || a.text.toLowerCase().contains('list episode'),
-        ).attributes['href'];
-        if (allEpLink != null && allEpLink.isNotEmpty) parentShowUrl = allEpLink;
-      } catch (_) {}
+      }
     }
 
     return parentShowUrl;
   }
 
   @visibleForTesting
-  Show parseAnoboyShowDetailsFromDoc(Document document, Show show) {
-      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id, showTitle: show.title);
+  Show parseSamehadakuShowDetailsFromDoc(Document document, Show show) {
+      List<Episode> allEpisodes = _parseSamehadakuEpisodesFromDoc(document, show.id, showTitle: show.title);
 
-      // Advanced Sorting: Handle Seasons
-      allEpisodes.sort((a, b) {
-         // Try to extract season number from title
-         int getSeason(String? title) {
-            if (title == null) return 0;
-            final match = RegExp(r'Season\s+(\d+)', caseSensitive: false).firstMatch(title);
-            if (match != null) {
-               return int.tryParse(match.group(1)!) ?? 0;
-            }
-            return 0;
-         }
-
-         final seasonA = getSeason(a.title);
-         final seasonB = getSeason(b.title);
-
-         if (seasonA != seasonB) {
-            return seasonA.compareTo(seasonB);
-         }
-         return a.episodeNumber.compareTo(b.episodeNumber);
-      });
+      allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
 
       // Parse details
       double? extractedRating;
-      final scoreElement = document.querySelector('#score');
-      if (scoreElement != null) {
-        extractedRating = double.tryParse(scoreElement.text.trim());
+      final ratingSpan = document.querySelector('.rating span, .score');
+      if (ratingSpan != null) {
+        extractedRating = double.tryParse(ratingSpan.text.trim());
       }
 
       String? studio;
@@ -569,93 +531,35 @@ class ScrapingService {
       String? duration;
       List<Genre> genres = [];
 
-      // Parse metadata table/text
-      final rows = document.querySelectorAll('.entry-content table tr, .post-body table tr');
-      if (rows.isNotEmpty) {
-        for (var row in rows) {
-          final cols = row.querySelectorAll('td');
-          if (cols.length >= 2) {
-            final key = cols[0].text.trim().toLowerCase();
-            final value = cols.last.text.trim();
-
-            if (key.contains('studio')) {
-              studio = value;
-            } else if (key.contains('source')) {
-              source = value;
-            } else if (key.contains('durasi') || key.contains('duration')) {
-              duration = value;
-            } else if (key.contains('genre')) {
-              final genreNames = value.split(',').map((e) => e.trim()).toList();
-              for (var name in genreNames) {
-                if (name.isNotEmpty) {
-                  genres.add(Genre(id: name.hashCode, name: name));
-                }
-              }
-            } else if ((key.contains('skor') || key.contains('score')) && extractedRating == null) {
-               extractedRating = double.tryParse(value);
-            }
-          }
+      final metadataSpans = document.querySelectorAll('.spe span');
+      for (var span in metadataSpans) {
+        final text = span.text.trim();
+        if (text.contains('Studio')) {
+          studio = text.replaceAll('Studio', '').trim();
+        } else if (text.contains('Source')) {
+          source = text.replaceAll('Source', '').trim();
+        } else if (text.contains('Duration')) {
+          duration = text.replaceAll('Duration', '').trim();
         }
-      } else {
-         // Fallback: Try parsing text content if no table (less common but possible)
-         final contentText = document.querySelector('.entry-content, .post-body')?.text ?? '';
-         final lines = contentText.split('\n');
-         for (var line in lines) {
-             final parts = line.split(':');
-             if (parts.length >= 2) {
-                final key = parts[0].trim().toLowerCase();
-                final value = parts.sublist(1).join(':').trim();
+      }
 
-                if (key == ('studio')) {
-                  studio = value;
-                } else if (key == ('source')) {
-                  source = value;
-                } else if (key == ('durasi')) {
-                  duration = value;
-                } else if (key == ('genre')) {
-                  final genreNames =
-                      value.split(',').map((e) => e.trim()).toList();
-                  for (var name in genreNames) {
-                    if (name.isNotEmpty) {
-                      genres.add(Genre(id: name.hashCode, name: name));
-                    }
-                  }
-                }
-             }
-         }
+      final genreLinks = document.querySelectorAll('.genre-info a, .mta a');
+      for (var a in genreLinks) {
+        final name = a.text.trim();
+        if (name.isNotEmpty) {
+          genres.add(Genre(id: name.hashCode, name: name));
+        }
       }
 
       String? synopsis;
-      // Heuristic: Synopsis is often a paragraph in content, usually strictly text.
-      // We'll take the text of paragraphs that are NOT in the table.
-      final contentEl = document.querySelector('.entry-content, .post-body');
-      if (contentEl != null) {
-         final paragraphs = contentEl.querySelectorAll('p');
-         for (var p in paragraphs) {
-            // Ignore if it's "Download..." or similar
-            if (p.text.toLowerCase().contains('download') || p.text.toLowerCase().contains('mirror')) continue;
-            // Ignore if it looks like metadata line
-            if (p.text.contains(':')) continue;
-
-            final text = p.text.trim();
-            if (text.length > 50) {
-              synopsis ??= text;
-              if (synopsis != text) {
-                synopsis = '$synopsis\n\n$text';
-              }
-            }
-          }
-
-          synopsis ??= contentEl.text.trim();
-
-          if (synopsis.length > 500) {
-            synopsis = '${synopsis.substring(0, 500)}...';
-          }
+      final synEl = document.querySelector('.desc p, .entry-content p, .ttls');
+      if (synEl != null) {
+         synopsis = synEl.text.trim();
       }
 
       String? coverImage = show.coverImageUrl;
       if (coverImage == null || coverImage.isEmpty) {
-         final imgEl = document.querySelector('.entry-content img, .post-body img');
+         final imgEl = document.querySelector('.thumb img, .infox img');
          coverImage = _extractImageUrl(imgEl);
       }
 
@@ -671,12 +575,12 @@ class ScrapingService {
       );
   }
 
-  Future<Episode> getAnoboyEpisodeDetails(Episode episode) async {
+  Future<Episode> getSamehadakuEpisodeDetails(Episode episode) async {
     if (episode.originalUrl == null || episode.originalUrl!.isEmpty) return episode;
 
     try {
       final response = await http.get(
-        Uri.parse(episode.originalUrl!),
+        Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent(episode.originalUrl!)}'),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
@@ -685,51 +589,28 @@ class ScrapingService {
 
       final document = parse(response.body);
 
-      // Always try to parse episode list first to populate show.episodes
-      String cleanTitle = episode.title ?? '';
-      // Remove "Episode X" suffix
-      final epMatch = RegExp(r'(?:Episode|Ep)\s+\d+').firstMatch(cleanTitle);
-      if (epMatch != null) {
-        cleanTitle = cleanTitle.substring(0, epMatch.start).trim();
-      }
-      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId, showTitle: cleanTitle.isNotEmpty ? cleanTitle : null);
-
-      final hasPlayer = document.querySelector('#mediaplayer') != null || document.querySelector('iframe') != null;
-
-      // Determine if this is primarily a Show Page (List) or Episode Page (Video)
-      // If no player, it's definitely a Show Page.
-      bool isShowPage = !hasPlayer;
-
-      // Fix for episode number if 0
       int currentEpisodeNumber = episode.episodeNumber;
       if (currentEpisodeNumber == 0) {
-          // Try from title
-          String titleText = document.querySelector('title')?.text ?? '';
+          final titleText = document.querySelector('title')?.text ?? '';
           var match = RegExp(r'(?:Episode|Ep)\s+(\d+)', caseSensitive: false).firstMatch(titleText);
           if (match != null) {
              currentEpisodeNumber = int.tryParse(match.group(1)!) ?? 0;
-          } else {
-             // Try from breadcrumbs
-             final breadcrumb = document.querySelector('.anime > span');
-             if (breadcrumb != null) {
-                 match = RegExp(r'Episode\s+(\d+)', caseSensitive: false).firstMatch(breadcrumb.text);
-                 if (match != null) currentEpisodeNumber = int.tryParse(match.group(1)!) ?? 0;
-             }
           }
       }
 
-      String? showUrl = episode.originalUrl;
-      final List<Map<String, String>> videoServers = [];
-      String? primaryIframe;
-      final List<Map<String, String>> downloadLinks = [];
+      final hasPlayer = document.querySelector('iframe') != null || document.querySelector('.player-area') != null || document.querySelector('.east_player_option') != null;
+      bool isShowPage = !hasPlayer;
+
+      String? showUrl = _findSamehadakuParentShowUrl(document);
 
       if (isShowPage) {
-         // Pure Show Page logic (recurse to target episode)
          String coverImage = episode.thumbnailUrl ?? '';
          if (coverImage.isEmpty) {
-             final imgEl = document.querySelector('.entry-content img, .post-body img');
+             final imgEl = document.querySelector('.thumb img, .infox img');
              coverImage = _extractImageUrl(imgEl);
          }
+
+         List<Episode> allEpisodes = _parseSamehadakuEpisodesFromDoc(document, episode.showId);
 
          if (allEpisodes.isNotEmpty) {
             final targetEp = allEpisodes.firstWhere(
@@ -737,9 +618,8 @@ class ScrapingService {
                orElse: () => allEpisodes.first,
             );
 
-            // Recurse ONLY if target URL is different to prevent loops
             if (targetEp.originalUrl != episode.originalUrl) {
-               final detailedEp = await getAnoboyEpisodeDetails(targetEp);
+               final detailedEp = await getSamehadakuEpisodeDetails(targetEp);
                 final fullShow = detailedEp.show ?? Show(
                     id: episode.showId,
                     title: episode.title ?? 'Anime',
@@ -747,7 +627,7 @@ class ScrapingService {
                     status: 'ongoing',
                     genres: [],
                     coverImageUrl: coverImage,
-                    originalUrl: showUrl,
+                    originalUrl: showUrl ?? episode.originalUrl,
                 );
 
                 final updatedShow = Show(
@@ -756,7 +636,7 @@ class ScrapingService {
                     type: fullShow.type,
                     status: fullShow.status,
                     genres: fullShow.genres,
-                    originalUrl: fullShow.originalUrl ?? showUrl,
+                    originalUrl: fullShow.originalUrl,
                     coverImageUrl: fullShow.coverImageUrl,
                     rating: fullShow.rating,
                     episodes: allEpisodes,
@@ -781,93 +661,115 @@ class ScrapingService {
          }
       }
 
-      // Episode Page Logic (Extract Player) - Runs for Episode Pages OR Bulk Pages (Player + List)
-      final iframeElement = document.querySelector('iframe#mediaplayer') ?? document.querySelector('iframe');
+      final List<Map<String, String>> videoServers = [];
+      String? primaryIframe;
+      final List<Map<String, String>> downloadLinks = [];
+
+      // Samehadaku video servers logic
+      final iframeElement = document.querySelector('.player-area iframe') ?? document.querySelector('iframe[src*="youtube"]');
       if (iframeElement != null) {
           primaryIframe = iframeElement.attributes['src'];
           if (primaryIframe != null) {
-            final iframeUrl = primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe';
             videoServers.add({
               'name': 'Primary Server',
-              'url': iframeUrl
+              'url': primaryIframe
             });
-            primaryIframe = iframeUrl;
           }
       }
 
-      final mirrorElements = document.querySelectorAll('.vmiror a');
-      for (var mirror in mirrorElements) {
-          final link = mirror.attributes['data-video'] ?? mirror.attributes['href'];
-          if (link != null && link.isNotEmpty && link != '#') {
-            String serverName = mirror.text.trim();
-            final parentText = mirror.parent?.text.split('|')[0].trim() ?? '';
-            if (parentText.isNotEmpty && parentText != serverName) {
-              serverName = '$parentText $serverName';
+      final serverElements = document.querySelectorAll('.east_player_option');
+      for (var server in serverElements) {
+         final name = server.text.trim();
+         final dataPost = server.attributes['data-post'];
+         final dataNume = server.attributes['data-nume'];
+         final dataType = server.attributes['data-type'];
+
+         if (dataPost != null && dataNume != null && dataType != null) {
+            if (primaryIframe == null && videoServers.isEmpty) {
+                 try {
+                     final ajaxUrl = '$samehadakuBaseUrl/wp-admin/admin-ajax.php';
+                     final postResponse = await http.post(
+                         Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent(ajaxUrl)}'),
+                         headers: {
+                             'Content-Type': 'application/x-www-form-urlencoded',
+                             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                         },
+                         body: 'action=player_ajax&post=$dataPost&nume=$dataNume&type=$dataType'
+                     );
+
+                     if (postResponse.statusCode == 200) {
+                         final iframeHtml = postResponse.body;
+                         final iframeDoc = parse(iframeHtml);
+                         final src = iframeDoc.querySelector('iframe')?.attributes['src'];
+                         if (src != null) {
+                             primaryIframe = src;
+                             videoServers.add({
+                                'name': name.isNotEmpty ? name : 'Server 1',
+                                'url': src
+                             });
+                         }
+                     }
+                 } catch (e) {
+                     debugPrint('Error fetching samehadaku iframe: $e');
+                 }
+            } else {
+                 // Provide a fallback placeholder or logic for other servers if needed
             }
-            final fullLink = link.startsWith('http') ? link : '$anoboyBaseUrl$link';
-            if (!videoServers.any((s) => s['url'] == fullLink)) {
-              videoServers.add({
-                'name': serverName.isEmpty ? 'Mirror Server' : serverName,
-                'url': fullLink
-              });
-            }
-          }
+         }
       }
 
-      final dlElements = document.querySelectorAll('a.udl');
+      final dlElements = document.querySelectorAll('.download-eps ul li a');
       for (var dl in dlElements) {
           final name = dl.text.trim();
           final link = dl.attributes['href'];
-          if (link != null && link.isNotEmpty && link != 'none') {
+          if (link != null && link.isNotEmpty && link != '#') {
             String dlName = name;
-            final parent = dl.parent;
-            if (parent != null) {
-              final providerText = parent.querySelector('.udj')?.text.trim() ?? '';
-              if (providerText.isNotEmpty) {
-                dlName = '$providerText $name';
-              }
+            // Try to find resolution
+            final parentLi = dl.parent?.parent; // li > span > a
+            if (parentLi != null && parentLi.localName == 'li') {
+               final resText = parentLi.querySelector('strong')?.text.trim() ?? '';
+               if (resText.isNotEmpty) {
+                  dlName = '$resText $name';
+               }
             }
+
             downloadLinks.add({
               'name': dlName,
-              'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link'
+              'url': link
             });
           }
       }
 
-      // Use shared logic to find parent show URL
-      showUrl = _findAnoboyParentShowUrl(document);
-
-      // Fetch episodes from Show Page if not already parsed and we have a Show URL
-      if (allEpisodes.isEmpty && showUrl != null && showUrl != episode.originalUrl) {
+      List<Episode> allEpisodes = [];
+      if (showUrl != null && showUrl != episode.originalUrl) {
            final showResponse = await http.get(
-            Uri.parse(showUrl.startsWith('http') ? showUrl : '$anoboyBaseUrl$showUrl'),
+            Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent(showUrl.startsWith('http') ? showUrl : '$samehadakuBaseUrl$showUrl')}'),
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
           );
           if (showResponse.statusCode == 200) {
             final showDoc = parse(showResponse.body);
-            // Use same cleanTitle derived earlier
-            allEpisodes = _parseAnoboyEpisodesFromDoc(showDoc, episode.showId, showTitle: cleanTitle.isNotEmpty ? cleanTitle : null);
+            allEpisodes = _parseSamehadakuEpisodesFromDoc(showDoc, episode.showId);
           }
       }
 
-      // Rating
       double? extractedRating;
-      final scoreElement = document.querySelector('#score');
-      if (scoreElement != null) {
-        extractedRating = double.tryParse(scoreElement.text.trim());
+      final ratingSpan = document.querySelector('.rating span, .score');
+      if (ratingSpan != null) {
+        extractedRating = double.tryParse(ratingSpan.text.trim());
       }
 
       allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
 
-      final navResult = findAnoboyNavigationLinks(document, currentEpisodeNumber, episode.title ?? '');
+      final navResult = findSamehadakuNavigationLinks(document);
       String? prevEpisodeUrl = navResult['prev'];
       String? nextEpisodeUrl = navResult['next'];
 
-      // Fallback/Override with list-based navigation
-      final currentIdx = allEpisodes.indexWhere((e) => e.episodeNumber == currentEpisodeNumber);
-      if (currentIdx != -1) {
-        if (currentIdx > 0) prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
-        if (currentIdx < allEpisodes.length - 1) nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
+      if (allEpisodes.isNotEmpty) {
+         final currentIdx = allEpisodes.indexWhere((e) => e.episodeNumber == currentEpisodeNumber);
+         if (currentIdx != -1) {
+           if (currentIdx > 0 && prevEpisodeUrl == null) prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
+           if (currentIdx < allEpisodes.length - 1 && nextEpisodeUrl == null) nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
+         }
       }
 
       final show = episode.show ?? Show(id: episode.showId, title: episode.title ?? 'Anime', type: 'anime', status: 'ongoing', genres: []);
@@ -900,147 +802,70 @@ class ScrapingService {
       );
 
     } catch (e) {
-      debugPrint('Error getting Anoboy details: $e');
+      debugPrint('Error getting Samehadaku details: $e');
       return episode;
     }
   }
 
   @visibleForTesting
-  Map<String, String?> findAnoboyNavigationLinks(Document document, int currentEpisodeNumber, String showTitle) {
+  Map<String, String?> findSamehadakuNavigationLinks(Document document) {
     String? prevEpisodeUrl;
     String? nextEpisodeUrl;
 
-    String cleanTitle = showTitle.toLowerCase();
-    // Remove "episode ..." suffix to get base title for matching
-    final epMatch = RegExp(r'(?:episode|ep)\s+\d+').firstMatch(cleanTitle);
-    if (epMatch != null) {
-      cleanTitle = cleanTitle.substring(0, epMatch.start).trim();
-    }
-
-    // Enhanced Prev/Next Scrape
-    var navLinks = document.querySelectorAll('.naveps a, .entry-content a, .post-body a');
-    if (navLinks.isEmpty) {
-      navLinks = document.querySelectorAll('a');
-    }
+    final navLinks = document.querySelectorAll('.naveps .nvsc a, .naveps a, .nvs a');
 
     for (var link in navLinks) {
       final text = link.text.trim().toLowerCase();
       final href = link.attributes['href'];
       if (href == null || href.isEmpty || href == '#') continue;
 
-      // Check for specific keywords first
-      if (text == 'episode sebelumnya' || text == 'prev' || text == 'sebelumnya' || text.contains('<< previous') || text.contains('previous episode')) {
-        prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-      } else if (text == 'episode selanjutnya' || text == 'next' || text == 'selanjutnya' || text.contains('next >>') || text.contains('next episode')) {
-        nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-      } else {
-        // Heuristic: specific episode links in nav area
-        // Often links like "Title Episode X"
-        if (currentEpisodeNumber > 0) {
-          final isGenericButton = RegExp(r'^(?:episode|ep)\s+\d+$').hasMatch(text);
-
-          if (text.contains('episode ${currentEpisodeNumber - 1}')) {
-             // Validate context: Must be generic button OR contain show title
-             if (isGenericButton || (cleanTitle.isNotEmpty && text.contains(cleanTitle))) {
-                prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-             }
-          } else if (text.contains('episode ${currentEpisodeNumber + 1}')) {
-             // Validate context
-             if (isGenericButton || (cleanTitle.isNotEmpty && text.contains(cleanTitle))) {
-                nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-             }
-          }
-        }
+      if (text.contains('prev') || text.contains('sebelumnya') || link.querySelector('.fa-angle-left') != null || link.querySelector('.fa-chevron-left') != null) {
+        prevEpisodeUrl = href.startsWith('http') ? href : '$samehadakuBaseUrl$href';
+      } else if (text.contains('next') || text.contains('selanjutnya') || link.querySelector('.fa-angle-right') != null || link.querySelector('.fa-chevron-right') != null) {
+        nextEpisodeUrl = href.startsWith('http') ? href : '$samehadakuBaseUrl$href';
       }
     }
+
     return {'prev': prevEpisodeUrl, 'next': nextEpisodeUrl};
   }
 
-  List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId, {String? showTitle}) {
+  List<Episode> _parseSamehadakuEpisodesFromDoc(dynamic document, int showId, {String? showTitle}) {
     final List<Episode> eps = [];
-
-    var contentContainers = document.querySelectorAll('.entry-content, .post-body, .episodelist, #content');
-
-    List<Element> epLinks = [];
-    if (contentContainers.isNotEmpty) {
-      for (var container in contentContainers) {
-        epLinks.addAll(container.querySelectorAll('a'));
-      }
-    } else {
-      epLinks = document.querySelectorAll('a');
-    }
-
     final seenUrls = <String>{};
 
-    String? normalizedShowTitle;
-    if (showTitle != null && showTitle.isNotEmpty) {
-      // Clean show title: remove (Sub Indo), trim, lowercase, remove special chars to be safe?
-      // Just lowercase and removing brackets seems enough for Anoboy.
-      normalizedShowTitle = showTitle.toLowerCase().replaceAll(RegExp(r'\s*\(.*?\)'), '').trim();
-    }
+    final epElements = document.querySelectorAll('.lstepsiode ul li');
+    for (var element in epElements) {
+       final link = element.querySelector('.epsleft .lchx a');
+       if (link == null) continue;
 
-    for (var link in epLinks) {
-      final title = link.attributes['title'] ?? link.text.trim();
-      String url = link.attributes['href'] ?? '';
+       final title = link.text.trim();
+       final url = link.attributes['href'] ?? '';
 
-      if (url.isEmpty || url.contains('#') || url.contains('facebook') || url.contains('twitter') || url.contains('whatsapp')) continue;
+       if (url.isEmpty || seenUrls.contains(url)) continue;
 
-      // Allow relative URLs that don't explicitly contain 'anoboy' in the href attribute
-      // But verify they are likely internal links (start with / or contain base url)
-      bool isValidUrl = false;
-      if (url.contains('anoboy')) {
-        isValidUrl = true;
-      } else if (url.startsWith('/')) {
-        isValidUrl = true; // Relative path
-        url = '$anoboyBaseUrl$url'; // Normalize to full URL immediately
-      }
-
-      if (!isValidUrl) continue;
-
-      // Ensure full URL for deduplication if not already
-      if (!url.startsWith('http')) {
-         // Should have been caught above, but safety check
-         if (url.startsWith('//')) {
-            url = 'https:$url';
-         } else {
-            url = '$anoboyBaseUrl$url';
-         }
-      }
-
-      if (seenUrls.contains(url)) continue;
-
-      if (title.contains('Episode') || title.contains('Ep ')) {
-        // Filter unrelated episodes if showTitle is provided
-        if (normalizedShowTitle != null) {
-          final normalizedTitle = title.toLowerCase();
-          final isGeneric = RegExp(r'^(?:episode|ep)\s+\d+$', caseSensitive: false).hasMatch(normalizedTitle);
-
-          if (!isGeneric && !normalizedTitle.contains(normalizedShowTitle)) {
-             continue;
+       int epNum = 0;
+       final epsSpan = element.querySelector('.epsright .eps a');
+       if (epsSpan != null) {
+          epNum = int.tryParse(epsSpan.text.trim()) ?? 0;
+       } else {
+          final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
+          if (epMatch != null) {
+            epNum = int.tryParse(epMatch.group(1)!) ?? 0;
           }
-        }
+       }
 
-        int epNum = 0;
-        final epMatch = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(title);
+       seenUrls.add(url);
 
-        if (epMatch != null) {
-          epNum = int.tryParse(epMatch.group(1)!) ?? 0;
-
-          final uniqueId = (url + title + epNum.toString()).hashCode;
-
-          seenUrls.add(url);
-
-          eps.add(Episode(
-            id: uniqueId,
-            showId: showId,
-            episodeNumber: epNum,
-            title: title,
-            videoUrl: '',
-            originalUrl: url,
-          ));
-        }
-      }
+       eps.add(Episode(
+         id: url.hashCode,
+         showId: showId,
+         episodeNumber: epNum,
+         title: title,
+         videoUrl: '',
+         originalUrl: url.startsWith('http') ? url : '$samehadakuBaseUrl$url',
+       ));
     }
+
     return eps;
   }
 
@@ -1332,10 +1157,10 @@ class ScrapingService {
     }
   }
 
-  Future<List<Show>> searchAnoboy(String query) async {
+  Future<List<Show>> searchSamehadaku(String query) async {
     try {
       final response = await http.get(
-        Uri.parse('$anoboyBaseUrl/?s=${Uri.encodeComponent(query)}'),
+        Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent('$samehadakuBaseUrl/?s=${Uri.encodeComponent(query)}')}' ),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
@@ -1345,27 +1170,36 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      final elements = document.querySelectorAll('a[rel="bookmark"]');
+      final elements = document.querySelectorAll('.animepost');
       for (var element in elements) {
-        final title = element.attributes['title'] ?? element.querySelector('h3.ibox1')?.text.trim() ?? '';
-        final url = element.attributes['href'] ?? '';
+        final linkElement = element.querySelector('a');
+        if (linkElement == null) continue;
+
+        final url = linkElement.attributes['href'] ?? '';
+
+        final titleElement = element.querySelector('.entry-title') ?? element.querySelector('img');
+        final title = titleElement?.text.trim().isNotEmpty == true
+             ? titleElement!.text.trim()
+             : (element.querySelector('img')?.attributes['title'] ?? '');
+
         final imgElement = element.querySelector('img');
 
         if (title.isNotEmpty && url.isNotEmpty) {
           final thumb = _extractImageUrl(imgElement);
 
           String status = 'ongoing';
-          if (title.toLowerCase().contains('completed') || title.toLowerCase().contains('tamat')) {
+          final typeText = element.querySelector('.type')?.text.trim().toLowerCase() ?? '';
+          if (typeText.contains('completed') || typeText.contains('tamat') || title.toLowerCase().contains('completed') || title.toLowerCase().contains('tamat')) {
             status = 'completed';
           }
 
           shows.add(Show(
             id: url.hashCode,
-            title: title.split(' Episode')[0].split(' Ep ')[0],
+            title: title,
             type: 'anime',
             status: status,
             coverImageUrl: thumb,
-            originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
+            originalUrl: url.startsWith('http') ? url : '$samehadakuBaseUrl$url',
             genres: [],
           ));
         }
@@ -1378,10 +1212,10 @@ class ScrapingService {
     }
   }
 
-  Future<List<Show>> getAnoboyAnimeList() async {
+  Future<List<Show>> getSamehadakuAnimeList() async {
     try {
       final response = await http.get(
-        Uri.parse('$anoboyBaseUrl/anime-list/'),
+        Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent('$samehadakuBaseUrl/daftar-anime-2/')}' ),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
@@ -1391,43 +1225,80 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      var content = document.querySelector('#ada') ?? document.querySelector('.entry-content') ?? document.querySelector('.post-body');
-
-      final links = content != null ? content.querySelectorAll('a') : document.querySelectorAll('a[rel="bookmark"]');
+      final links = document.querySelectorAll('.listab a, .listt a, .s_list a');
 
       for (var link in links) {
-        final title = link.attributes['title'] ?? link.text.trim();
+        final title = link.text.trim();
         final url = link.attributes['href'] ?? '';
 
         if (title.isEmpty || title.length < 2) continue;
-        if (!url.contains('anoboy')) continue;
-
-        if (url.contains('/page/') || url.contains('wp-json') || url.contains('feed') || url.contains('comment-page')) continue;
-        if (url.endsWith('#') || url.contains('#')) continue;
-
-        if (['Home', 'Jadwal', 'AnimeList', 'DonghuaList', 'Movie', 'Tokusatsu', 'Live Action', 'Studio Ghibli', 'One Piece', 'Rekomendasi', 'Lapor Eror', 'Advertise'].contains(title)) continue;
 
         if (shows.any((s) => s.originalUrl == url)) continue;
-
-        String status = 'ongoing';
-        if (title.toLowerCase().contains('completed') || title.toLowerCase().contains('tamat')) {
-          status = 'completed';
-        }
 
         shows.add(Show(
           id: url.hashCode,
           title: title,
           type: 'anime',
-          status: status,
+          status: 'completed', // list typically has completed/ongoing mixed but mostly it's an index
           genres: [],
-          originalUrl: url,
+          originalUrl: url.startsWith('http') ? url : '$samehadakuBaseUrl$url',
           coverImageUrl: '',
         ));
       }
 
       return shows;
     } catch (e) {
-      debugPrint('Error getting Anoboy Anime List: $e');
+      debugPrint('Error getting Samehadaku Anime List: $e');
+      return [];
+    }
+  }
+
+  Future<List<Show>> getSamehadakuMovies() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent('$samehadakuBaseUrl/anime-movie/')}' ),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      );
+      if (response.statusCode != 200) return [];
+
+      final document = parse(response.body);
+      final List<Show> shows = [];
+
+      final elements = document.querySelectorAll('.animepost');
+      for (var element in elements) {
+        final linkElement = element.querySelector('a');
+        if (linkElement == null) continue;
+
+        final url = linkElement.attributes['href'] ?? '';
+
+        final titleElement = element.querySelector('.entry-title') ?? element.querySelector('img');
+        final title = titleElement?.text.trim().isNotEmpty == true
+             ? titleElement!.text.trim()
+             : (element.querySelector('img')?.attributes['title'] ?? '');
+
+        final imgElement = element.querySelector('img');
+
+        if (title.isNotEmpty && url.isNotEmpty) {
+          final thumb = _extractImageUrl(imgElement);
+
+          shows.add(Show(
+            id: url.hashCode,
+            title: title,
+            type: 'movie',
+            status: 'completed',
+            coverImageUrl: thumb,
+            originalUrl: url.startsWith('http') ? url : '$samehadakuBaseUrl$url',
+            genres: [],
+          ));
+        }
+      }
+
+      final seenTitles = <String>{};
+      return shows.where((s) => seenTitles.add(s.title)).toList();
+    } catch (e) {
+      debugPrint('Error getting Samehadaku Movies: $e');
       return [];
     }
   }

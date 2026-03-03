@@ -250,7 +250,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             fit: BoxFit.cover,
                             httpHeaders: const {
                               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                              'Referer': 'https://ww1.anoboy.boo/',
+                              'Referer': 'https://v1.samehadaku.how/',
                             },
                             errorWidget: (context, url, error) => Container(color: AppColors.surface, width: 60, height: 80, child: const Icon(Icons.movie)),
                             placeholder: (context, url) => Container(color: AppColors.surface, width: 60, height: 80, child: const Center(child: CircularProgressIndicator(strokeWidth: 2))),

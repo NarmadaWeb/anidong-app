@@ -13,13 +13,13 @@ class ApiService {
   // Endpoint: GET /episodes/recent
   Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime', int page = 1}) async {
     if (type == 'anime') {
-      return await _scrapingService.getAnoboyRecentEpisodes(page: page);
+      return await _scrapingService.getSamehadakuRecentEpisodes(page: page);
     } else if (type == 'donghua') {
       return await _scrapingService.getAnichinRecentEpisodes(page: page);
     } else {
       // Combined mode
       final results = await Future.wait([
-        _scrapingService.getAnoboyRecentEpisodes(page: page),
+        _scrapingService.getSamehadakuRecentEpisodes(page: page),
         _scrapingService.getAnichinRecentEpisodes(page: page),
       ]);
       final combined = [...results[0], ...results[1]];
@@ -31,25 +31,25 @@ class ApiService {
   // Endpoint: GET /shows/top-rated (Recommendations)
   Future<List<Show>> getTopRatedShows(BuildContext context, {String type = 'combined'}) async {
     if (type == 'anime') {
-      // Anoboy doesn't have a specific "Top Rated" API easily accessible,
-      // so we might use recent episodes as a fallback or if there was a specific method like getAnoboyPopular.
+      // Samehadaku doesn't have a specific "Top Rated" API easily accessible,
+      // so we might use recent episodes as a fallback or if there was a specific method like getSamehadakuPopular.
       // For now, let's just fetch recent episodes and map to shows to ensure content.
       // Or we can leave it empty if strictly "Top Rated" is required but unavailable.
       // Better fallback: Use recent episodes to populate the list.
-      final eps = await _scrapingService.getAnoboyRecentEpisodes();
+      final eps = await _scrapingService.getSamehadakuRecentEpisodes();
       return eps.map((e) => e.show!).toList();
     } else if (type == 'donghua') {
       return await _scrapingService.getAnichinRecommendations();
     } else {
       // Combined mode
       final results = await Future.wait([
-        _scrapingService.getAnoboyRecentEpisodes(),
+        _scrapingService.getSamehadakuRecentEpisodes(),
         _scrapingService.getAnichinRecommendations(),
       ]);
-      final anoboyEps = results[0] as List<Episode>;
+      final samehadakuEps = results[0] as List<Episode>;
       final anichinShows = results[1] as List<Show>;
-      final combined = [
-        ...anoboyEps.map((e) => e.show!),
+      final combined = <Show>[
+        ...samehadakuEps.map((e) => e.show!),
         ...anichinShows
       ];
       combined.shuffle();
@@ -63,20 +63,20 @@ class ApiService {
 
   Future<List<Show>> getPopularShows(BuildContext context, {String type = 'combined'}) async {
     if (type == 'anime') {
-      // Anoboy doesn't have a clear popular section, using recent as placeholder
-      final eps = await _scrapingService.getAnoboyRecentEpisodes();
-      return eps.map((e) => e.show!).toList();
+      // Samehadaku doesn't have a clear popular section, using movies as placeholder or recent
+      final movies = await _scrapingService.getSamehadakuMovies();
+      return movies;
     } else if (type == 'donghua') {
       return await _scrapingService.getAnichinPopularToday();
     } else {
       final results = await Future.wait([
-        _scrapingService.getAnoboyRecentEpisodes(),
+        _scrapingService.getSamehadakuMovies(),
         _scrapingService.getAnichinPopularToday(),
       ]);
-      final anoboyEps = results[0] as List<Episode>;
-      final anichinShows = results[1] as List<Show>;
-      final combined = [
-        ...anoboyEps.map((e) => e.show!),
+      final samehadakuMovies = results[0];
+      final anichinShows = results[1];
+      final combined = <Show>[
+        ...samehadakuMovies,
         ...anichinShows
       ];
       combined.shuffle();
@@ -89,7 +89,7 @@ class ApiService {
     if (query.isEmpty) return [];
 
     final results = await Future.wait([
-      _scrapingService.searchAnoboy(query),
+      _scrapingService.searchSamehadaku(query),
       _scrapingService.searchAnichin(query),
     ]);
 
@@ -98,8 +98,12 @@ class ApiService {
 
   Future<List<Show>> getAnimeList() async {
     if (_cachedAnimeList.isNotEmpty) return _cachedAnimeList;
-    _cachedAnimeList = await _scrapingService.getAnoboyAnimeList();
+    _cachedAnimeList = await _scrapingService.getSamehadakuAnimeList();
     return _cachedAnimeList;
+  }
+
+  Future<List<Show>> getMoviesList() async {
+    return await _scrapingService.getSamehadakuMovies();
   }
 
   Future<List<Show>> searchAnimeLocal(String query) async {
@@ -115,16 +119,16 @@ class ApiService {
   }
 
   Future<Show> getShowDetails(Show show) async {
-    if (show.type == 'anime') {
-      return await _scrapingService.getAnoboyShowDetails(show);
+    if (show.type == 'anime' || show.type == 'movie') {
+      return await _scrapingService.getSamehadakuShowDetails(show);
     } else {
       return await _scrapingService.getAnichinShowDetails(show);
     }
   }
 
   Future<Episode> getEpisodeDetails(Episode episode) async {
-    if (episode.show?.type == 'anime') {
-      return await _scrapingService.getAnoboyEpisodeDetails(episode);
+    if (episode.show?.type == 'anime' || episode.show?.type == 'movie') {
+      return await _scrapingService.getSamehadakuEpisodeDetails(episode);
     } else {
       return await _scrapingService.getAnichinEpisodeDetails(episode);
     }
