@@ -1,0 +1,8 @@
+--- lib/data/services/scraping_service.dart
++++ lib/data/services/scraping_service.dart
+@@ -1041,6 +1042,7 @@
+            if (!isGenericFormat && !hasKeyword) {
+               continue;
+            }
+         }
++        */

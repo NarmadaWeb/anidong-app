@@ -79,15 +79,9 @@ class AnidongSearchDelegate extends SearchDelegate {
         _apiService.searchAnimeLocal(query),
         _apiService.searchShows(context, query),
       ]).then((results) {
-        final localAnimeResults = results[0];
-        final apiAnimeResults = results[1].where((s) => s.type == 'anime').toList();
+        final animeResults = results[0];
         final donghuaResults = results[1].where((s) => s.type == 'donghua').toList();
-
-        final animeMap = <String, Show>{};
-        for (var s in apiAnimeResults) animeMap[s.title] = s;
-        for (var s in localAnimeResults) animeMap[s.title] = s;
-
-        return [...animeMap.values, ...donghuaResults];
+        return [...animeResults, ...donghuaResults];
       }),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
