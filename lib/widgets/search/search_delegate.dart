@@ -84,8 +84,12 @@ class AnidongSearchDelegate extends SearchDelegate {
         final donghuaResults = results[1].where((s) => s.type == 'donghua').toList();
 
         final animeMap = <String, Show>{};
-        for (var s in apiAnimeResults) animeMap[s.title] = s;
-        for (var s in localAnimeResults) animeMap[s.title] = s;
+        for (var s in apiAnimeResults) {
+          animeMap[s.title] = s;
+        }
+        for (var s in localAnimeResults) {
+          animeMap[s.title] = s;
+        }
 
         return [...animeMap.values, ...donghuaResults];
       }),

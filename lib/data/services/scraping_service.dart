@@ -1026,8 +1026,6 @@ class ScrapingService {
       if (seenUrls.contains(url)) continue;
 
       // Often "Oshi no Ko Season 2 Episode 1" has 'episode' or 'ep'. Wait, what if it's "Episode drama"? Let's just allow if it has the show title or generic episode.
-      // Either generic episode format or it contains the show title
-      bool matchesShow = cleanBaseShowTitle != null && title.toLowerCase().contains(cleanBaseShowTitle);
 
       // Let's broaden the match condition to easily accept our links but try to filter out bad ones
       bool containsEpOrKeyword = title.toLowerCase().contains('episode') || title.toLowerCase().contains('ep ') || title.toLowerCase().contains('selesai') || title.toLowerCase().contains('tamat') || title.toLowerCase().contains('download') || (cleanBaseShowTitle != null && cleanBaseShowTitle.isNotEmpty && title.toLowerCase().contains(cleanBaseShowTitle.split(' ')[0]));
