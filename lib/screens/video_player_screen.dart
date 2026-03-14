@@ -128,7 +128,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ..loadRequest(
         Uri.parse(url),
         headers: {
-          'Referer': 'https://anichin.asia/',
+          'Referer': 'https://anichin.moe/',
         },
       );
   }
