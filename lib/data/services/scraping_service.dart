@@ -11,7 +11,7 @@ import 'package:html/dom.dart';
 
 class ScrapingService {
   static String anoboyBaseUrl = 'https://ww1.anoboy.boo';
-  static String anichinBaseUrl = 'https://anichin.asia';
+  static String anichinBaseUrl = 'https://anichin.moe';
 
   static void updateBaseUrls(String anoboy, String anichin) {
     if (anoboy.isNotEmpty) anoboyBaseUrl = anoboy;
