@@ -814,11 +814,31 @@ class ScrapingService {
       }
 
       // Episode Page Logic (Extract Player) - Runs for Episode Pages OR Bulk Pages (Player + List)
+      Future<String?> extractNestedIframe(String linkUrl) async {
+        try {
+          final res = await http.get(Uri.parse(linkUrl), headers: {
+             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          });
+          if (res.statusCode == 200) {
+            final doc = parse(res.body);
+            final iframe = doc.querySelector('iframe#mediaplayer') ?? doc.querySelector('iframe');
+            if (iframe != null) {
+               return iframe.attributes['src'];
+            }
+          }
+        } catch (_) {}
+        return linkUrl;
+      }
+
       final iframeElement = document.querySelector('iframe#mediaplayer') ?? document.querySelector('iframe');
       if (iframeElement != null) {
           primaryIframe = iframeElement.attributes['src'];
           if (primaryIframe != null) {
-            final iframeUrl = primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe';
+            String iframeUrl = primaryIframe!.startsWith('http') ? primaryIframe! : '$anoboyBaseUrl$primaryIframe';
+            if (iframeUrl.contains('adsbatch720.php')) {
+                final nested = await extractNestedIframe(iframeUrl);
+                if (nested != null) iframeUrl = nested;
+            }
             videoServers.add({
               'name': 'Primary Server',
               'url': iframeUrl
@@ -836,7 +856,11 @@ class ScrapingService {
             if (parentText.isNotEmpty && parentText != serverName) {
               serverName = '$parentText $serverName';
             }
-            final fullLink = link.startsWith('http') ? link : '$anoboyBaseUrl$link';
+            String fullLink = link.startsWith('http') ? link : (link.startsWith('/') ? '$anoboyBaseUrl$link' : link);
+            if (fullLink.contains('adsbatch720.php')) {
+                final nested = await extractNestedIframe(fullLink);
+                if (nested != null) fullLink = nested;
+            }
             if (!videoServers.any((s) => s['url'] == fullLink)) {
               videoServers.add({
                 'name': serverName.isEmpty ? 'Mirror Server' : serverName,
