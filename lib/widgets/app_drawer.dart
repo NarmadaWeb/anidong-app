@@ -12,6 +12,7 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: AppColors.background,
       // SafeArea memastikan seluruh konten Drawer tidak tertimpa UI sistem
       child: SafeArea(
         child: Column(
