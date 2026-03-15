@@ -573,7 +573,7 @@ class ScrapingService {
          // Try to extract season number from title
          int getSeason(String? title) {
             if (title == null) return 0;
-            final match = RegExp(r'Season\s+(\d+)', caseSensitive: false).firstMatch(title);
+            final match = RegExp(r'(?:Season|S)\s*(\d+)', caseSensitive: false).firstMatch(title);
             if (match != null) {
                return int.tryParse(match.group(1)!) ?? 0;
             }

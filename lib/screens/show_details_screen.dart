@@ -1,3 +1,4 @@
+import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/api_service.dart';
 import 'package:anidong/screens/video_player_screen.dart';
@@ -25,6 +26,15 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
     super.initState();
     _show = widget.show;
     _fetchDetails();
+  }
+
+  int _getSeason(String? title) {
+    if (title == null) return 1;
+    final match = RegExp(r'(?:Season|S)\s*(\d+)', caseSensitive: false).firstMatch(title);
+    if (match != null) {
+      return int.tryParse(match.group(1)!) ?? 1;
+    }
+    return 1;
   }
 
   Future<void> _fetchDetails() async {
@@ -181,103 +191,81 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   ],
 
                   // Episodes Section
-                  const Text(
-                    'All Episodes',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
                   if (_show.episodes != null && _show.episodes!.isNotEmpty)
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 1.5,
-                      ),
-                      itemCount: _show.episodes!.length,
-                      itemBuilder: (context, index) {
-                        final ep = _show.episodes![index];
-                        return InkWell(
-                          onTap: () {
-                            AdService.instance.showAdIfAvailable(() {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VideoPlayerScreen(episode: ep),
-                                ),
-                              );
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Stack(
-                              fit: StackFit.expand,
+                    Builder(
+                      builder: (context) {
+                        if (_show.type == 'anime') {
+                          final Map<int, List<Episode>> groupedEpisodes = {};
+                          for (var ep in _show.episodes!) {
+                            final season = _getSeason(ep.title);
+                            if (!groupedEpisodes.containsKey(season)) {
+                              groupedEpisodes[season] = [];
+                            }
+                            groupedEpisodes[season]!.add(ep);
+                          }
+
+                          final sortedSeasons = groupedEpisodes.keys.toList()..sort();
+
+                          // If there's only one season, just show 'All Episodes' header
+                          if (sortedSeasons.length == 1) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (ep.thumbnailUrl != null && ep.thumbnailUrl!.isNotEmpty)
-                                  CachedNetworkImage(
-                                    imageUrl: ep.thumbnailUrl!,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(color: Theme.of(context).canvasColor),
-                                    errorWidget: (context, url, error) => Container(
-                                      color: Theme.of(context).canvasColor,
-                                      child: const Icon(Icons.image_not_supported, size: 40),
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    color: Theme.of(context).canvasColor,
-                                    child: const Center(
-                                      child: Icon(Icons.movie_creation_outlined, size: 40, color: Colors.grey),
-                                    ),
-                                  ),
-                                Positioned(
-                                  bottom: 0,
-                                  left: 0,
-                                  right: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.topCenter,
-                                        colors: [
-                                          Colors.black.withValues(alpha: 0.8),
-                                          Colors.transparent,
-                                        ],
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Episode ${ep.episodeNumber}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        shadows: [
-                                          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(0, 1)),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                const Text(
+                                  'All Episodes',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
+                                const SizedBox(height: 16),
+                                _buildEpisodesGrid(context, groupedEpisodes[sortedSeasons.first]!),
                               ],
-                            ),
-                          ),
-                        );
+                            );
+                          }
+
+                          // Multiple seasons, show headers for each
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: sortedSeasons.map((season) {
+                              final eps = groupedEpisodes[season]!;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 4,
+                                          height: 20,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Season $season',
+                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  _buildEpisodesGrid(context, eps),
+                                  const SizedBox(height: 16),
+                                ],
+                              );
+                            }).toList(),
+                          );
+                        } else {
+                          // Non-anime (Donghua), standard display
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'All Episodes',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildEpisodesGrid(context, _show.episodes!),
+                            ],
+                          );
+                        }
                       },
                     )
                   else if (!_isLoading)
@@ -292,6 +280,101 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildEpisodesGrid(BuildContext context, List<Episode> episodes) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.5,
+      ),
+      itemCount: episodes.length,
+      itemBuilder: (context, index) {
+        final ep = episodes[index];
+        return InkWell(
+          onTap: () {
+            AdService.instance.showAdIfAvailable(() {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VideoPlayerScreen(episode: ep),
+                ),
+              );
+            });
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (ep.thumbnailUrl != null && ep.thumbnailUrl!.isNotEmpty)
+                  CachedNetworkImage(
+                    imageUrl: ep.thumbnailUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(color: Theme.of(context).canvasColor),
+                    errorWidget: (context, url, error) => Container(
+                      color: Theme.of(context).canvasColor,
+                      child: const Icon(Icons.image_not_supported, size: 40),
+                    ),
+                  )
+                else
+                  Container(
+                    color: Theme.of(context).canvasColor,
+                    child: const Center(
+                      child: Icon(Icons.movie_creation_outlined, size: 40, color: Colors.grey),
+                    ),
+                  ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.8),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                    child: Text(
+                      'Episode ${ep.episodeNumber}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        shadows: [
+                          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(0, 1)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
