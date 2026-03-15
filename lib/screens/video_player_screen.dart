@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/providers/home_provider.dart';
 import 'package:anidong/providers/local_data_provider.dart';
+import 'package:anidong/data/services/scraping_service.dart';
 import 'package:anidong/screens/download/download_options_screen.dart';
 import 'package:anidong/screens/show_details_screen.dart';
 import 'package:anidong/widgets/star_rating.dart';
@@ -115,6 +116,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   void _initWebViewController(String url) {
     _isLoading = true;
+
+    final String referer = _detailedEpisode.show?.type == 'anime'
+        ? ScrapingService.anoboyBaseUrl
+        : ScrapingService.anichinBaseUrl;
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
@@ -128,7 +134,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ..loadRequest(
         Uri.parse(url),
         headers: {
-          'Referer': 'https://anichin.moe/',
+          'Referer': referer,
         },
       );
   }
