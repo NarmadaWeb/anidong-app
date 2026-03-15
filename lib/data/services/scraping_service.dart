@@ -1127,7 +1127,7 @@ class ScrapingService {
             try {
               final decoded = utf8.decode(base64.decode(url));
               // The decoded string is typically an HTML fragment like <iframe src="..."></iframe>
-              final match = RegExp('src=[\"\'](.*?)[\"\']', caseSensitive: false).firstMatch(decoded);
+              final match = RegExp('src=["\'](.*?)["\']', caseSensitive: false).firstMatch(decoded);
               if (match != null && match.group(1) != null) {
                 url = match.group(1)!;
               } else {
