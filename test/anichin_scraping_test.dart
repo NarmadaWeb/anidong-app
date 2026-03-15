@@ -1,63 +1,10 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart';
+import 'package:anidong/data/services/scraping_service.dart';
 
 void main() {
-  test('Anichin Selector Logic: Finds list with .epx when header is missing', () {
-    const html = '''
-<html>
-<body>
-  <div class="section">
-    <h3>Popular</h3>
-    <div class="listupd" id="popular-list">
-        <div class="bs">
-            <div class="tt"><h2>Popular Show</h2></div>
-            <!-- No epx here -->
-        </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <!-- No Header here -->
-    <div class="listupd" id="recent-list">
-        <div class="bs">
-            <div class="epx">Ep 10</div>
-            <div class="tt"><h2>Recent Show</h2></div>
-        </div>
-    </div>
-  </div>
-</body>
-</html>
-''';
-
-    final document = parse(html);
-
-    // The exact logic implemented in ScrapingService
-    var latestSection = document.querySelectorAll('.listupd').firstWhere(
-          (e) {
-            final headerText = e.previousElementSibling?.text.toLowerCase() ?? '';
-            return headerText.contains('rilisan terbaru') ||
-                   headerText.contains('latest') ||
-                   headerText.contains('update');
-          },
-          orElse: () {
-             try {
-                return document.querySelectorAll('.listupd').firstWhere((section) {
-                   return section.querySelectorAll('.bs .epx').isNotEmpty;
-                });
-             } catch (_) {
-                final lists = document.querySelectorAll('.listupd');
-                if (lists.length > 1) return lists[1];
-                if (lists.isNotEmpty) return lists[0];
-                throw Exception('No listupd found');
-             }
-          }
-      );
-
-    expect(latestSection.attributes['id'], 'recent-list');
-  });
-
-  test('Anichin Selector Logic: Finds list by header "Rilisan Terbaru"', () {
+  test('Anichin Selector Logic: Finds list by header "Rilisan Terbaru" in old structure', () {
     const html = '''
 <html>
 <body>
@@ -74,17 +21,32 @@ void main() {
 ''';
 
     final document = parse(html);
+    final scraper = ScrapingService();
+    final latestSection = scraper.findAnichinListupd(document, ['rilisan terbaru', 'latest release']);
+    expect(latestSection?.attributes['id'], 'target-list');
+  });
 
-    var latestSection = document.querySelectorAll('.listupd').firstWhere(
-          (e) {
-            final headerText = e.previousElementSibling?.text.toLowerCase() ?? '';
-            return headerText.contains('rilisan terbaru') ||
-                   headerText.contains('latest') ||
-                   headerText.contains('update');
-          },
-          orElse: () => document.body! // Dummy fallback
-      );
+  test('Anichin Selector Logic: Finds list by header "Latest Release" in new bixbox structure', () {
+    const html = '''
+<html>
+<body>
+  <div class="bixbox">
+    <h3>Popular Today</h3>
+    <div class="listupd" id="popular-list">
+    </div>
+  </div>
+  <div class="bixbox">
+    <h3>Latest Release</h3>
+    <div class="listupd" id="recent-list">
+    </div>
+  </div>
+</body>
+</html>
+''';
 
-    expect(latestSection.attributes['id'], 'target-list');
+    final document = parse(html);
+    final scraper = ScrapingService();
+    final latestSection = scraper.findAnichinListupd(document, ['rilisan terbaru', 'latest release']);
+    expect(latestSection?.attributes['id'], 'recent-list');
   });
 }

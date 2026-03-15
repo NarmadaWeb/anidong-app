@@ -10,6 +10,36 @@ import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 
 class ScrapingService {
+  @visibleForTesting
+  Element? findAnichinListupd(Document document, List<String> keywords) {
+    // 1. Check inside .bixbox containers (New Structure)
+    final blocks = document.querySelectorAll('.bixbox');
+    for (var b in blocks) {
+      final headings = b.querySelectorAll('h2, h3, h4, div, span');
+      for (var h in headings) {
+        final text = h.text.trim().toLowerCase();
+        if (keywords.any((k) => text.contains(k))) {
+          final listupd = b.querySelector('.listupd');
+          if (listupd != null) return listupd;
+        }
+      }
+    }
+
+    // 2. Fallback to previous sibling method (Old Structure)
+    final listupds = document.querySelectorAll('.listupd');
+    for (var listupd in listupds) {
+      final prev = listupd.previousElementSibling;
+      if (prev != null) {
+        final text = prev.text.trim().toLowerCase();
+        if (keywords.any((k) => text.contains(k))) {
+          return listupd;
+        }
+      }
+    }
+
+    return null;
+  }
+
   static String anoboyBaseUrl = 'https://ww1.anoboy.boo';
   static String anichinBaseUrl = 'https://anichin.moe';
 
@@ -100,10 +130,8 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Episode> episodes = [];
 
-      var latestSection = document.querySelectorAll('.listupd').firstWhere(
-          (e) => e.previousElementSibling?.text.contains('Rilisan Terbaru') ?? false,
-          orElse: () => document.querySelectorAll('.listupd').length > 1 ? document.querySelectorAll('.listupd')[1] : document.querySelector('.listupd')!
-      );
+      var latestSection = findAnichinListupd(document, ['rilisan terbaru', 'latest release'])
+          ?? (document.querySelectorAll('.listupd').length > 1 ? document.querySelectorAll('.listupd')[1] : document.querySelector('.listupd')!);
 
       final elements = latestSection.querySelectorAll('.bs');
       for (var element in elements) {
@@ -162,10 +190,8 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      var popularSection = document.querySelectorAll('.listupd').firstWhere(
-          (e) => e.previousElementSibling?.text.contains('Terpopuler Hari Ini') ?? false,
-          orElse: () => document.querySelector('.listupd')!
-      );
+      var popularSection = findAnichinListupd(document, ['terpopuler hari ini', 'popular today', 'terpopuler'])
+          ?? document.querySelector('.listupd')!;
 
       final elements = popularSection.querySelectorAll('.bs');
       for (var element in elements) {
@@ -213,10 +239,8 @@ class ScrapingService {
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      var recSection = document.querySelectorAll('.listupd').firstWhere(
-          (e) => e.previousElementSibling?.text.contains('Rekomendasi') ?? false,
-          orElse: () => document.querySelectorAll('.listupd').length > 2 ? document.querySelectorAll('.listupd')[2] : document.querySelector('.listupd')!
-      );
+      var recSection = findAnichinListupd(document, ['rekomendasi', 'recommendation'])
+          ?? (document.querySelectorAll('.listupd').length > 2 ? document.querySelectorAll('.listupd')[2] : document.querySelector('.listupd')!);
 
       final elements = recSection.querySelectorAll('.bs');
       for (var element in elements) {
