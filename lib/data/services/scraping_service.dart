@@ -834,7 +834,7 @@ class ScrapingService {
       if (iframeElement != null) {
           primaryIframe = iframeElement.attributes['src'];
           if (primaryIframe != null) {
-            String iframeUrl = primaryIframe!.startsWith('http') ? primaryIframe! : '$anoboyBaseUrl$primaryIframe';
+            String iframeUrl = primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe';
             if (iframeUrl.contains('adsbatch720.php')) {
                 final nested = await extractNestedIframe(iframeUrl);
                 if (nested != null) iframeUrl = nested;
