@@ -566,7 +566,7 @@ class ScrapingService {
 
   @visibleForTesting
   Show parseAnoboyShowDetailsFromDoc(Document document, Show show) {
-      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id, showTitle: show.title);
+      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id, showTitle: show.title, show: show);
 
       // Advanced Sorting: Handle Seasons
       allEpisodes.sort((a, b) {
@@ -724,7 +724,7 @@ class ScrapingService {
       if (epMatch != null) {
         cleanTitle = cleanTitle.substring(0, epMatch.start).trim();
       }
-      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId, showTitle: cleanTitle.isNotEmpty ? cleanTitle : null);
+      List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, episode.showId, showTitle: cleanTitle.isNotEmpty ? cleanTitle : null, show: episode.show);
 
       final hasPlayer = document.querySelector('#mediaplayer') != null || document.querySelector('iframe') != null;
 
@@ -902,7 +902,7 @@ class ScrapingService {
           if (showResponse.statusCode == 200) {
             final showDoc = parse(showResponse.body);
             // Use same cleanTitle derived earlier
-            allEpisodes = _parseAnoboyEpisodesFromDoc(showDoc, episode.showId, showTitle: cleanTitle.isNotEmpty ? cleanTitle : null);
+            allEpisodes = _parseAnoboyEpisodesFromDoc(showDoc, episode.showId, showTitle: cleanTitle.isNotEmpty ? cleanTitle : null, show: episode.show);
           }
       }
 
@@ -1012,7 +1012,7 @@ class ScrapingService {
     return {'prev': prevEpisodeUrl, 'next': nextEpisodeUrl};
   }
 
-  List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId, {String? showTitle}) {
+  List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId, {String? showTitle, Show? show}) {
     final List<Episode> eps = [];
 
     var contentContainers = document.querySelectorAll('.entry-content, .post-body, .episodelist, #content, .singlelink, .sisi');
@@ -1120,6 +1120,7 @@ class ScrapingService {
             title: title,
             videoUrl: '',
             originalUrl: url,
+            show: show,
           ));
         }
       }
