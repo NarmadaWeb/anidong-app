@@ -835,7 +835,7 @@ class ScrapingService {
           primaryIframe = iframeElement.attributes['src'];
           if (primaryIframe != null) {
             String iframeUrl = primaryIframe.startsWith('http') ? primaryIframe : '$anoboyBaseUrl$primaryIframe';
-            if (iframeUrl.contains('adsbatch720.php')) {
+            if (iframeUrl.contains('adsbatch720.php') || iframeUrl.contains('yup/data.php')) {
                 final nested = await extractNestedIframe(iframeUrl);
                 if (nested != null) iframeUrl = nested;
             }
@@ -857,7 +857,7 @@ class ScrapingService {
               serverName = '$parentText $serverName';
             }
             String fullLink = link.startsWith('http') ? link : (link.startsWith('/') ? '$anoboyBaseUrl$link' : link);
-            if (fullLink.contains('adsbatch720.php')) {
+            if (fullLink.contains('adsbatch720.php') || fullLink.contains('yup/data.php')) {
                 final nested = await extractNestedIframe(fullLink);
                 if (nested != null) fullLink = nested;
             }
@@ -1031,7 +1031,10 @@ class ScrapingService {
       }
     }
     if (epLinks.isEmpty) {
-      epLinks = document.querySelectorAll('a');
+      epLinks = document.querySelectorAll('a[rel="bookmark"]');
+      if (epLinks.isEmpty) {
+         epLinks = document.querySelectorAll('a');
+      }
     }
 
     final seenUrls = <String>{};
