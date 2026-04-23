@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/scraping_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'package:anidong/data/services/http_client_service.dart';
 
 class ConfigService {
   static final ConfigService _instance = ConfigService._internal();
@@ -15,7 +15,8 @@ class ConfigService {
 
   Future<void> fetchApiConfig() async {
     try {
-      final response = await http.get(Uri.parse('https://raw.githubusercontent.com/rajasunrise/anidong/main/api.json'));
+      final response = await (await HttpClientService().client).get(Uri.parse(
+          'https://raw.githubusercontent.com/rajasunrise/anidong/main/api.json'));
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
         if (jsonList.isNotEmpty) {
@@ -24,7 +25,8 @@ class ConfigService {
           final String donghuaUrl = config['donghua'] ?? '';
 
           ScrapingService.updateBaseUrls(animeUrl, donghuaUrl);
-          debugPrint('Updated base URLs: Anime: $animeUrl, Donghua: $donghuaUrl');
+          debugPrint(
+              'Updated base URLs: Anime: $animeUrl, Donghua: $donghuaUrl');
         }
       } else {
         debugPrint('Failed to load API config: ${response.statusCode}');
@@ -36,7 +38,8 @@ class ConfigService {
 
   Future<List<Show>> fetchTrendings() async {
     try {
-      final response = await http.get(Uri.parse('https://raw.githubusercontent.com/rajasunrise/anidong/main/trendings.json'));
+      final response = await (await HttpClientService().client).get(Uri.parse(
+          'https://raw.githubusercontent.com/rajasunrise/anidong/main/trendings.json'));
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
         final List<Show> shows = [];
@@ -65,7 +68,8 @@ class ConfigService {
 
   Future<Map<String, List<Show>>> fetchSchedule() async {
     try {
-      final response = await http.get(Uri.parse('https://raw.githubusercontent.com/rajasunrise/anidong/main/jadwal.json'));
+      final response = await (await HttpClientService().client).get(Uri.parse(
+          'https://raw.githubusercontent.com/rajasunrise/anidong/main/jadwal.json'));
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
         final Map<String, List<Show>> schedule = {};
@@ -84,7 +88,8 @@ class ConfigService {
               type: 'donghua',
               status: 'ongoing',
               coverImageUrl: null,
-              originalUrl: '', // Intentionally empty as source doesn't provide it
+              originalUrl:
+                  '', // Intentionally empty as source doesn't provide it
               genres: [],
             ));
           }
@@ -106,13 +111,16 @@ class ConfigService {
   Future<List<Show>> fetchSlider(String type) async {
     String url;
     if (type == 'anime') {
-      url = 'https://raw.githubusercontent.com/rajasunrise/anidong/main/anime-slider.json';
+      url =
+          'https://raw.githubusercontent.com/rajasunrise/anidong/main/anime-slider.json';
     } else {
-      url = 'https://raw.githubusercontent.com/rajasunrise/anidong/main/donghua-slider.json';
+      url =
+          'https://raw.githubusercontent.com/rajasunrise/anidong/main/donghua-slider.json';
     }
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final response =
+          await (await HttpClientService().client).get(Uri.parse(url));
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
         final List<Show> shows = [];
@@ -141,10 +149,12 @@ class ConfigService {
   }
 
   Future<List<Show>> fetchDailySchedule(String type, String day) async {
-    final String url = 'https://raw.githubusercontent.com/rajasunrise/anidong/main/jadwal/$type/$day.json';
+    final String url =
+        'https://raw.githubusercontent.com/rajasunrise/anidong/main/jadwal/$type/$day.json';
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final response =
+          await (await HttpClientService().client).get(Uri.parse(url));
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
         final List<Show> shows = [];
@@ -162,7 +172,8 @@ class ConfigService {
         }
         return shows;
       } else {
-        debugPrint('Failed to load daily schedule for $type/$day: ${response.statusCode}');
+        debugPrint(
+            'Failed to load daily schedule for $type/$day: ${response.statusCode}');
         return [];
       }
     } catch (e) {

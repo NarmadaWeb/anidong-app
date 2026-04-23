@@ -44,7 +44,7 @@ class NotificationService {
     } catch (e) {
       // Fallback if location not found
       tz.setLocalLocation(tz.getLocation('UTC'));
-       debugPrint('Error setting location for $timeZoneName: $e');
+      debugPrint('Error setting location for $timeZoneName: $e');
     }
 
     // Initialize notification settings
@@ -58,7 +58,8 @@ class NotificationService {
       requestAlertPermission: true,
     );
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
     );
@@ -102,39 +103,39 @@ class NotificationService {
 
     // Schedule for next 3 days
     for (int day = 0; day < 3; day++) {
-       List<int> hours = [];
-       while (hours.length < 2) {
-         int h = random.nextInt(24);
-         if (!hours.contains(h)) {
-           hours.add(h);
-         }
-       }
-       hours.sort();
+      List<int> hours = [];
+      while (hours.length < 2) {
+        int h = random.nextInt(24);
+        if (!hours.contains(h)) {
+          hours.add(h);
+        }
+      }
+      hours.sort();
 
-       for (int i = 0; i < hours.length; i++) {
-         int hour = hours[i];
-         int minute = random.nextInt(60);
+      for (int i = 0; i < hours.length; i++) {
+        int hour = hours[i];
+        int minute = random.nextInt(60);
 
-         tz.TZDateTime scheduledDate = tz.TZDateTime(
-           tz.local,
-           now.year,
-           now.month,
-           now.day,
-           hour,
-           minute,
-         ).add(Duration(days: day));
+        tz.TZDateTime scheduledDate = tz.TZDateTime(
+          tz.local,
+          now.year,
+          now.month,
+          now.day,
+          hour,
+          minute,
+        ).add(Duration(days: day));
 
-         if (scheduledDate.isBefore(now)) {
-           continue;
-         }
+        if (scheduledDate.isBefore(now)) {
+          continue;
+        }
 
-         await _scheduleNotification(
-           id: day * 10 + i,
-           title: 'AniDong Updates',
-           body: 'Jangan lupa cek update terbaru hari ini!',
-           scheduledDate: scheduledDate,
-         );
-       }
+        await _scheduleNotification(
+          id: day * 10 + i,
+          title: 'AniDong Updates',
+          body: 'Jangan lupa cek update terbaru hari ini!',
+          scheduledDate: scheduledDate,
+        );
+      }
     }
   }
 

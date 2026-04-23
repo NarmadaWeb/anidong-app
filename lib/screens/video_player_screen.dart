@@ -110,7 +110,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         }
       });
 
-      Provider.of<LocalDataProvider>(context, listen: false).addToHistory(_detailedEpisode);
+      Provider.of<LocalDataProvider>(context, listen: false)
+          .addToHistory(_detailedEpisode);
     }
   }
 
@@ -127,7 +128,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
-            if (mounted) setState(() { _isLoading = false; });
+            if (mounted)
+              setState(() {
+                _isLoading = false;
+              });
           },
         ),
       )
@@ -168,7 +172,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         _toggleFullScreen();
       },
       child: Scaffold(
-        backgroundColor: _isFullScreen ? Colors.black : Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: _isFullScreen
+            ? Colors.black
+            : Theme.of(context).scaffoldBackgroundColor,
         body: _isFullScreen
             ? Stack(
                 children: [
@@ -182,7 +188,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       ),
                     ),
                   if (_isLoading)
-                    Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
+                    Center(
+                        child: CircularProgressIndicator(
+                            color: Theme.of(context).primaryColor)),
                   Positioned(
                     bottom: 20,
                     right: 20,
@@ -194,7 +202,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         child: FloatingActionButton(
                           backgroundColor: Colors.black54,
                           onPressed: _toggleFullScreen,
-                          child: const Icon(Icons.fullscreen_exit, color: Colors.white),
+                          child: const Icon(Icons.fullscreen_exit,
+                              color: Colors.white),
                         ),
                       ),
                     ),
@@ -209,7 +218,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     flexibleSpace: FlexibleSpaceBar(
                       background: _isDataLoading
-                          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
+                          ? Center(
+                              child: CircularProgressIndicator(
+                                  color: Theme.of(context).primaryColor))
                           : AspectRatio(
                               aspectRatio: 16 / 9,
                               child: _currentIframeUrl != null
@@ -219,26 +230,36 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                         if (!_showControls)
                                           Positioned.fill(
                                             child: GestureDetector(
-                                              behavior: HitTestBehavior.translucent,
+                                              behavior:
+                                                  HitTestBehavior.translucent,
                                               onTap: _toggleControls,
-                                              child: Container(color: Colors.transparent),
+                                              child: Container(
+                                                  color: Colors.transparent),
                                             ),
                                           ),
                                         if (_isLoading)
-                                          Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
+                                          Center(
+                                              child: CircularProgressIndicator(
+                                                  color: Theme.of(context)
+                                                      .primaryColor)),
                                         Positioned(
                                           bottom: 10,
                                           right: 10,
                                           child: AnimatedOpacity(
                                             opacity: _showControls ? 1.0 : 0.0,
-                                            duration: const Duration(milliseconds: 300),
+                                            duration: const Duration(
+                                                milliseconds: 300),
                                             child: IgnorePointer(
                                               ignoring: !_showControls,
                                               child: IconButton(
-                                                icon: const Icon(Icons.fullscreen, color: Colors.white, size: 30),
+                                                icon: const Icon(
+                                                    Icons.fullscreen,
+                                                    color: Colors.white,
+                                                    size: 30),
                                                 onPressed: _toggleFullScreen,
                                                 style: IconButton.styleFrom(
-                                                  backgroundColor: Colors.black45,
+                                                  backgroundColor:
+                                                      Colors.black45,
                                                 ),
                                               ),
                                             ),
@@ -249,7 +270,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                   : Container(
                                       color: Colors.black,
                                       child: const Center(
-                                        child: Text('No Video Available', style: TextStyle(color: Colors.white)),
+                                        child: Text('No Video Available',
+                                            style:
+                                                TextStyle(color: Colors.white)),
                                       ),
                                     ),
                             ),
@@ -258,13 +281,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       if (_detailedEpisode.show != null)
                         Consumer<LocalDataProvider>(
                           builder: (context, localData, child) {
-                            bool isBookmarked = localData.isBookmarked(_detailedEpisode.show!);
+                            bool isBookmarked =
+                                localData.isBookmarked(_detailedEpisode.show!);
                             return IconButton(
                               icon: Icon(
-                                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                                color: isBookmarked ? Theme.of(context).primaryColor : Colors.white,
+                                isBookmarked
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                color: isBookmarked
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.white,
                               ),
-                              onPressed: () => localData.toggleBookmark(_detailedEpisode.show!),
+                              onPressed: () => localData
+                                  .toggleBookmark(_detailedEpisode.show!),
                             );
                           },
                         ),
@@ -272,48 +301,102 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   ),
                   SliverToBoxAdapter(
                     child: _isDataLoading
-                        ? SizedBox(height: 200, child: Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)))
+                        ? SizedBox(
+                            height: 200,
+                            child: Center(
+                                child: CircularProgressIndicator(
+                                    color: Theme.of(context).primaryColor)))
                         : Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _detailedEpisode.show?.title ?? _detailedEpisode.title ?? 'No Title',
-                                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color),
+                                  _detailedEpisode.show?.title ??
+                                      _detailedEpisode.title ??
+                                      'No Title',
+                                  style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.color),
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
-                                      child: Text('Episode ${_detailedEpisode.episodeNumber}', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .primaryColor
+                                              .withValues(alpha: 0.2),
+                                          borderRadius:
+                                              BorderRadius.circular(4)),
+                                      child: Text(
+                                          'Episode ${_detailedEpisode.episodeNumber}',
+                                          style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12)),
                                     ),
                                     const SizedBox(width: 12),
-                                    Text(_detailedEpisode.show?.status ?? 'Ongoing', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
+                                    Text(
+                                        _detailedEpisode.show?.status ??
+                                            'Ongoing',
+                                        style: TextStyle(
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color,
+                                            fontSize: 13)),
                                     const Spacer(),
-                                    StarRating(rating: _detailedEpisode.show?.rating ?? 0.0),
+                                    StarRating(
+                                        rating: _detailedEpisode.show?.rating ??
+                                            0.0),
                                     const SizedBox(width: 4),
-                                    Text(_detailedEpisode.show?.rating?.toString() ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    Text(
+                                        _detailedEpisode.show?.rating
+                                                ?.toString() ??
+                                            'N/A',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                                 const SizedBox(height: 24),
-
                                 Row(
                                   children: [
                                     Expanded(
                                       child: ElevatedButton.icon(
                                         icon: const Icon(Icons.skip_previous),
                                         label: const Text('Prev'),
-                                        onPressed: _detailedEpisode.prevEpisodeUrl != null
-                                            ? () => _playEpisodeFromUrl(_detailedEpisode.prevEpisodeUrl!)
-                                            : null,
+                                        onPressed:
+                                            _detailedEpisode.prevEpisodeUrl !=
+                                                    null
+                                                ? () => _playEpisodeFromUrl(
+                                                    _detailedEpisode
+                                                        .prevEpisodeUrl!)
+                                                : null,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Theme.of(context).cardColor,
-                                          foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
-                                          disabledBackgroundColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
-                                          disabledForegroundColor: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: 0.3),
+                                          backgroundColor:
+                                              Theme.of(context).cardColor,
+                                          foregroundColor: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color,
+                                          disabledBackgroundColor:
+                                              Theme.of(context)
+                                                  .cardColor
+                                                  .withValues(alpha: 0.5),
+                                          disabledForegroundColor:
+                                              Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.3),
                                         ),
                                       ),
                                     ),
@@ -322,14 +405,23 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                       child: ElevatedButton.icon(
                                         icon: const Icon(Icons.skip_next),
                                         label: const Text('Next'),
-                                        onPressed: _detailedEpisode.nextEpisodeUrl != null
-                                            ? () => _playEpisodeFromUrl(_detailedEpisode.nextEpisodeUrl!)
-                                            : null,
+                                        onPressed:
+                                            _detailedEpisode.nextEpisodeUrl !=
+                                                    null
+                                                ? () => _playEpisodeFromUrl(
+                                                    _detailedEpisode
+                                                        .nextEpisodeUrl!)
+                                                : null,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Theme.of(context).primaryColor,
+                                          backgroundColor:
+                                              Theme.of(context).primaryColor,
                                           foregroundColor: Colors.white,
-                                          disabledBackgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                                          disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
+                                          disabledBackgroundColor:
+                                              Theme.of(context)
+                                                  .primaryColor
+                                                  .withValues(alpha: 0.5),
+                                          disabledForegroundColor: Colors.white
+                                              .withValues(alpha: 0.3),
                                         ),
                                       ),
                                     ),
@@ -346,7 +438,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => ShowDetailsScreen(show: _detailedEpisode.show!),
+                                                builder: (context) =>
+                                                    ShowDetailsScreen(
+                                                        show: _detailedEpisode
+                                                            .show!),
                                               ),
                                             );
                                           }
@@ -354,32 +449,52 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.redAccent,
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-
-                                if (_detailedEpisode.videoServers != null && _detailedEpisode.videoServers!.isNotEmpty) ...[
-                                  const Text('Select Server', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                if (_detailedEpisode.videoServers != null &&
+                                    _detailedEpisode
+                                        .videoServers!.isNotEmpty) ...[
+                                  const Text('Select Server',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 12),
                                   SizedBox(
                                     height: 36,
                                     child: ListView.builder(
                                       scrollDirection: Axis.horizontal,
-                                      itemCount: _detailedEpisode.videoServers!.length,
+                                      itemCount:
+                                          _detailedEpisode.videoServers!.length,
                                       itemBuilder: (context, index) {
-                                        final server = _detailedEpisode.videoServers![index];
-                                        final isSelected = _currentIframeUrl == server['url'];
+                                        final server = _detailedEpisode
+                                            .videoServers![index];
+                                        final isSelected =
+                                            _currentIframeUrl == server['url'];
                                         return Padding(
-                                          padding: const EdgeInsets.only(right: 8.0),
+                                          padding:
+                                              const EdgeInsets.only(right: 8.0),
                                           child: ChoiceChip(
-                                            label: Text(server['name'] ?? 'Server ${index + 1}'),
+                                            label: Text(server['name'] ??
+                                                'Server ${index + 1}'),
                                             selected: isSelected,
-                                            onSelected: (selected) => _changeServer(server['url']!),
-                                            selectedColor: Theme.of(context).primaryColor,
-                                            labelStyle: TextStyle(color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12),
-                                            backgroundColor: Theme.of(context).cardColor,
+                                            onSelected: (selected) =>
+                                                _changeServer(server['url']!),
+                                            selectedColor:
+                                                Theme.of(context).primaryColor,
+                                            labelStyle: TextStyle(
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color,
+                                                fontSize: 12),
+                                            backgroundColor:
+                                                Theme.of(context).cardColor,
                                           ),
                                         );
                                       },
@@ -387,37 +502,51 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                   ),
                                   const SizedBox(height: 24),
                                 ],
-
-                                const Text('Download Section', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                const Text('Download Section',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 12),
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
-                                    onPressed: (_detailedEpisode.downloadLinks != null && _detailedEpisode.downloadLinks!.isNotEmpty)
-                                        ? () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => DownloadOptionsScreen(
-                                                  downloadLinks: _detailedEpisode.downloadLinks!,
-                                                  title: _detailedEpisode.show?.title ?? 'Episode',
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        : null,
+                                    onPressed:
+                                        (_detailedEpisode.downloadLinks !=
+                                                    null &&
+                                                _detailedEpisode
+                                                    .downloadLinks!.isNotEmpty)
+                                            ? () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        DownloadOptionsScreen(
+                                                      downloadLinks:
+                                                          _detailedEpisode
+                                                              .downloadLinks!,
+                                                      title: _detailedEpisode
+                                                              .show?.title ??
+                                                          'Episode',
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            : null,
                                     icon: const Icon(Icons.download),
                                     label: const Text('Download Episode'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context).cardColor,
-                                      foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      backgroundColor:
+                                          Theme.of(context).cardColor,
+                                      foregroundColor: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-
-
                                 const SizedBox(height: 100),
                               ],
                             ),

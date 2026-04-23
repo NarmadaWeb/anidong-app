@@ -36,11 +36,11 @@ class _MainScreenState extends State<MainScreen> {
     _pages = [
       const HomeScreen(), // 0
       const TrendingScreen(), // 1
-      const HistoryScreen(),  // 2
+      const HistoryScreen(), // 2
       const ScheduleScreen(), // 3
       const SettingsScreen(), // 4
-      const ExploreScreen(),  // 5
-      const MyListScreen(),   // 6
+      const ExploreScreen(), // 5
+      const MyListScreen(), // 6
     ];
   }
 
@@ -65,9 +65,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Set<int> noAppBarPages = {
-      1, 2, 3, 4
-    };
+    final Set<int> noAppBarPages = {1, 2, 3, 4};
 
     return LayoutBuilder(builder: (context, constraints) {
       bool isWideScreen = constraints.maxWidth >= 800;
@@ -86,18 +84,30 @@ class _MainScreenState extends State<MainScreen> {
               onDestinationSelected: _onItemTapped,
               labelType: NavigationRailLabelType.all,
               selectedIconTheme: const IconThemeData(color: AppColors.accent),
-              unselectedIconTheme: const IconThemeData(color: AppColors.secondaryText),
-              selectedLabelTextStyle: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w500),
-              unselectedLabelTextStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
+              unselectedIconTheme:
+                  const IconThemeData(color: AppColors.secondaryText),
+              selectedLabelTextStyle: const TextStyle(
+                  color: AppColors.accent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500),
+              unselectedLabelTextStyle:
+                  const TextStyle(color: AppColors.secondaryText, fontSize: 12),
               destinations: const [
-                NavigationRailDestination(icon: Icon(Boxicons.bxs_home_smile), label: Text('Home')),
-                NavigationRailDestination(icon: Icon(Boxicons.bxs_hot), label: Text('Trendings')),
-                NavigationRailDestination(icon: Icon(Boxicons.bxs_time_five), label: Text('History')),
-                NavigationRailDestination(icon: Icon(Boxicons.bx_calendar_event), label: Text('Jadwal')),
-                NavigationRailDestination(icon: Icon(Boxicons.bx_cog), label: Text('Settings')),
+                NavigationRailDestination(
+                    icon: Icon(Boxicons.bxs_home_smile), label: Text('Home')),
+                NavigationRailDestination(
+                    icon: Icon(Boxicons.bxs_hot), label: Text('Trendings')),
+                NavigationRailDestination(
+                    icon: Icon(Boxicons.bxs_time_five), label: Text('History')),
+                NavigationRailDestination(
+                    icon: Icon(Boxicons.bx_calendar_event),
+                    label: Text('Jadwal')),
+                NavigationRailDestination(
+                    icon: Icon(Boxicons.bx_cog), label: Text('Settings')),
               ],
             ),
-            const VerticalDivider(thickness: 1, width: 1, color: AppColors.surface),
+            const VerticalDivider(
+                thickness: 1, width: 1, color: AppColors.surface),
             Expanded(child: scaffoldBody),
           ],
         );
@@ -109,82 +119,99 @@ class _MainScreenState extends State<MainScreen> {
         appBar: noAppBarPages.contains(_currentPageIndex)
             ? null
             : AppBar(
-              toolbarHeight: 64,
-              backgroundColor: AppColors.background.withValues(alpha: 0.8),
-              elevation: 0,
-              flexibleSpace: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(color: Colors.transparent),
+                toolbarHeight: 64,
+                backgroundColor: AppColors.background.withValues(alpha: 0.8),
+                elevation: 0,
+                flexibleSpace: ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(color: Colors.transparent),
+                  ),
                 ),
-              ),
-              leading: Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Boxicons.bx_menu, size: 24, color: AppColors.secondaryText),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
+                leading: Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(Boxicons.bx_menu,
+                        size: 24, color: AppColors.secondaryText),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
                 ),
-              ),
-              title: Consumer<HomeProvider>(
-                builder: (context, provider, child) {
-                  return ModeSwitch(
-                    currentMode: provider.currentMode,
-                    onModeChanged: (newMode) {
-                      provider.changeMode(context, newMode);
-                    },
-                  );
-                },
-              ),
-              centerTitle: true,
-              actions: [
-                // Aksi untuk tombol pencarian
-                IconButton(
-                  onPressed: () {
-                    // Menampilkan layar pencarian
-                    showSearch(
-                      context: context,
-                      delegate: AnidongSearchDelegate(),
+                title: Consumer<HomeProvider>(
+                  builder: (context, provider, child) {
+                    return ModeSwitch(
+                      currentMode: provider.currentMode,
+                      onModeChanged: (newMode) {
+                        provider.changeMode(context, newMode);
+                      },
                     );
                   },
-                  icon: const Icon(Boxicons.bx_search, size: 24, color: AppColors.secondaryText),
                 ),
-                const SizedBox(width: 8),
-              ],
-            ),
-      drawer: AppDrawer(
-        onPageSelected: _navigateToPageFromDrawer,
-      ),
-        body: scaffoldBody,
-        bottomNavigationBar: isWideScreen ? null : Container(
-          height: 80,
-          decoration: BoxDecoration(
-            color: AppColors.background.withValues(alpha: 0.8),
-            border: Border(top: BorderSide(color: AppColors.surface.withValues(alpha: 0.5), width: 1.0)),
-          ),
-          child: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: BottomNavigationBar(
-                items: const <BottomNavigationBarItem>[
-                  BottomNavigationBarItem(icon: Icon(Boxicons.bxs_home_smile), label: 'Home'),
-                  BottomNavigationBarItem(icon: Icon(Boxicons.bxs_hot), label: 'Trendings'),
-                  BottomNavigationBarItem(icon: Icon(Boxicons.bxs_time_five), label: 'History'),
-                  BottomNavigationBarItem(icon: Icon(Boxicons.bx_calendar_event), label: 'Jadwal'),
-                  BottomNavigationBarItem(icon: Icon(Boxicons.bx_cog), label: 'Settings'),
+                centerTitle: true,
+                actions: [
+                  // Aksi untuk tombol pencarian
+                  IconButton(
+                    onPressed: () {
+                      // Menampilkan layar pencarian
+                      showSearch(
+                        context: context,
+                        delegate: AnidongSearchDelegate(),
+                      );
+                    },
+                    icon: const Icon(Boxicons.bx_search,
+                        size: 24, color: AppColors.secondaryText),
+                  ),
+                  const SizedBox(width: 8),
                 ],
-                currentIndex: _bottomNavIndex == -1 ? 0 : _bottomNavIndex,
-                onTap: _onItemTapped,
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                selectedItemColor: _bottomNavIndex == -1 ? AppColors.secondaryText : AppColors.accent,
-                unselectedItemColor: AppColors.secondaryText,
-                showUnselectedLabels: true,
-                selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-                unselectedLabelStyle: const TextStyle(fontSize: 10),
               ),
-            ),
-          ),
+        drawer: AppDrawer(
+          onPageSelected: _navigateToPageFromDrawer,
         ),
+        body: scaffoldBody,
+        bottomNavigationBar: isWideScreen
+            ? null
+            : Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppColors.background.withValues(alpha: 0.8),
+                  border: Border(
+                      top: BorderSide(
+                          color: AppColors.surface.withValues(alpha: 0.5),
+                          width: 1.0)),
+                ),
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: BottomNavigationBar(
+                      items: const <BottomNavigationBarItem>[
+                        BottomNavigationBarItem(
+                            icon: Icon(Boxicons.bxs_home_smile), label: 'Home'),
+                        BottomNavigationBarItem(
+                            icon: Icon(Boxicons.bxs_hot), label: 'Trendings'),
+                        BottomNavigationBarItem(
+                            icon: Icon(Boxicons.bxs_time_five),
+                            label: 'History'),
+                        BottomNavigationBarItem(
+                            icon: Icon(Boxicons.bx_calendar_event),
+                            label: 'Jadwal'),
+                        BottomNavigationBarItem(
+                            icon: Icon(Boxicons.bx_cog), label: 'Settings'),
+                      ],
+                      currentIndex: _bottomNavIndex == -1 ? 0 : _bottomNavIndex,
+                      onTap: _onItemTapped,
+                      type: BottomNavigationBarType.fixed,
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      selectedItemColor: _bottomNavIndex == -1
+                          ? AppColors.secondaryText
+                          : AppColors.accent,
+                      unselectedItemColor: AppColors.secondaryText,
+                      showUnselectedLabels: true,
+                      selectedLabelStyle: const TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w500),
+                      unselectedLabelStyle: const TextStyle(fontSize: 10),
+                    ),
+                  ),
+                ),
+              ),
       );
     });
   }

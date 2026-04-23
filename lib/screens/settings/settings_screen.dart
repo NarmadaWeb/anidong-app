@@ -58,7 +58,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'Customize your experience',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white.withValues(alpha: 0.8), // Keep white on gradient
+                            color: Colors.white.withValues(
+                                alpha: 0.8), // Keep white on gradient
                           ),
                         ),
                       ],

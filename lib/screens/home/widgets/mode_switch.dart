@@ -33,7 +33,8 @@ class ModeSwitch extends StatelessWidget {
           child: Stack(
             children: [
               AnimatedAlign(
-                alignment: isAnime ? Alignment.centerLeft : Alignment.centerRight,
+                alignment:
+                    isAnime ? Alignment.centerLeft : Alignment.centerRight,
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 child: Container(

@@ -25,7 +25,9 @@ class HeroSlider extends StatelessWidget {
             child: Container(
               color: Theme.of(context).cardColor,
               alignment: Alignment.center,
-              child: Text('No featured shows available.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+              child: Text('No featured shows available.',
+                  style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color)),
             ),
           );
         }
@@ -81,9 +83,11 @@ class _HeroSlideItem extends StatelessWidget {
       // Menggunakan bannerImageUrl dari objek Show
       imageUrl: show.bannerImageUrl ?? show.coverImageUrl ?? '',
       fit: BoxFit.cover,
-      placeholder: (context, url) => Container(color: Theme.of(context).cardColor),
+      placeholder: (context, url) =>
+          Container(color: Theme.of(context).cardColor),
       errorWidget: (context, url, error) => Center(
-        child: Icon(Icons.image_not_supported, color: Theme.of(context).iconTheme.color),
+        child: Icon(Icons.image_not_supported,
+            color: Theme.of(context).iconTheme.color),
       ),
     );
   }
@@ -114,16 +118,18 @@ class _HeroSlideItem extends StatelessWidget {
         children: [
           Text(
             // Menggunakan title dari objek Show
-            show.title.length > 40 ? '${show.title.substring(0, 40)}...' : show.title,
+            show.title.length > 40
+                ? '${show.title.substring(0, 40)}...'
+                : show.title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  shadows: [
-                    const Shadow(blurRadius: 10.0, color: Colors.black54),
-                    const Shadow(blurRadius: 20.0, color: Colors.black54),
-                  ],
-                ),
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              shadows: [
+                const Shadow(blurRadius: 10.0, color: Colors.black54),
+                const Shadow(blurRadius: 20.0, color: Colors.black54),
+              ],
+            ),
           ),
         ],
       ),

@@ -74,7 +74,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Jadwal Rilis', style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold)),
+        title: const Text('Jadwal Rilis',
+            style: TextStyle(
+                color: AppColors.primaryText, fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.background,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.primaryText),
@@ -123,13 +125,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               future: _scheduleFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                  return const Center(
+                      child:
+                          CircularProgressIndicator(color: AppColors.accent));
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: AppColors.secondaryText)));
+                  return Center(
+                      child: Text('Error: ${snapshot.error}',
+                          style:
+                              const TextStyle(color: AppColors.secondaryText)));
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No schedule available.', style: TextStyle(color: AppColors.secondaryText)));
+                  return const Center(
+                      child: Text('No schedule available.',
+                          style: TextStyle(color: AppColors.secondaryText)));
                 }
 
                 final shows = snapshot.data!;
@@ -164,7 +173,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accent : AppColors.surface,
           borderRadius: BorderRadius.circular(8),
-          border: isSelected ? null : Border.all(color: AppColors.secondaryText.withValues(alpha: 0.3)),
+          border: isSelected
+              ? null
+              : Border.all(
+                  color: AppColors.secondaryText.withValues(alpha: 0.3)),
         ),
         alignment: Alignment.center,
         child: Text(
@@ -187,7 +199,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accent : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: isSelected ? null : Border.all(color: AppColors.secondaryText.withValues(alpha: 0.3)),
+          border: isSelected
+              ? null
+              : Border.all(
+                  color: AppColors.secondaryText.withValues(alpha: 0.3)),
         ),
         alignment: Alignment.center,
         child: Text(
@@ -213,16 +228,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     imageUrl: show.coverImageUrl!,
                     fit: BoxFit.cover,
                     width: double.infinity,
-                    placeholder: (context, url) => Container(color: AppColors.surface),
+                    placeholder: (context, url) =>
+                        Container(color: AppColors.surface),
                     errorWidget: (context, url, error) => Container(
                       color: AppColors.surface,
-                      child: const Icon(Icons.error, color: AppColors.secondaryText),
+                      child: const Icon(Icons.error,
+                          color: AppColors.secondaryText),
                     ),
                   )
                 : Container(
                     color: AppColors.surface,
                     child: const Center(
-                      child: Icon(Icons.movie, color: AppColors.secondaryText, size: 40),
+                      child: Icon(Icons.movie,
+                          color: AppColors.secondaryText, size: 40),
                     ),
                   ),
           ),

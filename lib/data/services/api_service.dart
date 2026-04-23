@@ -11,7 +11,8 @@ class ApiService {
   List<Show> _cachedAnimeList = [];
 
   // Endpoint: GET /episodes/recent
-  Future<List<Episode>> getRecentEpisodes(BuildContext context, {String type = 'anime', int page = 1}) async {
+  Future<List<Episode>> getRecentEpisodes(BuildContext context,
+      {String type = 'anime', int page = 1}) async {
     if (type == 'anime') {
       return await _scrapingService.getAnoboyRecentEpisodes(page: page);
     } else if (type == 'donghua') {
@@ -29,7 +30,8 @@ class ApiService {
   }
 
   // Endpoint: GET /shows/top-rated (Recommendations)
-  Future<List<Show>> getTopRatedShows(BuildContext context, {String type = 'combined'}) async {
+  Future<List<Show>> getTopRatedShows(BuildContext context,
+      {String type = 'combined'}) async {
     if (type == 'anime') {
       // Anoboy doesn't have a specific "Top Rated" API easily accessible,
       // so we might use recent episodes as a fallback or if there was a specific method like getAnoboyPopular.
@@ -48,10 +50,7 @@ class ApiService {
       ]);
       final anoboyEps = results[0] as List<Episode>;
       final anichinShows = results[1] as List<Show>;
-      final combined = [
-        ...anoboyEps.map((e) => e.show!),
-        ...anichinShows
-      ];
+      final combined = [...anoboyEps.map((e) => e.show!), ...anichinShows];
       combined.shuffle();
       return combined;
     }
@@ -61,7 +60,8 @@ class ApiService {
     return await ConfigService().fetchTrendings();
   }
 
-  Future<List<Show>> getPopularShows(BuildContext context, {String type = 'combined'}) async {
+  Future<List<Show>> getPopularShows(BuildContext context,
+      {String type = 'combined'}) async {
     if (type == 'anime') {
       // Anoboy doesn't have a clear popular section, using recent as placeholder
       final eps = await _scrapingService.getAnoboyRecentEpisodes();
@@ -75,10 +75,7 @@ class ApiService {
       ]);
       final anoboyEps = results[0] as List<Episode>;
       final anichinShows = results[1] as List<Show>;
-      final combined = [
-        ...anoboyEps.map((e) => e.show!),
-        ...anichinShows
-      ];
+      final combined = [...anoboyEps.map((e) => e.show!), ...anichinShows];
       combined.shuffle();
       return combined;
     }
@@ -109,9 +106,9 @@ class ApiService {
     }
 
     final lowerQuery = query.toLowerCase();
-    return _cachedAnimeList.where((show) =>
-      show.title.toLowerCase().contains(lowerQuery)
-    ).toList();
+    return _cachedAnimeList
+        .where((show) => show.title.toLowerCase().contains(lowerQuery))
+        .toList();
   }
 
   Future<Show> getShowDetails(Show show) async {

@@ -22,7 +22,8 @@ class HistoryScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.delete_sweep),
             onPressed: () {
-              Provider.of<LocalDataProvider>(context, listen: false).clearHistory();
+              Provider.of<LocalDataProvider>(context, listen: false)
+                  .clearHistory();
             },
           )
         ],
@@ -54,9 +55,17 @@ class HistoryScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('⏰ Watch History', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+                      const Text('⏰ Watch History',
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryText)),
                       const SizedBox(height: 4),
-                      Text('Continue where you left off', style: TextStyle(fontSize: 14, color: AppColors.primaryText.withValues(alpha: 0.8))),
+                      Text('Continue where you left off',
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.primaryText
+                                  .withValues(alpha: 0.8))),
                     ],
                   ),
                 ),
@@ -66,10 +75,14 @@ class HistoryScreen extends StatelessWidget {
                     builder: (context, localData, child) {
                       final history = localData.history;
                       if (history.isEmpty) {
-                        return const Center(child: Text('No history yet.', style: TextStyle(color: AppColors.secondaryText)));
+                        return const Center(
+                            child: Text('No history yet.',
+                                style:
+                                    TextStyle(color: AppColors.secondaryText)));
                       }
                       return ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 100.0),
+                        padding:
+                            const EdgeInsets.fromLTRB(16.0, 0, 16.0, 100.0),
                         itemCount: history.length,
                         itemBuilder: (context, index) {
                           final episode = history[index];
@@ -95,7 +108,8 @@ class HistoryScreen extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => VideoPlayerScreen(episode: episode)),
+          MaterialPageRoute(
+              builder: (context) => VideoPlayerScreen(episode: episode)),
         );
       },
       child: GlassCard(
@@ -108,8 +122,12 @@ class HistoryScreen extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: episode.thumbnailUrl != null
-                    ? Image.network(episode.thumbnailUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.movie, color: Theme.of(context).iconTheme.color))
-                    : Icon(Icons.movie, color: Theme.of(context).iconTheme.color),
+                    ? Image.network(episode.thumbnailUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => Icon(Icons.movie,
+                            color: Theme.of(context).iconTheme.color))
+                    : Icon(Icons.movie,
+                        color: Theme.of(context).iconTheme.color),
               ),
             ),
             const SizedBox(width: 16),
@@ -118,15 +136,29 @@ class HistoryScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(episode.title ?? episode.show?.title ?? 'Unknown',
-                      maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Theme.of(context).textTheme.bodyLarge?.color)),
                   const SizedBox(height: 4),
-                  Text('Episode ${episode.episodeNumber}', style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
+                  Text('Episode ${episode.episodeNumber}',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodySmall?.color)),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
-                    child: const Text('Watched', style: TextStyle(fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.bold)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4)),
+                    child: const Text('Watched',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -134,7 +166,8 @@ class HistoryScreen extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
               onPressed: () {
-                Provider.of<LocalDataProvider>(context, listen: false).removeFromHistory(episode);
+                Provider.of<LocalDataProvider>(context, listen: false)
+                    .removeFromHistory(episode);
               },
             )
           ],

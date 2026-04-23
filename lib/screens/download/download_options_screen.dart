@@ -17,7 +17,8 @@ class DownloadOptionsScreen extends StatelessWidget {
   });
 
   Future<void> _launchUrl(BuildContext context, String url) async {
-    if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(Uri.parse(url),
+        mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not launch $url')),
@@ -30,7 +31,10 @@ class DownloadOptionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Download $title', style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.titleLarge?.color)),
+        title: Text('Download $title',
+            style: TextStyle(
+                fontSize: 18,
+                color: Theme.of(context).textTheme.titleLarge?.color)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -58,7 +62,8 @@ class DownloadOptionsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Icon(Boxicons.bx_chevron_right, color: Theme.of(context).iconTheme.color),
+                    Icon(Boxicons.bx_chevron_right,
+                        color: Theme.of(context).iconTheme.color),
                   ],
                 ),
               ),

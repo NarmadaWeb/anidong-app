@@ -13,7 +13,9 @@ class PlaceholderScreen extends StatelessWidget {
       body: Center(
         child: Text(
           '$title Page',
-          style: TextStyle(color: Theme.of(context).textTheme.headlineSmall?.color, fontSize: 24),
+          style: TextStyle(
+              color: Theme.of(context).textTheme.headlineSmall?.color,
+              fontSize: 24),
         ),
       ),
     );

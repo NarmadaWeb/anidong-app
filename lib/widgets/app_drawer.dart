@@ -48,7 +48,11 @@ class AppDrawer extends StatelessWidget {
             // Grup Bawah: Settings
             Column(
               children: [
-                Divider(color: Theme.of(context).dividerColor, height: 1, indent: 16, endIndent: 16),
+                Divider(
+                    color: Theme.of(context).dividerColor,
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16),
                 _buildDrawerItem(
                   icon: Boxicons.bxs_cog,
                   text: 'Settings',
@@ -92,21 +96,19 @@ class AppDrawer extends StatelessWidget {
     required GestureTapCallback onTap,
     Color? iconColor,
   }) {
-    return Builder(
-      builder: (context) {
-        return ListTile(
-          leading: Icon(icon, color: iconColor ?? AppColors.accent, size: 26),
-          title: Text(
-            text,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-              fontSize: 16,
-            ),
+    return Builder(builder: (context) {
+      return ListTile(
+        leading: Icon(icon, color: iconColor ?? AppColors.accent, size: 26),
+        title: Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+            fontSize: 16,
           ),
-          onTap: onTap,
-        );
-      }
-    );
+        ),
+        onTap: onTap,
+      );
+    });
   }
 }

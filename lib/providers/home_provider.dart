@@ -57,7 +57,8 @@ class HomeProvider with ChangeNotifier {
       // Panggil API secara bersamaan untuk efisiensi
       final results = await Future.wait([
         _apiService.getRecentEpisodes(context, type: _currentMode, page: 1),
-        _apiService.getTopRatedShows(context, type: _currentMode), // Recommendations
+        _apiService.getTopRatedShows(context,
+            type: _currentMode), // Recommendations
         _apiService.getPopularShows(context, type: _currentMode),
         ConfigService().fetchSlider(_currentMode),
       ]);
@@ -74,27 +75,31 @@ class HomeProvider with ChangeNotifier {
       debugPrint("======= DEBUGGING: HomeProvider =======");
       debugPrint("=========================================");
       debugPrint("=> Mode Saat Ini: $_currentMode");
-      debugPrint("=> Jumlah Episode Terbaru Diterima: ${_recentEpisodes.length}");
+      debugPrint(
+          "=> Jumlah Episode Terbaru Diterima: ${_recentEpisodes.length}");
       debugPrint("=> Jumlah Top Rated Diterima: ${_recommendedShows.length}");
 
       // Periksa konten dari list Top Rated jika tidak kosong
       if (_recommendedShows.isNotEmpty) {
         debugPrint("\n--- Detail Top Rated Shows ---");
         for (var show in _recommendedShows) {
-          debugPrint("  - ID: ${show.id}, Judul: ${show.title}, Tipe: ${show.type}");
+          debugPrint(
+              "  - ID: ${show.id}, Judul: ${show.title}, Tipe: ${show.type}");
         }
       } else {
-        debugPrint("  - Tidak ada data Top Rated yang diterima atau diparsing.");
+        debugPrint(
+            "  - Tidak ada data Top Rated yang diterima atau diparsing.");
       }
       debugPrint("=========================================\n");
       // --- AKHIR DARI PRINT UNTUK DEBUGGING ---
 
       // Set state ke loaded karena data sudah siap
       _state = HomeState.loaded;
-
     } catch (e) {
       // Jika terjadi error, simpan pesan error dan set state ke error
-      _errorMessage = e.toString().replaceFirst("Exception: ", ""); // Membersihkan pesan error
+      _errorMessage = e
+          .toString()
+          .replaceFirst("Exception: ", ""); // Membersihkan pesan error
       _state = HomeState.error;
 
       // --- PRINT ERROR UNTUK DEBUGGING ---
@@ -119,7 +124,8 @@ class HomeProvider with ChangeNotifier {
 
     try {
       final nextPage = _currentPage + 1;
-      final newEpisodes = await _apiService.getRecentEpisodes(context, type: _currentMode, page: nextPage);
+      final newEpisodes = await _apiService.getRecentEpisodes(context,
+          type: _currentMode, page: nextPage);
 
       if (newEpisodes.isNotEmpty) {
         _recentEpisodes.addAll(newEpisodes);

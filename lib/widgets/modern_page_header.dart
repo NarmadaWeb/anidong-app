@@ -14,15 +14,18 @@ class ModernPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 24.0), // padding: 1rem 1rem 1.5rem
-      margin: const EdgeInsets.fromLTRB(0, 0, 0, 24.0), // margin: 0 -1rem 1.5rem
+      padding: const EdgeInsets.fromLTRB(
+          16.0, 16.0, 16.0, 24.0), // padding: 1rem 1rem 1.5rem
+      margin:
+          const EdgeInsets.fromLTRB(0, 0, 0, 24.0), // margin: 0 -1rem 1.5rem
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.accent, AppColors.orangeAccent],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24.0)), // border-radius: 0 0 1.5rem 1.5rem
+        borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(24.0)), // border-radius: 0 0 1.5rem 1.5rem
         boxShadow: [
           BoxShadow(
             color: AppColors.accent.withValues(alpha: 0.3),
@@ -47,7 +50,8 @@ class ModernPageHeader extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 14, // text-sm
-              color: AppColors.primaryText.withValues(alpha: 0.8), // text-white/80
+              color:
+                  AppColors.primaryText.withValues(alpha: 0.8), // text-white/80
             ),
           ),
         ],
