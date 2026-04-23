@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -18,10 +19,12 @@ class AdService {
   final String _adUnitId = 'ca-app-pub-3802258742710450/7162582093';
 
   Future<void> initialize() async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return;
     await MobileAds.instance.initialize();
   }
 
   void loadRewardedAd() {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return;
     if (_hasWatchedAdSession) return; // No need to load if already watched
     if (_isAdLoading) return; // Prevent multiple loads
 
@@ -45,6 +48,11 @@ class AdService {
   }
 
   void showAdIfAvailable(VoidCallback onComplete) {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
+      onComplete();
+      return;
+    }
+
     // Logic: Only show ad once per session.
     if (_hasWatchedAdSession) {
       debugPrint('Ad already watched this session. Skipping.');
