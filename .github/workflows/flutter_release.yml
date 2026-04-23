@@ -92,6 +92,7 @@ jobs:
           BUILD_DIR="build/linux/x64/release/bundle"
           RPM_ROOT="${HOME}/rpmbuild"
 
+          mkdir -p ${RPM_ROOT}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
           rm -rf ${RPM_ROOT}/BUILDROOT/*
 
           cat << SPEC > ${RPM_ROOT}/SPECS/anidong.spec
