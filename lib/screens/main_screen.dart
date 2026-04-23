@@ -69,12 +69,46 @@ class _MainScreenState extends State<MainScreen> {
       1, 2, 3, 4
     };
 
-    return Scaffold(
-      extendBody: true,
-      extendBodyBehindAppBar: true,
-      appBar: noAppBarPages.contains(_currentPageIndex)
-          ? null
-          : AppBar(
+    return LayoutBuilder(builder: (context, constraints) {
+      bool isWideScreen = constraints.maxWidth >= 800;
+
+      Widget scaffoldBody = IndexedStack(
+        index: _currentPageIndex,
+        children: _pages,
+      );
+
+      if (isWideScreen) {
+        scaffoldBody = Row(
+          children: [
+            NavigationRail(
+              backgroundColor: AppColors.background.withValues(alpha: 0.8),
+              selectedIndex: _bottomNavIndex == -1 ? 0 : _bottomNavIndex,
+              onDestinationSelected: _onItemTapped,
+              labelType: NavigationRailLabelType.all,
+              selectedIconTheme: const IconThemeData(color: AppColors.accent),
+              unselectedIconTheme: const IconThemeData(color: AppColors.secondaryText),
+              selectedLabelTextStyle: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w500),
+              unselectedLabelTextStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
+              destinations: const [
+                NavigationRailDestination(icon: Icon(Boxicons.bxs_home_smile), label: Text('Home')),
+                NavigationRailDestination(icon: Icon(Boxicons.bxs_hot), label: Text('Trendings')),
+                NavigationRailDestination(icon: Icon(Boxicons.bxs_time_five), label: Text('History')),
+                NavigationRailDestination(icon: Icon(Boxicons.bx_calendar_event), label: Text('Jadwal')),
+                NavigationRailDestination(icon: Icon(Boxicons.bx_cog), label: Text('Settings')),
+              ],
+            ),
+            const VerticalDivider(thickness: 1, width: 1, color: AppColors.surface),
+            Expanded(child: scaffoldBody),
+          ],
+        );
+      }
+
+      return Scaffold(
+        extendBody: true,
+        extendBodyBehindAppBar: true,
+        appBar: noAppBarPages.contains(_currentPageIndex)
+            ? null
+            : AppBar(
               toolbarHeight: 64,
               backgroundColor: AppColors.background.withValues(alpha: 0.8),
               elevation: 0,
@@ -119,41 +153,39 @@ class _MainScreenState extends State<MainScreen> {
       drawer: AppDrawer(
         onPageSelected: _navigateToPageFromDrawer,
       ),
-      body: IndexedStack(
-        index: _currentPageIndex,
-        children: _pages,
-      ),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: AppColors.background.withValues(alpha: 0.8),
-          border: Border(top: BorderSide(color: AppColors.surface.withValues(alpha: 0.5), width: 1.0)),
-        ),
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: BottomNavigationBar(
-              items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Boxicons.bxs_home_smile), label: 'Home'),
-                BottomNavigationBarItem(icon: Icon(Boxicons.bxs_hot), label: 'Trendings'),
-                BottomNavigationBarItem(icon: Icon(Boxicons.bxs_time_five), label: 'History'),
-                BottomNavigationBarItem(icon: Icon(Boxicons.bx_calendar_event), label: 'Jadwal'),
-                BottomNavigationBarItem(icon: Icon(Boxicons.bx_cog), label: 'Settings'),
-              ],
-              currentIndex: _bottomNavIndex == -1 ? 0 : _bottomNavIndex,
-              onTap: _onItemTapped,
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              selectedItemColor: _bottomNavIndex == -1 ? AppColors.secondaryText : AppColors.accent,
-              unselectedItemColor: AppColors.secondaryText,
-              showUnselectedLabels: true,
-              selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-              unselectedLabelStyle: const TextStyle(fontSize: 10),
+        body: scaffoldBody,
+        bottomNavigationBar: isWideScreen ? null : Container(
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.background.withValues(alpha: 0.8),
+            border: Border(top: BorderSide(color: AppColors.surface.withValues(alpha: 0.5), width: 1.0)),
+          ),
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: BottomNavigationBar(
+                items: const <BottomNavigationBarItem>[
+                  BottomNavigationBarItem(icon: Icon(Boxicons.bxs_home_smile), label: 'Home'),
+                  BottomNavigationBarItem(icon: Icon(Boxicons.bxs_hot), label: 'Trendings'),
+                  BottomNavigationBarItem(icon: Icon(Boxicons.bxs_time_five), label: 'History'),
+                  BottomNavigationBarItem(icon: Icon(Boxicons.bx_calendar_event), label: 'Jadwal'),
+                  BottomNavigationBarItem(icon: Icon(Boxicons.bx_cog), label: 'Settings'),
+                ],
+                currentIndex: _bottomNavIndex == -1 ? 0 : _bottomNavIndex,
+                onTap: _onItemTapped,
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                selectedItemColor: _bottomNavIndex == -1 ? AppColors.secondaryText : AppColors.accent,
+                unselectedItemColor: AppColors.secondaryText,
+                showUnselectedLabels: true,
+                selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+                unselectedLabelStyle: const TextStyle(fontSize: 10),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
