@@ -57,7 +57,9 @@ class _ModeSwitchState extends State<ModeSwitch> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isAnime ? AppColors.primaryText : AppColors.secondaryText,
+                        color: isAnime
+                            ? AppColors.primaryText
+                            : AppColors.secondaryText,
                       ),
                     ),
                   ),
@@ -69,7 +71,9 @@ class _ModeSwitchState extends State<ModeSwitch> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isAnime ? AppColors.secondaryText : AppColors.primaryText,
+                        color: isAnime
+                            ? AppColors.secondaryText
+                            : AppColors.primaryText,
                       ),
                     ),
                   ),

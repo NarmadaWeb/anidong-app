@@ -30,7 +30,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
   int _getSeason(String? title) {
     if (title == null) return 1;
-    final match = RegExp(r'(?:Season|S)\s*(\d+)', caseSensitive: false).firstMatch(title);
+    final match =
+        RegExp(r'(?:Season|S)\s*(\d+)', caseSensitive: false).firstMatch(title);
     if (match != null) {
       return int.tryParse(match.group(1)!) ?? 1;
     }
@@ -71,7 +72,9 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
         elevation: 0,
       ),
       body: _isLoading && (_show.episodes == null || _show.episodes!.isEmpty)
-          ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
+          ? Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).primaryColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -123,14 +126,16 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     _show.rating.toString(),
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
                             const SizedBox(height: 8),
                             _buildInfoRow('Status', _show.status),
                             _buildInfoRow('Type', _show.type),
-                            if (_show.releaseYear != null) _buildInfoRow('Released', '${_show.releaseYear}'),
+                            if (_show.releaseYear != null)
+                              _buildInfoRow('Released', '${_show.releaseYear}'),
                           ],
                         ),
                       ),
@@ -147,7 +152,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
-                        _buildTableRow('Semua Episode', _show.title, isLink: true),
+                        _buildTableRow('Semua Episode', _show.title,
+                            isLink: true),
                         const Divider(height: 16),
                         if (_show.studio != null) ...[
                           _buildTableRow('Studio', _show.studio!),
@@ -161,11 +167,12 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                           _buildTableRow('Durasi', _show.duration!),
                           const Divider(height: 16),
                         ],
-                         if (_show.genres.isNotEmpty) ...[
-                          _buildTableRow('Genre', _show.genres.map((g) => g.name).join(', ')),
+                        if (_show.genres.isNotEmpty) ...[
+                          _buildTableRow('Genre',
+                              _show.genres.map((g) => g.name).join(', ')),
                           const Divider(height: 16),
                         ],
-                         if (_show.rating != null)
+                        if (_show.rating != null)
                           _buildTableRow('Score', _show.rating.toString()),
                       ],
                     ),
@@ -176,14 +183,19 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   if (_show.synopsis != null && _show.synopsis!.isNotEmpty) ...[
                     const Text(
                       'Synopsis',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _show.synopsis!,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                        color: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.color
+                            ?.withValues(alpha: 0.8),
                         height: 1.5,
                       ),
                     ),
@@ -204,7 +216,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                             groupedEpisodes[season]!.add(ep);
                           }
 
-                          final sortedSeasons = groupedEpisodes.keys.toList()..sort();
+                          final sortedSeasons = groupedEpisodes.keys.toList()
+                            ..sort();
 
                           // If there's only one season, just show 'All Episodes' header
                           if (sortedSeasons.length == 1) {
@@ -213,10 +226,13 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                               children: [
                                 const Text(
                                   'All Episodes',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 16),
-                                _buildEpisodesGrid(context, groupedEpisodes[sortedSeasons.first]!),
+                                _buildEpisodesGrid(context,
+                                    groupedEpisodes[sortedSeasons.first]!),
                               ],
                             );
                           }
@@ -230,7 +246,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12.0),
                                     child: Row(
                                       children: [
                                         Container(
@@ -241,7 +258,9 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                                         const SizedBox(width: 8),
                                         Text(
                                           'Season $season',
-                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                          style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold),
                                         ),
                                       ],
                                     ),
@@ -259,7 +278,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                             children: [
                               const Text(
                                 'All Episodes',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 16),
                               _buildEpisodesGrid(context, _show.episodes!),
@@ -328,7 +348,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   CachedNetworkImage(
                     imageUrl: ep.thumbnailUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: Theme.of(context).canvasColor),
+                    placeholder: (context, url) =>
+                        Container(color: Theme.of(context).canvasColor),
                     errorWidget: (context, url, error) => Container(
                       color: Theme.of(context).canvasColor,
                       child: const Icon(Icons.image_not_supported, size: 40),
@@ -338,7 +359,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   Container(
                     color: Theme.of(context).canvasColor,
                     child: const Center(
-                      child: Icon(Icons.movie_creation_outlined, size: 40, color: Colors.grey),
+                      child: Icon(Icons.movie_creation_outlined,
+                          size: 40, color: Colors.grey),
                     ),
                   ),
                 Positioned(
@@ -346,7 +368,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   left: 0,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
@@ -364,7 +387,10 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         shadows: [
-                          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(0, 1)),
+                          Shadow(
+                              blurRadius: 2,
+                              color: Colors.black,
+                              offset: Offset(0, 1)),
                         ],
                       ),
                     ),
@@ -414,7 +440,9 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
           child: Text(
             value,
             style: TextStyle(
-              color: isLink ? Colors.blueAccent : Theme.of(context).textTheme.bodyMedium?.color,
+              color: isLink
+                  ? Colors.blueAccent
+                  : Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: isLink ? FontWeight.bold : FontWeight.normal,
             ),
           ),

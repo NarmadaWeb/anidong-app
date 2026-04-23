@@ -28,7 +28,8 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = _overriddenPath ?? join(await getDatabasesPath(), 'anidong.db');
+    String path =
+        _overriddenPath ?? join(await getDatabasesPath(), 'anidong.db');
     return await openDatabase(
       path,
       version: 1,

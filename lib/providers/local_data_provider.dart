@@ -30,9 +30,11 @@ class LocalDataProvider with ChangeNotifier {
   // Bookmarks
   bool isBookmarked(Show show) {
     if (show.type == 'anime') {
-      return _animeBookmarks.any((item) => item.originalUrl == show.originalUrl);
+      return _animeBookmarks
+          .any((item) => item.originalUrl == show.originalUrl);
     } else {
-      return _donghuaBookmarks.any((item) => item.originalUrl == show.originalUrl);
+      return _donghuaBookmarks
+          .any((item) => item.originalUrl == show.originalUrl);
     }
   }
 
@@ -40,9 +42,11 @@ class LocalDataProvider with ChangeNotifier {
     if (isBookmarked(show)) {
       await _dbHelper.deleteBookmark(show);
       if (show.type == 'anime') {
-        _animeBookmarks.removeWhere((item) => item.originalUrl == show.originalUrl);
+        _animeBookmarks
+            .removeWhere((item) => item.originalUrl == show.originalUrl);
       } else {
-        _donghuaBookmarks.removeWhere((item) => item.originalUrl == show.originalUrl);
+        _donghuaBookmarks
+            .removeWhere((item) => item.originalUrl == show.originalUrl);
       }
     } else {
       await _dbHelper.insertBookmark(show);

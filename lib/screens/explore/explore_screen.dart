@@ -106,9 +106,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('🔍 Search & Explore', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                        const Text('🔍 Search & Explore',
+                            style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
                         const SizedBox(height: 4),
-                        Text('Find your favorite Anime & Donghua', style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.8))),
+                        Text('Find your favorite Anime & Donghua',
+                            style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withValues(alpha: 0.8))),
                       ],
                     ),
                   ),
@@ -129,7 +136,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             decoration: InputDecoration(
                               hintText: 'Search title...',
                               border: InputBorder.none,
-                              icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
+                              icon: Icon(Icons.search,
+                                  color: Theme.of(context).iconTheme.color),
                             ),
                             onSubmitted: _handleSearch,
                           ),
@@ -158,7 +166,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('🎭 Genres', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const Text('🎭 Genres',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
                           _buildGenreGrid(),
                           const SizedBox(height: 24),
@@ -190,13 +200,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
+          color: isSelected
+              ? Theme.of(context).primaryColor
+              : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).textTheme.bodyMedium?.color,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -206,14 +220,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _buildSearchResults() {
     if (_isSearching) {
-      return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
+      return Center(
+          child:
+              CircularProgressIndicator(color: Theme.of(context).primaryColor));
     }
 
     if (_searchResults.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Text('No results found.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+          child: Text('No results found.',
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color)),
         ),
       );
     }
@@ -249,26 +267,55 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             height: 80,
                             fit: BoxFit.cover,
                             httpHeaders: const {
-                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                              'User-Agent':
+                                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                               'Referer': 'https://ww1.anoboy.boo/',
                             },
-                            errorWidget: (context, url, error) => Container(color: AppColors.surface, width: 60, height: 80, child: const Icon(Icons.movie)),
-                            placeholder: (context, url) => Container(color: AppColors.surface, width: 60, height: 80, child: const Center(child: CircularProgressIndicator(strokeWidth: 2))),
+                            errorWidget: (context, url, error) => Container(
+                                color: AppColors.surface,
+                                width: 60,
+                                height: 80,
+                                child: const Icon(Icons.movie)),
+                            placeholder: (context, url) => Container(
+                                color: AppColors.surface,
+                                width: 60,
+                                height: 80,
+                                child: const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2))),
                           )
-                        : Container(color: AppColors.surface, width: 60, height: 80, child: const Icon(Icons.movie)),
+                        : Container(
+                            color: AppColors.surface,
+                            width: 60,
+                            height: 80,
+                            child: const Icon(Icons.movie)),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(show.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                        Text(show.title,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color)),
                         const SizedBox(height: 4),
-                        Text(show.status, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
+                        Text(show.status,
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color,
+                                fontSize: 13)),
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_right, color: Theme.of(context).iconTheme.color),
+                  Icon(Icons.chevron_right,
+                      color: Theme.of(context).iconTheme.color),
                 ],
               ),
             ),
@@ -288,29 +335,56 @@ class _ExploreScreenState extends State<ExploreScreen> {
       childAspectRatio: 0.85,
       children: [
         _buildGenreCard(
-          emoji: '⚔️', title: 'Action', description: 'Fast-paced adventures',
-          gradientColors: [AppColors.actionGradientStart, AppColors.actionGradientEnd],
+          emoji: '⚔️',
+          title: 'Action',
+          description: 'Fast-paced adventures',
+          gradientColors: [
+            AppColors.actionGradientStart,
+            AppColors.actionGradientEnd
+          ],
         ),
         _buildGenreCard(
-          emoji: '💖', title: 'Romance', description: 'Heart-warming stories',
-          gradientColors: [AppColors.romanceGradientStart, AppColors.romanceGradientEnd],
+          emoji: '💖',
+          title: 'Romance',
+          description: 'Heart-warming stories',
+          gradientColors: [
+            AppColors.romanceGradientStart,
+            AppColors.romanceGradientEnd
+          ],
         ),
         _buildGenreCard(
-          emoji: '🔮', title: 'Fantasy', description: 'Magical adventures',
-          gradientColors: [AppColors.fantasyGradientStart, AppColors.fantasyGradientEnd],
+          emoji: '🔮',
+          title: 'Fantasy',
+          description: 'Magical adventures',
+          gradientColors: [
+            AppColors.fantasyGradientStart,
+            AppColors.fantasyGradientEnd
+          ],
         ),
         _buildGenreCard(
-          emoji: '😂', title: 'Comedy', description: 'Hilarious moments',
-          gradientColors: [AppColors.comedyGradientStart, AppColors.comedyGradientEnd],
+          emoji: '😂',
+          title: 'Comedy',
+          description: 'Hilarious moments',
+          gradientColors: [
+            AppColors.comedyGradientStart,
+            AppColors.comedyGradientEnd
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildGenreCard({ required String emoji, required String title, required String description, required List<Color> gradientColors}) {
+  Widget _buildGenreCard(
+      {required String emoji,
+      required String title,
+      required String description,
+      required List<Color> gradientColors}) {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-      gradient: LinearGradient(colors: gradientColors, begin: Alignment.topLeft, end: Alignment.bottomRight),
+      gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight),
       border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -318,9 +392,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Text(emoji, style: const TextStyle(fontSize: 40)),
           Column(
             children: [
-              Text(title, style: const TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.bold, fontSize: 20)),
+              Text(title,
+                  style: const TextStyle(
+                      color: AppColors.primaryText,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20)),
               const SizedBox(height: 4),
-              Text(description, style: TextStyle(color: AppColors.primaryText.withValues(alpha: 0.8), fontSize: 14), textAlign: TextAlign.center),
+              Text(description,
+                  style: TextStyle(
+                      color: AppColors.primaryText.withValues(alpha: 0.8),
+                      fontSize: 14),
+                  textAlign: TextAlign.center),
             ],
           ),
         ],
@@ -355,7 +437,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
         children: [
           Text(emoji, style: const TextStyle(fontSize: 28)),
           const SizedBox(height: 8),
-          Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 14, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+          Text(title,
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center),
         ],
       ),
     );

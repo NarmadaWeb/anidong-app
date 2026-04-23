@@ -12,7 +12,12 @@ class ContentRepository {
     {'id': 7, 'title': 'Attack on Titan', 'mode': 'anime', 'type': 'episode'},
     {'id': 8, 'title': 'Swallowed Star', 'mode': 'donghua', 'type': 'episode'},
     {'id': 9, 'title': 'Solo Leveling', 'mode': 'anime', 'type': 'recommended'},
-    {'id': 10, 'title': 'Battle Through the Heavens', 'mode': 'donghua', 'type': 'recommended'},
+    {
+      'id': 10,
+      'title': 'Battle Through the Heavens',
+      'mode': 'donghua',
+      'type': 'recommended'
+    },
     {'id': 11, 'title': 'Demon Slayer', 'mode': 'anime', 'type': 'recommended'},
   ];
 

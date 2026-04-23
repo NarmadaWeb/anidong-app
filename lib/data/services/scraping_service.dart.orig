@@ -5,6 +5,7 @@ import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/genre_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 import 'package:flutter/foundation.dart';
+import 'package:anidong/data/services/http_client_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
@@ -37,7 +38,7 @@ class ScrapingService {
   Future<List<Episode>> getAnoboyRecentEpisodes({int page = 1}) async {
     try {
       final url = page > 1 ? '$anoboyBaseUrl/page/$page/' : anoboyBaseUrl;
-      final response = await http.get(
+      final response = await (await HttpClientService().client).get(
         Uri.parse(url),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -94,7 +95,7 @@ class ScrapingService {
   Future<List<Episode>> getAnichinRecentEpisodes({int page = 1}) async {
     try {
       final url = page > 1 ? '$anichinBaseUrl/page/$page/' : anichinBaseUrl;
-      final response = await http.get(Uri.parse(url));
+      final response = await (await HttpClientService().client).get(Uri.parse(url));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -156,7 +157,7 @@ class ScrapingService {
 
   Future<List<Show>> getAnichinPopularToday() async {
     try {
-      final response = await http.get(Uri.parse(anichinBaseUrl));
+      final response = await (await HttpClientService().client).get(Uri.parse(anichinBaseUrl));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -207,7 +208,7 @@ class ScrapingService {
 
   Future<List<Show>> getAnichinRecommendations() async {
     try {
-      final response = await http.get(Uri.parse(anichinBaseUrl));
+      final response = await (await HttpClientService().client).get(Uri.parse(anichinBaseUrl));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -260,7 +261,7 @@ class ScrapingService {
     if (show.originalUrl == null || show.originalUrl!.isEmpty) return show;
 
     try {
-      final response = await http.get(
+      final response = await (await HttpClientService().client).get(
         Uri.parse(show.originalUrl!),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -431,7 +432,7 @@ class ScrapingService {
     if (show.originalUrl == null || show.originalUrl!.isEmpty) return show;
 
     try {
-      final response = await http.get(
+      final response = await (await HttpClientService().client).get(
         Uri.parse(show.originalUrl!),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -447,7 +448,7 @@ class ScrapingService {
 
       if (parentShowUrl != null && parentShowUrl != show.originalUrl && !parentShowUrl.contains('/000/')) {
          try {
-           final parentResponse = await http.get(
+           final parentResponse = await (await HttpClientService().client).get(
              Uri.parse(parentShowUrl.startsWith('http') ? parentShowUrl : '$anoboyBaseUrl$parentShowUrl'),
              headers: {
                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -678,7 +679,7 @@ class ScrapingService {
     if (episode.originalUrl == null || episode.originalUrl!.isEmpty) return episode;
 
     try {
-      final response = await http.get(
+      final response = await (await HttpClientService().client).get(
         Uri.parse(episode.originalUrl!),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -842,7 +843,7 @@ class ScrapingService {
 
       // Fetch episodes from Show Page if not already parsed and we have a Show URL
       if (allEpisodes.isEmpty && showUrl != null && showUrl != episode.originalUrl) {
-           final showResponse = await http.get(
+           final showResponse = await (await HttpClientService().client).get(
             Uri.parse(showUrl.startsWith('http') ? showUrl : '$anoboyBaseUrl$showUrl'),
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
           );
@@ -1151,7 +1152,7 @@ class ScrapingService {
     if (episode.originalUrl == null || episode.originalUrl!.isEmpty) return episode;
 
     try {
-      final response = await http.get(Uri.parse(episode.originalUrl!));
+      final response = await (await HttpClientService().client).get(Uri.parse(episode.originalUrl!));
       if (response.statusCode != 200) return episode;
 
       final document = parse(response.body);
@@ -1302,7 +1303,7 @@ class ScrapingService {
       String? showUrl = findAnichinShowUrl(document);
 
       if (showUrl != null) {
-        final showResponse = await http.get(Uri.parse(showUrl));
+        final showResponse = await (await HttpClientService().client).get(Uri.parse(showUrl));
         if (showResponse.statusCode == 200) {
           final showDoc = parse(showResponse.body);
           var epElements = showDoc.querySelectorAll('.eplister li a');
@@ -1364,7 +1365,7 @@ class ScrapingService {
 
   Future<List<Show>> searchAnoboy(String query) async {
     try {
-      final response = await http.get(
+      final response = await (await HttpClientService().client).get(
         Uri.parse('$anoboyBaseUrl/?s=${Uri.encodeComponent(query)}'),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -1410,7 +1411,7 @@ class ScrapingService {
 
   Future<List<Show>> getAnoboyAnimeList() async {
     try {
-      final response = await http.get(
+      final response = await (await HttpClientService().client).get(
         Uri.parse('$anoboyBaseUrl/anime-list/'),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -1464,7 +1465,7 @@ class ScrapingService {
 
   Future<List<Show>> searchAnichin(String query) async {
     try {
-      final response = await http.get(Uri.parse('$anichinBaseUrl/?s=${Uri.encodeComponent(query)}'));
+      final response = await (await HttpClientService().client).get(Uri.parse('$anichinBaseUrl/?s=${Uri.encodeComponent(query)}'));
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -1512,7 +1513,7 @@ class ScrapingService {
 
   Future<Map<String, List<Show>>> getAnichinSchedule() async {
     try {
-      final response = await http.get(Uri.parse('$anichinBaseUrl/schedule/'));
+      final response = await (await HttpClientService().client).get(Uri.parse('$anichinBaseUrl/schedule/'));
       if (response.statusCode != 200) return {};
 
       final document = parse(response.body);

@@ -34,6 +34,7 @@ dependencies:
   path_provider: ^2.1.4
   google_mobile_ads: ^5.1.0
   flutter_local_notifications_linux: ^5.0.0
+  http_proxy: ^1.2.3
 
 dev_dependencies:
   flutter_test:
@@ -41,6 +42,7 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
   sqflite_common_ffi: ^2.3.3
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -94,3 +96,15 @@ flutter_distributor:
             build_args:
               target-platform: linux-x64
               release: true
+
+flutter_launcher_icons:
+  image_path: "assets/images/logo.png"
+  android: true
+  ios: true
+  windows:
+    generate: true
+    image_path: "assets/images/logo.png"
+    icon_size: 256
+  linux:
+    generate: true
+    image_path: "assets/images/logo.png"

@@ -76,19 +76,19 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // If all checks pass
     if (mounted) {
-       await _initNotifications();
+      await _initNotifications();
       _navigateToHome();
     }
   }
 
   Future<void> _initNotifications() async {
-      try {
-        final notificationService = NotificationService();
-        await notificationService.init();
-        await notificationService.scheduleDailySilentNotifications();
-      } catch (e) {
-        debugPrint("Error initializing notifications: $e");
-      }
+    try {
+      final notificationService = NotificationService();
+      await notificationService.init();
+      await notificationService.scheduleDailySilentNotifications();
+    } catch (e) {
+      debugPrint("Error initializing notifications: $e");
+    }
   }
 
   void _showErrorDialog({

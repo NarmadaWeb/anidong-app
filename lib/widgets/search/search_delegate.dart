@@ -69,7 +69,9 @@ class AnidongSearchDelegate extends SearchDelegate {
       return Center(
         child: Text(
           'Search for Anime or Donghua',
-          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16),
+          style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+              fontSize: 16),
         ),
       );
     }
@@ -80,8 +82,10 @@ class AnidongSearchDelegate extends SearchDelegate {
         _apiService.searchShows(context, query),
       ]).then((results) {
         final localAnimeResults = results[0];
-        final apiAnimeResults = results[1].where((s) => s.type == 'anime').toList();
-        final donghuaResults = results[1].where((s) => s.type == 'donghua').toList();
+        final apiAnimeResults =
+            results[1].where((s) => s.type == 'anime').toList();
+        final donghuaResults =
+            results[1].where((s) => s.type == 'donghua').toList();
 
         final animeMap = <String, Show>{};
         for (var s in apiAnimeResults) {
@@ -95,14 +99,16 @@ class AnidongSearchDelegate extends SearchDelegate {
       }),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+          return const Center(
+              child: CircularProgressIndicator(color: AppColors.accent));
         }
 
         if (snapshot.hasError) {
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color),
             ),
           );
         }
@@ -113,7 +119,9 @@ class AnidongSearchDelegate extends SearchDelegate {
           return Center(
             child: Text(
               'No results found for "$query"',
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16),
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  fontSize: 16),
             ),
           );
         }
@@ -166,7 +174,8 @@ class AnidongSearchDelegate extends SearchDelegate {
                     width: 60,
                     height: 80,
                     color: Theme.of(context).cardColor,
-                    child: Icon(Icons.image_outlined, color: Theme.of(context).iconTheme.color),
+                    child: Icon(Icons.image_outlined,
+                        color: Theme.of(context).iconTheme.color),
                   ),
                 ),
               ),
@@ -194,7 +203,8 @@ class AnidongSearchDelegate extends SearchDelegate {
                   ],
                 ),
               ),
-              Icon(Boxicons.bx_chevron_right, color: Theme.of(context).iconTheme.color),
+              Icon(Boxicons.bx_chevron_right,
+                  color: Theme.of(context).iconTheme.color),
             ],
           ),
         ),

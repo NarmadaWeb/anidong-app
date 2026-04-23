@@ -81,16 +81,14 @@ class Show {
   factory Show.fromJson(Map<String, dynamic> json) {
     var genreList = <Genre>[];
     if (json['genres'] != null) {
-      genreList = (json['genres'] as List)
-          .map((g) => Genre.fromJson(g))
-          .toList();
+      genreList =
+          (json['genres'] as List).map((g) => Genre.fromJson(g)).toList();
     }
 
     var epList = <Episode>[];
     if (json['episodes'] != null) {
-      epList = (json['episodes'] as List)
-          .map((e) => Episode.fromJson(e))
-          .toList();
+      epList =
+          (json['episodes'] as List).map((e) => Episode.fromJson(e)).toList();
     }
 
     return Show(
@@ -107,7 +105,9 @@ class Show {
       source: json['source'],
       duration: json['duration'],
       genres: genreList,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'])
+          : null,
       originalUrl: json['original_url'],
       episodes: epList.isNotEmpty ? epList : null,
     );

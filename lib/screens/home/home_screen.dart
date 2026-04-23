@@ -18,14 +18,17 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<HomeProvider>(
       builder: (context, provider, child) {
-        if (provider.state == HomeState.loading || provider.state == HomeState.initial) {
+        if (provider.state == HomeState.loading ||
+            provider.state == HomeState.initial) {
           // Call fetchHomePageData with context when the provider is first initialized or loading
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (provider.state == HomeState.initial) {
               provider.fetchHomePageData(context);
             }
           });
-          return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
+          return Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).primaryColor));
         }
 
         if (provider.state == HomeState.error) {
@@ -35,7 +38,10 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Error: ${provider.errorMessage}', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+                  Text('Error: ${provider.errorMessage}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: Theme.of(context).textTheme.bodySmall?.color)),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
                     onPressed: () => provider.fetchHomePageData(context),
@@ -68,10 +74,12 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 64 + MediaQuery.of(context).viewPadding.top + 16),
+                SizedBox(
+                    height: 64 + MediaQuery.of(context).viewPadding.top + 16),
                 const HeroSlider(),
                 _buildSectionTitle('New Episodes'),
-                _buildNewEpisodesGrid(context, allRecentEpisodes, provider.currentMode, provider), // Kirim mode saat ini
+                _buildNewEpisodesGrid(context, allRecentEpisodes,
+                    provider.currentMode, provider), // Kirim mode saat ini
                 _buildSectionTitle('Recommended For You'),
                 _buildRecommendedList(context, filteredRecommended),
                 const SizedBox(height: 100),
@@ -91,16 +99,19 @@ class HomeScreen extends StatelessWidget {
     return Builder(builder: (context) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
-        child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.bold)),
+        child: Text(title,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontSize: 20, fontWeight: FontWeight.bold)),
       );
     });
   }
 
   // --- PERBAIKAN DI SINI ---
-  Widget _buildNewEpisodesGrid(BuildContext context, List<Episode> episodes, String currentMode, HomeProvider provider) {
-
+  Widget _buildNewEpisodesGrid(BuildContext context, List<Episode> episodes,
+      String currentMode, HomeProvider provider) {
     final filteredEpisodes = episodes.where((ep) {
-
       return true;
     }).toList();
 
@@ -108,7 +119,10 @@ class HomeScreen extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
         alignment: Alignment.center,
-        child: Text('No new episodes available for this mode.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+        child: Text('No new episodes available for this mode.',
+            textAlign: TextAlign.center,
+            style:
+                TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
       );
     }
 
@@ -119,13 +133,17 @@ class HomeScreen extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 16, childAspectRatio: 0.6,
+            crossAxisCount: 3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.6,
           ),
           itemCount: filteredEpisodes.length,
           itemBuilder: (context, index) {
             final episode = filteredEpisodes[index];
             // Judul sekarang diambil dari episode itu sendiri jika ada, jika tidak, dari Show.
-            final displayTitle = episode.title ?? episode.show?.title ?? 'Unknown Episode';
+            final displayTitle =
+                episode.title ?? episode.show?.title ?? 'Unknown Episode';
 
             return GestureDetector(
               onTap: () {
@@ -148,25 +166,45 @@ class HomeScreen extends StatelessWidget {
                           child: CachedNetworkImage(
                             imageUrl: episode.thumbnailUrl ?? '',
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: Theme.of(context).cardColor),
-                            errorWidget: (context, url, error) => Center(child: Icon(Icons.image_not_supported, color: Theme.of(context).iconTheme.color)),
+                            placeholder: (context, url) =>
+                                Container(color: Theme.of(context).cardColor),
+                            errorWidget: (context, url, error) => Center(
+                                child: Icon(Icons.image_not_supported,
+                                    color: Theme.of(context).iconTheme.color)),
                           ),
                         ),
-
                         Positioned(
-                          bottom: 8, left: 8, right: 8,
+                          bottom: 8,
+                          left: 8,
+                          right: 8,
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(color: Theme.of(context).primaryColor.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(4)),
-                                child: Text('Ep ${episode.episodeNumber}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .primaryColor
+                                        .withValues(alpha: 0.9),
+                                    borderRadius: BorderRadius.circular(4)),
+                                child: Text('Ep ${episode.episodeNumber}',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600)),
                               ),
                               const Spacer(),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(color: AppColors.yellow400, borderRadius: BorderRadius.circular(4)),
-                                child: const Text('Sub', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
+                                    color: AppColors.yellow400,
+                                    borderRadius: BorderRadius.circular(4)),
+                                child: const Text('Sub',
+                                    style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -179,7 +217,10 @@ class HomeScreen extends StatelessWidget {
                     displayTitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w500),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -189,7 +230,9 @@ class HomeScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: provider.isLoadingMore
-              ? Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor))
+              ? Center(
+                  child: CircularProgressIndicator(
+                      color: Theme.of(context).primaryColor))
               : SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
@@ -208,12 +251,15 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRecommendedList(BuildContext context, List<Show> shows) {
-     if (shows.isEmpty) {
+    if (shows.isEmpty) {
       return Container(
         height: MediaQuery.of(context).size.height * 0.25,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Text('No recommendations available for this mode.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+        child: Text('No recommendations available for this mode.',
+            textAlign: TextAlign.center,
+            style:
+                TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
       );
     }
 
@@ -249,8 +295,11 @@ class HomeScreen extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: show.coverImageUrl ?? '',
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(color: Theme.of(context).cardColor),
-                          errorWidget: (context, url, error) => Center(child: Icon(Icons.image_not_supported, color: Theme.of(context).iconTheme.color)),
+                          placeholder: (context, url) =>
+                              Container(color: Theme.of(context).cardColor),
+                          errorWidget: (context, url, error) => Center(
+                              child: Icon(Icons.image_not_supported,
+                                  color: Theme.of(context).iconTheme.color)),
                         ),
                       ),
                     ),
@@ -259,7 +308,10 @@ class HomeScreen extends StatelessWidget {
                       show.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),

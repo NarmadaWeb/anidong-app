@@ -111,47 +111,47 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildSettingsSection(String title, List<Widget> items) {
-    return Builder(
-      builder: (context) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-              child: Text(
-                title.toUpperCase(),
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 1.1,
-                ),
+    return Builder(builder: (context) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+            child: Text(
+              title.toUpperCase(),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                letterSpacing: 1.1,
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: items,
-              ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(16),
             ),
-          ],
-        );
-      }
-    );
+            child: Column(
+              children: items,
+            ),
+          ),
+        ],
+      );
+    });
   }
 
   Widget _buildSettingsItem(String title, VoidCallback onTap) {
-    return Builder(
-      builder: (context) {
-        return ListTile(
-          title: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w500)),
-          trailing: Icon(Boxicons.bx_chevron_right, color: Theme.of(context).iconTheme.color),
-          onTap: onTap,
-        );
-      }
-    );
+    return Builder(builder: (context) {
+      return ListTile(
+        title: Text(title,
+            style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontWeight: FontWeight.w500)),
+        trailing: Icon(Boxicons.bx_chevron_right,
+            color: Theme.of(context).iconTheme.color),
+        onTap: onTap,
+      );
+    });
   }
 }
