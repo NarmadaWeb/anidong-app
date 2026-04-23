@@ -497,10 +497,12 @@ class ScrapingService {
     // Parse episodes
     List<Episode> allEpisodes = [];
     var epElements = document.querySelectorAll('.eplister li a');
-    if (epElements.isEmpty)
+    if (epElements.isEmpty) {
       epElements = document.querySelectorAll('.lstep li a');
-    if (epElements.isEmpty)
+    }
+    if (epElements.isEmpty) {
       epElements = document.querySelectorAll('.episodelist li a');
+    }
 
     for (var epEl in epElements) {
       final rawUrl = epEl.attributes['href'] ?? '';
@@ -648,8 +650,9 @@ class ScrapingService {
                   a.text.toLowerCase().contains('list episode'),
             )
             .attributes['href'];
-        if (allEpLink != null && allEpLink.isNotEmpty)
+        if (allEpLink != null && allEpLink.isNotEmpty) {
           parentShowUrl = allEpLink;
+        }
       } catch (_) {}
     }
 
@@ -762,7 +765,9 @@ class ScrapingService {
       for (var p in paragraphs) {
         // Ignore if it's "Download..." or similar
         if (p.text.toLowerCase().contains('download') ||
-            p.text.toLowerCase().contains('mirror')) continue;
+            p.text.toLowerCase().contains('mirror')) {
+          continue;
+        }
         // Ignore if it looks like metadata line
         if (p.text.contains(':')) continue;
 
@@ -802,8 +807,9 @@ class ScrapingService {
   }
 
   Future<Episode> getAnoboyEpisodeDetails(Episode episode) async {
-    if (episode.originalUrl == null || episode.originalUrl!.isEmpty)
+    if (episode.originalUrl == null || episode.originalUrl!.isEmpty) {
       return episode;
+    }
 
     try {
       final response = await (await HttpClientService().client).get(
@@ -851,8 +857,9 @@ class ScrapingService {
           if (breadcrumb != null) {
             match = RegExp(r'Episode\s+(\d+)', caseSensitive: false)
                 .firstMatch(breadcrumb.text);
-            if (match != null)
+            if (match != null) {
               currentEpisodeNumber = int.tryParse(match.group(1)!) ?? 0;
+            }
           }
         }
       }
@@ -1050,10 +1057,12 @@ class ScrapingService {
       final currentIdx = allEpisodes
           .indexWhere((e) => e.episodeNumber == currentEpisodeNumber);
       if (currentIdx != -1) {
-        if (currentIdx > 0)
+        if (currentIdx > 0) {
           prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
-        if (currentIdx < allEpisodes.length - 1)
+        }
+        if (currentIdx < allEpisodes.length - 1) {
           nextEpisodeUrl = allEpisodes[currentIdx + 1].originalUrl;
+        }
       }
 
       final show = episode.show ??
@@ -1218,7 +1227,9 @@ class ScrapingService {
           url.contains('#') ||
           url.contains('facebook') ||
           url.contains('twitter') ||
-          url.contains('whatsapp')) continue;
+          url.contains('whatsapp')) {
+        continue;
+      }
 
       // Allow relative URLs that don't explicitly contain 'anoboy' in the href attribute
       // But verify they are likely internal links (start with / or contain base url)
@@ -1400,8 +1411,9 @@ class ScrapingService {
   }
 
   Future<Episode> getAnichinEpisodeDetails(Episode episode) async {
-    if (episode.originalUrl == null || episode.originalUrl!.isEmpty)
+    if (episode.originalUrl == null || episode.originalUrl!.isEmpty) {
       return episode;
+    }
 
     try {
       final String safeUrl = episode.originalUrl!.startsWith('http')
@@ -1438,10 +1450,12 @@ class ScrapingService {
       if (isShowPage) {
         List<Episode> allEpisodes = [];
         var epElements = document.querySelectorAll('.eplister li a');
-        if (epElements.isEmpty)
+        if (epElements.isEmpty) {
           epElements = document.querySelectorAll('.lstep li a');
-        if (epElements.isEmpty)
+        }
+        if (epElements.isEmpty) {
           epElements = document.querySelectorAll('.episodelist li a');
+        }
 
         for (var epEl in epElements) {
           final rawUrl = epEl.attributes['href'] ?? '';
@@ -1620,10 +1634,12 @@ class ScrapingService {
         if (showResponse.statusCode == 200) {
           final showDoc = parse(showResponse.body);
           var epElements = showDoc.querySelectorAll('.eplister li a');
-          if (epElements.isEmpty)
+          if (epElements.isEmpty) {
             epElements = showDoc.querySelectorAll('.lstep li a');
-          if (epElements.isEmpty)
+          }
+          if (epElements.isEmpty) {
             epElements = showDoc.querySelectorAll('.episodelist li a');
+          }
 
           for (var epEl in epElements) {
             final rawUrl = epEl.attributes['href'] ?? '';
@@ -1778,7 +1794,9 @@ class ScrapingService {
         if (url.contains('/page/') ||
             url.contains('wp-json') ||
             url.contains('feed') ||
-            url.contains('comment-page')) continue;
+            url.contains('comment-page')) {
+          continue;
+        }
         if (url.endsWith('#') || url.contains('#')) continue;
 
         if ([
@@ -1794,7 +1812,9 @@ class ScrapingService {
           'Rekomendasi',
           'Lapor Eror',
           'Advertise'
-        ].contains(title)) continue;
+        ].contains(title)) {
+          continue;
+        }
 
         if (shows.any((s) => s.originalUrl == url)) continue;
 

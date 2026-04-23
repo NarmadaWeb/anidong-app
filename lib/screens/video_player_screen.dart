@@ -128,10 +128,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
-            if (mounted)
+            if (mounted) {
               setState(() {
                 _isLoading = false;
               });
+            }
           },
         ),
       )
