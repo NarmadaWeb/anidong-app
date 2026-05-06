@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boxicons/flutter_boxicons.dart';
 import 'package:anidong/utils/app_colors.dart';
+import 'package:anidong/data/services/scraping_service.dart';
 import 'package:anidong/widgets/glass_card.dart';
 import 'package:provider/provider.dart';
 
@@ -151,10 +152,10 @@ class _MyListScreenState extends State<MyListScreen>
                         width: 70,
                         height: 90,
                         fit: BoxFit.cover,
-                        httpHeaders: const {
+                        httpHeaders: {
                           'User-Agent':
                               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                          'Referer': 'https://ww1.anoboy.boo/',
+                          'Referer': ScrapingService.anoboyBaseUrl,
                         },
                         placeholder: (context, url) => Center(
                             child: CircularProgressIndicator(
