@@ -267,11 +267,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             width: 60,
                             height: 80,
                             fit: BoxFit.cover,
-                            httpHeaders: {
-                              'User-Agent':
-                                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                              'Referer': ScrapingService.anoboyBaseUrl,
-                            },
+                            httpHeaders: ScrapingService.getAnoboyHeaders(),
                             errorWidget: (context, url, error) => Container(
                                 color: AppColors.surface,
                                 width: 60,

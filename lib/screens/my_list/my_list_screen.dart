@@ -152,11 +152,7 @@ class _MyListScreenState extends State<MyListScreen>
                         width: 70,
                         height: 90,
                         fit: BoxFit.cover,
-                        httpHeaders: {
-                          'User-Agent':
-                              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                          'Referer': ScrapingService.anoboyBaseUrl,
-                        },
+                        httpHeaders: ScrapingService.getAnoboyHeaders(),
                         placeholder: (context, url) => Center(
                             child: CircularProgressIndicator(
                                 color: Theme.of(context).primaryColor)),
