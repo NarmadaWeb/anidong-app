@@ -43,6 +43,21 @@ class ScrapingService {
   static String anoboyBaseUrl = 'https://ww1.anoboy.boo';
   static String anichinBaseUrl = 'https://anichin.moe';
 
+  static final Map<String, String> defaultHeaders = {
+    'User-Agent':
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': '*/*',
+    'Accept-Language': 'en-US,en;q=0.9',
+  };
+
+  static Map<String, String> getAnichinHeaders() {
+    return {...defaultHeaders, 'Referer': anichinBaseUrl};
+  }
+
+  static Map<String, String> getAnoboyHeaders() {
+    return {...defaultHeaders, 'Referer': anoboyBaseUrl};
+  }
+
   static void updateBaseUrls(String anoboy, String anichin) {
     if (anoboy.isNotEmpty) anoboyBaseUrl = anoboy;
     if (anichin.isNotEmpty) anichinBaseUrl = anichin;
@@ -50,7 +65,8 @@ class ScrapingService {
 
   String _extractImageUrl(Element? imgElement) {
     if (imgElement == null) return '';
-    String thumb = imgElement.attributes['data-src'] ??
+    String thumb =
+        imgElement.attributes['data-src'] ??
         imgElement.attributes['data-lazy-src'] ??
         imgElement.attributes['src'] ??
         '';
@@ -70,23 +86,21 @@ class ScrapingService {
       final url = page > 1 ? '$anoboyBaseUrl/page/$page/' : anoboyBaseUrl;
       final response = await (await HttpClientService().client).get(
         Uri.parse(url),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': anoboyBaseUrl,
-        },
+        headers: ScrapingService.getAnoboyHeaders(),
       );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
       final List<Episode> episodes = [];
 
-      final elements =
-          document.querySelectorAll('.home_index a[rel="bookmark"]');
+      final elements = document.querySelectorAll(
+        '.home_index a[rel="bookmark"]',
+      );
       for (var element in elements) {
         if (element.querySelector('.amv') == null) continue;
 
-        final title = element.attributes['title'] ??
+        final title =
+            element.attributes['title'] ??
             element.querySelector('h3.ibox1')?.text.trim() ??
             '';
         final url = element.attributes['href'] ?? '';
@@ -100,23 +114,25 @@ class ScrapingService {
             epNum = int.tryParse(epMatch.group(1)!) ?? 0;
           }
 
-          episodes.add(Episode(
-            id: url.hashCode,
-            showId: title.hashCode,
-            episodeNumber: epNum,
-            title: title,
-            videoUrl: '',
-            thumbnailUrl: thumb,
-            originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
-            show: Show(
-              id: title.hashCode,
-              title: title.split(' Episode')[0],
-              type: 'anime',
-              status: 'ongoing',
-              genres: [],
-              coverImageUrl: thumb,
+          episodes.add(
+            Episode(
+              id: url.hashCode,
+              showId: title.hashCode,
+              episodeNumber: epNum,
+              title: title,
+              videoUrl: '',
+              thumbnailUrl: thumb,
+              originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
+              show: Show(
+                id: title.hashCode,
+                title: title.split(' Episode')[0],
+                type: 'anime',
+                status: 'ongoing',
+                genres: [],
+                coverImageUrl: thumb,
+              ),
             ),
-          ));
+          );
         }
       }
       return episodes;
@@ -129,8 +145,10 @@ class ScrapingService {
   Future<List<Episode>> getAnichinRecentEpisodes({int page = 1}) async {
     try {
       final url = page > 1 ? '$anichinBaseUrl/page/$page/' : anichinBaseUrl;
-      final response =
-          await (await HttpClientService().client).get(Uri.parse(url));
+      final response = await (await HttpClientService().client).get(
+        Uri.parse(url),
+        headers: ScrapingService.getAnichinHeaders(),
+      );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -138,9 +156,9 @@ class ScrapingService {
 
       var latestSection =
           findAnichinListupd(document, ['rilisan terbaru', 'latest release']) ??
-              (document.querySelectorAll('.listupd').length > 1
-                  ? document.querySelectorAll('.listupd')[1]
-                  : document.querySelector('.listupd')!);
+          (document.querySelectorAll('.listupd').length > 1
+              ? document.querySelectorAll('.listupd')[1]
+              : document.querySelector('.listupd')!);
 
       final elements = latestSection.querySelectorAll('.bs');
       for (var element in elements) {
@@ -151,16 +169,17 @@ class ScrapingService {
 
         if (titleElement != null && linkElement != null) {
           final h2 = titleElement.querySelector('h2');
-          final rawTitle =
-              h2 != null ? h2.text.trim() : titleElement.text.trim();
+          final rawTitle = h2 != null
+              ? h2.text.trim()
+              : titleElement.text.trim();
           final rawUrl = linkElement.attributes['href'] ?? '';
           final url = rawUrl.startsWith('http')
               ? rawUrl
               : (rawUrl.startsWith('//')
-                  ? 'https:$rawUrl'
-                  : (rawUrl.startsWith('/')
-                      ? '$anichinBaseUrl$rawUrl'
-                      : '$anichinBaseUrl/$rawUrl'));
+                    ? 'https:$rawUrl'
+                    : (rawUrl.startsWith('/')
+                          ? '$anichinBaseUrl$rawUrl'
+                          : '$anichinBaseUrl/$rawUrl'));
           final thumb = imgElement?.attributes['src'] ?? '';
           final epText = epElement?.text.trim() ?? '';
 
@@ -174,22 +193,24 @@ class ScrapingService {
 
           final showTitle = rawTitle.split(' Episode')[0].split(' Ep ')[0];
 
-          episodes.add(Episode(
-            id: url.hashCode,
-            showId: showTitle.hashCode,
-            episodeNumber: epNum,
-            title: showTitle,
-            videoUrl: '',
-            thumbnailUrl: thumb,
-            originalUrl: url,
-            show: Show(
-              id: showTitle.hashCode,
+          episodes.add(
+            Episode(
+              id: url.hashCode,
+              showId: showTitle.hashCode,
+              episodeNumber: epNum,
               title: showTitle,
-              type: 'donghua',
-              status: 'ongoing',
-              genres: [],
+              videoUrl: '',
+              thumbnailUrl: thumb,
+              originalUrl: url,
+              show: Show(
+                id: showTitle.hashCode,
+                title: showTitle,
+                type: 'donghua',
+                status: 'ongoing',
+                genres: [],
+              ),
             ),
-          ));
+          );
         }
       }
       return episodes;
@@ -201,15 +222,21 @@ class ScrapingService {
 
   Future<List<Show>> getAnichinPopularToday() async {
     try {
-      final response = await (await HttpClientService().client)
-          .get(Uri.parse(anichinBaseUrl));
+      final response = await (await HttpClientService().client).get(
+        Uri.parse(anichinBaseUrl),
+        headers: ScrapingService.getAnichinHeaders(),
+      );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      var popularSection = findAnichinListupd(document,
-              ['terpopuler hari ini', 'popular today', 'terpopuler']) ??
+      var popularSection =
+          findAnichinListupd(document, [
+            'terpopuler hari ini',
+            'popular today',
+            'terpopuler',
+          ]) ??
           document.querySelector('.listupd')!;
 
       final elements = popularSection.querySelectorAll('.bs');
@@ -225,14 +252,15 @@ class ScrapingService {
           final url = rawUrl.startsWith('http')
               ? rawUrl
               : (rawUrl.startsWith('//')
-                  ? 'https:$rawUrl'
-                  : (rawUrl.startsWith('/')
-                      ? '$anichinBaseUrl$rawUrl'
-                      : '$anichinBaseUrl/$rawUrl'));
+                    ? 'https:$rawUrl'
+                    : (rawUrl.startsWith('/')
+                          ? '$anichinBaseUrl$rawUrl'
+                          : '$anichinBaseUrl/$rawUrl'));
           final thumb = imgElement?.attributes['src'] ?? '';
 
           String status = 'ongoing';
-          final statusEl = element.querySelector('.status') ??
+          final statusEl =
+              element.querySelector('.status') ??
               element.querySelector('.sb') ??
               element.querySelector('.limit .bt');
           if (statusEl != null) {
@@ -244,15 +272,17 @@ class ScrapingService {
             }
           }
 
-          shows.add(Show(
-            id: url.hashCode,
-            title: title.split(' Episode')[0].split(' Ep ')[0],
-            type: 'donghua',
-            status: status,
-            coverImageUrl: thumb,
-            originalUrl: url,
-            genres: [],
-          ));
+          shows.add(
+            Show(
+              id: url.hashCode,
+              title: title.split(' Episode')[0].split(' Ep ')[0],
+              type: 'donghua',
+              status: status,
+              coverImageUrl: thumb,
+              originalUrl: url,
+              genres: [],
+            ),
+          );
         }
       }
       return shows;
@@ -263,8 +293,10 @@ class ScrapingService {
 
   Future<List<Show>> getAnichinRecommendations() async {
     try {
-      final response = await (await HttpClientService().client)
-          .get(Uri.parse(anichinBaseUrl));
+      final response = await (await HttpClientService().client).get(
+        Uri.parse(anichinBaseUrl),
+        headers: ScrapingService.getAnichinHeaders(),
+      );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -272,9 +304,9 @@ class ScrapingService {
 
       var recSection =
           findAnichinListupd(document, ['rekomendasi', 'recommendation']) ??
-              (document.querySelectorAll('.listupd').length > 2
-                  ? document.querySelectorAll('.listupd')[2]
-                  : document.querySelector('.listupd')!);
+          (document.querySelectorAll('.listupd').length > 2
+              ? document.querySelectorAll('.listupd')[2]
+              : document.querySelector('.listupd')!);
 
       final elements = recSection.querySelectorAll('.bs');
       for (var element in elements) {
@@ -289,14 +321,15 @@ class ScrapingService {
           final url = rawUrl.startsWith('http')
               ? rawUrl
               : (rawUrl.startsWith('//')
-                  ? 'https:$rawUrl'
-                  : (rawUrl.startsWith('/')
-                      ? '$anichinBaseUrl$rawUrl'
-                      : '$anichinBaseUrl/$rawUrl'));
+                    ? 'https:$rawUrl'
+                    : (rawUrl.startsWith('/')
+                          ? '$anichinBaseUrl$rawUrl'
+                          : '$anichinBaseUrl/$rawUrl'));
           final thumb = imgElement?.attributes['src'] ?? '';
 
           String status = 'ongoing';
-          final statusEl = element.querySelector('.status') ??
+          final statusEl =
+              element.querySelector('.status') ??
               element.querySelector('.sb') ??
               element.querySelector('.limit .bt');
           if (statusEl != null) {
@@ -308,15 +341,17 @@ class ScrapingService {
             }
           }
 
-          shows.add(Show(
-            id: url.hashCode,
-            title: title.split(' Episode')[0].split(' Ep ')[0],
-            type: 'donghua',
-            status: status,
-            coverImageUrl: thumb,
-            originalUrl: url,
-            genres: [],
-          ));
+          shows.add(
+            Show(
+              id: url.hashCode,
+              title: title.split(' Episode')[0].split(' Ep ')[0],
+              type: 'donghua',
+              status: status,
+              coverImageUrl: thumb,
+              originalUrl: url,
+              genres: [],
+            ),
+          );
         }
       }
       return shows;
@@ -332,16 +367,13 @@ class ScrapingService {
       final String safeUrl = show.originalUrl!.startsWith('http')
           ? show.originalUrl!
           : (show.originalUrl!.startsWith('//')
-              ? 'https:${show.originalUrl!}'
-              : (show.originalUrl!.startsWith('/')
-                  ? '$anichinBaseUrl${show.originalUrl!}'
-                  : '$anichinBaseUrl/${show.originalUrl!}'));
+                ? 'https:${show.originalUrl!}'
+                : (show.originalUrl!.startsWith('/')
+                      ? '$anichinBaseUrl${show.originalUrl!}'
+                      : '$anichinBaseUrl/${show.originalUrl!}'));
       final response = await (await HttpClientService().client).get(
         Uri.parse(safeUrl),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
+        headers: ScrapingService.getAnichinHeaders(),
       );
       if (response.statusCode != 200) return show;
 
@@ -365,10 +397,10 @@ class ScrapingService {
       final href = bcs[1].attributes['href'];
       showUrl = href != null
           ? (href.startsWith('http')
-              ? href
-              : (href.startsWith('//')
-                  ? 'https:$href'
-                  : (href.startsWith('/') ? '$anichinBaseUrl$href' : href)))
+                ? href
+                : (href.startsWith('//')
+                      ? 'https:$href'
+                      : (href.startsWith('/') ? '$anichinBaseUrl$href' : href)))
           : null;
     }
 
@@ -393,8 +425,8 @@ class ScrapingService {
             showUrl = href.startsWith('http')
                 ? href
                 : (href.startsWith('//')
-                    ? 'https:$href'
-                    : (href.startsWith('/') ? '$anichinBaseUrl$href' : href));
+                      ? 'https:$href'
+                      : (href.startsWith('/') ? '$anichinBaseUrl$href' : href));
             break;
           }
         }
@@ -403,16 +435,19 @@ class ScrapingService {
 
     // 3. Fallback: Check for specific classes
     if (showUrl == null) {
-      final specificLink = document
-          .querySelector('.all-episodes a, .list-episodes a, .show-info a');
+      final specificLink = document.querySelector(
+        '.all-episodes a, .list-episodes a, .show-info a',
+      );
       if (specificLink != null) {
         final href = specificLink.attributes['href'];
         showUrl = href != null
             ? (href.startsWith('http')
-                ? href
-                : (href.startsWith('//')
-                    ? 'https:$href'
-                    : (href.startsWith('/') ? '$anichinBaseUrl$href' : href)))
+                  ? href
+                  : (href.startsWith('//')
+                        ? 'https:$href'
+                        : (href.startsWith('/')
+                              ? '$anichinBaseUrl$href'
+                              : href)))
             : null;
       }
     }
@@ -426,8 +461,8 @@ class ScrapingService {
           showUrl = href.startsWith('http')
               ? href
               : (href.startsWith('//')
-                  ? 'https:$href'
-                  : (href.startsWith('/') ? '$anichinBaseUrl$href' : href));
+                    ? 'https:$href'
+                    : (href.startsWith('/') ? '$anichinBaseUrl$href' : href));
           break;
         }
       }
@@ -459,8 +494,8 @@ class ScrapingService {
     // Enhanced Synopsis Extraction
     final synEl =
         document.querySelector('.entry-content[itemprop="description"] p') ??
-            document.querySelector('.entry-content p') ??
-            document.querySelector('.desc');
+        document.querySelector('.entry-content p') ??
+        document.querySelector('.desc');
 
     if (synEl != null) {
       synopsis = synEl.text.trim();
@@ -482,7 +517,8 @@ class ScrapingService {
 
     // Cover Image Extraction
     String? coverImage = show.coverImageUrl;
-    final imgEl = document.querySelector('.thumb img') ??
+    final imgEl =
+        document.querySelector('.thumb img') ??
         document.querySelector('.ts-post-image') ??
         document.querySelector('.wp-post-image') ??
         document.querySelector('div[itemprop="image"] img');
@@ -509,8 +545,8 @@ class ScrapingService {
       final url = rawUrl.startsWith('http')
           ? rawUrl
           : (rawUrl.startsWith('//')
-              ? 'https:$rawUrl'
-              : (rawUrl.startsWith('/') ? '$anichinBaseUrl$rawUrl' : rawUrl));
+                ? 'https:$rawUrl'
+                : (rawUrl.startsWith('/') ? '$anichinBaseUrl$rawUrl' : rawUrl));
       final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
       final title = epEl.querySelector('.epl-title')?.text.trim() ?? '';
 
@@ -518,16 +554,18 @@ class ScrapingService {
       thumb ??= epEl.querySelector('img')?.attributes['data-src'];
 
       if (url.isNotEmpty) {
-        allEpisodes.add(Episode(
-          id: url.hashCode,
-          showId: show.id,
-          episodeNumber: int.tryParse(numText) ?? 0,
-          title: title,
-          videoUrl: '',
-          originalUrl: url,
-          thumbnailUrl: thumb,
-          show: show,
-        ));
+        allEpisodes.add(
+          Episode(
+            id: url.hashCode,
+            showId: show.id,
+            episodeNumber: int.tryParse(numText) ?? 0,
+            title: title,
+            videoUrl: '',
+            originalUrl: url,
+            thumbnailUrl: thumb,
+            show: show,
+          ),
+        );
       }
     }
 
@@ -545,10 +583,7 @@ class ScrapingService {
     try {
       final response = await (await HttpClientService().client).get(
         Uri.parse(show.originalUrl!),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
+        headers: ScrapingService.getAnoboyHeaders(),
       );
       if (response.statusCode != 200) return show;
 
@@ -562,18 +597,19 @@ class ScrapingService {
           !parentShowUrl.contains('/000/')) {
         try {
           final parentResponse = await (await HttpClientService().client).get(
-            Uri.parse(parentShowUrl.startsWith('http')
-                ? parentShowUrl
-                : '$anoboyBaseUrl$parentShowUrl'),
-            headers: {
-              'User-Agent':
-                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            },
+            Uri.parse(
+              parentShowUrl.startsWith('http')
+                  ? parentShowUrl
+                  : '$anoboyBaseUrl$parentShowUrl',
+            ),
+            headers: ScrapingService.getAnoboyHeaders(),
           );
           if (parentResponse.statusCode == 200) {
             final parentDoc = parse(parentResponse.body);
             return parseAnoboyShowDetailsFromDoc(
-                parentDoc, show.copyWith(originalUrl: parentShowUrl));
+              parentDoc,
+              show.copyWith(originalUrl: parentShowUrl),
+            );
           }
         } catch (e) {
           debugPrint('Error redirecting to Anoboy Show Page: $e');
@@ -628,7 +664,8 @@ class ScrapingService {
         // Check metadata table first
         // Added .contenttable as it often contains the table outside .entry-content
         final rows = document.querySelectorAll(
-            '.entry-content table tr, .post-body table tr, .contenttable table tr');
+          '.entry-content table tr, .post-body table tr, .contenttable table tr',
+        );
         for (var row in rows) {
           final th = row.querySelector('th');
           if (th != null && th.text.toLowerCase().contains('semua episode')) {
@@ -661,16 +698,22 @@ class ScrapingService {
 
   @visibleForTesting
   Show parseAnoboyShowDetailsFromDoc(Document document, Show show) {
-    List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(document, show.id,
-        showTitle: show.title, show: show);
+    List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(
+      document,
+      show.id,
+      showTitle: show.title,
+      show: show,
+    );
 
     // Advanced Sorting: Handle Seasons
     allEpisodes.sort((a, b) {
       // Try to extract season number from title
       int getSeason(String? title) {
         if (title == null) return 0;
-        final match = RegExp(r'(?:Season|S)\s*(\d+)', caseSensitive: false)
-            .firstMatch(title);
+        final match = RegExp(
+          r'(?:Season|S)\s*(\d+)',
+          caseSensitive: false,
+        ).firstMatch(title);
         if (match != null) {
           return int.tryParse(match.group(1)!) ?? 0;
         }
@@ -699,8 +742,9 @@ class ScrapingService {
     List<Genre> genres = [];
 
     // Parse metadata table/text
-    final rows = document
-        .querySelectorAll('.entry-content table tr, .post-body table tr');
+    final rows = document.querySelectorAll(
+      '.entry-content table tr, .post-body table tr',
+    );
     if (rows.isNotEmpty) {
       for (var row in rows) {
         final cols = row.querySelectorAll('td');
@@ -789,8 +833,9 @@ class ScrapingService {
 
     String? coverImage = show.coverImageUrl;
     if (coverImage == null || coverImage.isEmpty) {
-      final imgEl =
-          document.querySelector('.entry-content img, .post-body img');
+      final imgEl = document.querySelector(
+        '.entry-content img, .post-body img',
+      );
       coverImage = _extractImageUrl(imgEl);
     }
 
@@ -814,10 +859,7 @@ class ScrapingService {
     try {
       final response = await (await HttpClientService().client).get(
         Uri.parse(episode.originalUrl!),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
+        headers: ScrapingService.getAnoboyHeaders(),
       );
       if (response.statusCode != 200) return episode;
 
@@ -831,11 +873,14 @@ class ScrapingService {
         cleanTitle = cleanTitle.substring(0, epMatch.start).trim();
       }
       List<Episode> allEpisodes = _parseAnoboyEpisodesFromDoc(
-          document, episode.showId,
-          showTitle: cleanTitle.isNotEmpty ? cleanTitle : null,
-          show: episode.show);
+        document,
+        episode.showId,
+        showTitle: cleanTitle.isNotEmpty ? cleanTitle : null,
+        show: episode.show,
+      );
 
-      final hasPlayer = document.querySelector('#mediaplayer') != null ||
+      final hasPlayer =
+          document.querySelector('#mediaplayer') != null ||
           document.querySelector('iframe') != null;
 
       // Determine if this is primarily a Show Page (List) or Episode Page (Video)
@@ -847,16 +892,20 @@ class ScrapingService {
       if (currentEpisodeNumber == 0) {
         // Try from title
         String titleText = document.querySelector('title')?.text ?? '';
-        var match = RegExp(r'(?:Episode|Ep)\s+(\d+)', caseSensitive: false)
-            .firstMatch(titleText);
+        var match = RegExp(
+          r'(?:Episode|Ep)\s+(\d+)',
+          caseSensitive: false,
+        ).firstMatch(titleText);
         if (match != null) {
           currentEpisodeNumber = int.tryParse(match.group(1)!) ?? 0;
         } else {
           // Try from breadcrumbs
           final breadcrumb = document.querySelector('.anime > span');
           if (breadcrumb != null) {
-            match = RegExp(r'Episode\s+(\d+)', caseSensitive: false)
-                .firstMatch(breadcrumb.text);
+            match = RegExp(
+              r'Episode\s+(\d+)',
+              caseSensitive: false,
+            ).firstMatch(breadcrumb.text);
             if (match != null) {
               currentEpisodeNumber = int.tryParse(match.group(1)!) ?? 0;
             }
@@ -873,8 +922,9 @@ class ScrapingService {
         // Pure Show Page logic (recurse to target episode)
         String coverImage = episode.thumbnailUrl ?? '';
         if (coverImage.isEmpty) {
-          final imgEl =
-              document.querySelector('.entry-content img, .post-body img');
+          final imgEl = document.querySelector(
+            '.entry-content img, .post-body img',
+          );
           coverImage = _extractImageUrl(imgEl);
         }
 
@@ -887,7 +937,8 @@ class ScrapingService {
           // Recurse ONLY if target URL is different to prevent loops
           if (targetEp.originalUrl != episode.originalUrl) {
             final detailedEp = await getAnoboyEpisodeDetails(targetEp);
-            final fullShow = detailedEp.show ??
+            final fullShow =
+                detailedEp.show ??
                 Show(
                   id: episode.showId,
                   title: episode.title ?? 'Anime',
@@ -932,14 +983,14 @@ class ScrapingService {
       // Episode Page Logic (Extract Player) - Runs for Episode Pages OR Bulk Pages (Player + List)
       Future<String?> extractNestedIframe(String linkUrl) async {
         try {
-          final res = await (await HttpClientService().client)
-              .get(Uri.parse(linkUrl), headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          });
+          final res = await (await HttpClientService().client).get(
+            Uri.parse(linkUrl),
+            headers: ScrapingService.getAnoboyHeaders(),
+          );
           if (res.statusCode == 200) {
             final doc = parse(res.body);
-            final iframe = doc.querySelector('iframe#mediaplayer') ??
+            final iframe =
+                doc.querySelector('iframe#mediaplayer') ??
                 doc.querySelector('iframe');
             if (iframe != null) {
               return iframe.attributes['src'];
@@ -949,7 +1000,8 @@ class ScrapingService {
         return linkUrl;
       }
 
-      final iframeElement = document.querySelector('iframe#mediaplayer') ??
+      final iframeElement =
+          document.querySelector('iframe#mediaplayer') ??
           document.querySelector('iframe');
       if (iframeElement != null) {
         primaryIframe = iframeElement.attributes['src'];
@@ -988,7 +1040,7 @@ class ScrapingService {
           if (!videoServers.any((s) => s['url'] == fullLink)) {
             videoServers.add({
               'name': serverName.isEmpty ? 'Mirror Server' : serverName,
-              'url': fullLink
+              'url': fullLink,
             });
           }
         }
@@ -1010,7 +1062,7 @@ class ScrapingService {
           }
           downloadLinks.add({
             'name': dlName,
-            'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link'
+            'url': link.startsWith('http') ? link : '$anoboyBaseUrl$link',
           });
         }
       }
@@ -1024,18 +1076,19 @@ class ScrapingService {
           showUrl != episode.originalUrl) {
         final showResponse = await (await HttpClientService().client).get(
           Uri.parse(
-              showUrl.startsWith('http') ? showUrl : '$anoboyBaseUrl$showUrl'),
-          headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-          },
+            showUrl.startsWith('http') ? showUrl : '$anoboyBaseUrl$showUrl',
+          ),
+          headers: ScrapingService.getAnoboyHeaders(),
         );
         if (showResponse.statusCode == 200) {
           final showDoc = parse(showResponse.body);
           // Use same cleanTitle derived earlier
-          allEpisodes = _parseAnoboyEpisodesFromDoc(showDoc, episode.showId,
-              showTitle: cleanTitle.isNotEmpty ? cleanTitle : null,
-              show: episode.show);
+          allEpisodes = _parseAnoboyEpisodesFromDoc(
+            showDoc,
+            episode.showId,
+            showTitle: cleanTitle.isNotEmpty ? cleanTitle : null,
+            show: episode.show,
+          );
         }
       }
 
@@ -1049,13 +1102,17 @@ class ScrapingService {
       allEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
 
       final navResult = findAnoboyNavigationLinks(
-          document, currentEpisodeNumber, episode.title ?? '');
+        document,
+        currentEpisodeNumber,
+        episode.title ?? '',
+      );
       String? prevEpisodeUrl = navResult['prev'];
       String? nextEpisodeUrl = navResult['next'];
 
       // Fallback/Override with list-based navigation
-      final currentIdx = allEpisodes
-          .indexWhere((e) => e.episodeNumber == currentEpisodeNumber);
+      final currentIdx = allEpisodes.indexWhere(
+        (e) => e.episodeNumber == currentEpisodeNumber,
+      );
       if (currentIdx != -1) {
         if (currentIdx > 0) {
           prevEpisodeUrl = allEpisodes[currentIdx - 1].originalUrl;
@@ -1065,13 +1122,15 @@ class ScrapingService {
         }
       }
 
-      final show = episode.show ??
+      final show =
+          episode.show ??
           Show(
-              id: episode.showId,
-              title: episode.title ?? 'Anime',
-              type: 'anime',
-              status: 'ongoing',
-              genres: []);
+            id: episode.showId,
+            title: episode.title ?? 'Anime',
+            type: 'anime',
+            status: 'ongoing',
+            genres: [],
+          );
       final updatedShow = Show(
         id: show.id,
         title: show.title,
@@ -1090,8 +1149,9 @@ class ScrapingService {
         episodeNumber: currentEpisodeNumber,
         title: episode.title,
         videoUrl: episode.videoUrl,
-        iframeUrl:
-            videoServers.isNotEmpty ? videoServers[0]['url'] : primaryIframe,
+        iframeUrl: videoServers.isNotEmpty
+            ? videoServers[0]['url']
+            : primaryIframe,
         videoServers: videoServers,
         originalUrl: episode.originalUrl,
         downloadLinks: downloadLinks,
@@ -1108,7 +1168,10 @@ class ScrapingService {
 
   @visibleForTesting
   Map<String, String?> findAnoboyNavigationLinks(
-      Document document, int currentEpisodeNumber, String showTitle) {
+    Document document,
+    int currentEpisodeNumber,
+    String showTitle,
+  ) {
     String? prevEpisodeUrl;
     String? nextEpisodeUrl;
 
@@ -1120,8 +1183,9 @@ class ScrapingService {
     }
 
     // Enhanced Prev/Next Scrape
-    var navLinks =
-        document.querySelectorAll('.naveps a, .entry-content a, .post-body a');
+    var navLinks = document.querySelectorAll(
+      '.naveps a, .entry-content a, .post-body a',
+    );
     if (navLinks.isEmpty) {
       navLinks = document.querySelectorAll('a');
     }
@@ -1148,22 +1212,25 @@ class ScrapingService {
         // Heuristic: specific episode links in nav area
         // Often links like "Title Episode X"
         if (currentEpisodeNumber > 0) {
-          final isGenericButton =
-              RegExp(r'^(?:episode|ep)\s+\d+$').hasMatch(text);
+          final isGenericButton = RegExp(
+            r'^(?:episode|ep)\s+\d+$',
+          ).hasMatch(text);
 
           if (text.contains('episode ${currentEpisodeNumber - 1}')) {
             // Validate context: Must be generic button OR contain show title
             if (isGenericButton ||
                 (cleanTitle.isNotEmpty && text.contains(cleanTitle))) {
-              prevEpisodeUrl =
-                  href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+              prevEpisodeUrl = href.startsWith('http')
+                  ? href
+                  : '$anoboyBaseUrl$href';
             }
           } else if (text.contains('episode ${currentEpisodeNumber + 1}')) {
             // Validate context
             if (isGenericButton ||
                 (cleanTitle.isNotEmpty && text.contains(cleanTitle))) {
-              nextEpisodeUrl =
-                  href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+              nextEpisodeUrl = href.startsWith('http')
+                  ? href
+                  : '$anoboyBaseUrl$href';
             }
           }
         }
@@ -1172,12 +1239,17 @@ class ScrapingService {
     return {'prev': prevEpisodeUrl, 'next': nextEpisodeUrl};
   }
 
-  List<Episode> _parseAnoboyEpisodesFromDoc(dynamic document, int showId,
-      {String? showTitle, Show? show}) {
+  List<Episode> _parseAnoboyEpisodesFromDoc(
+    dynamic document,
+    int showId, {
+    String? showTitle,
+    Show? show,
+  }) {
     final List<Episode> eps = [];
 
     var contentContainers = document.querySelectorAll(
-        '.entry-content, .post-body, .episodelist, #content, .singlelink, .sisi');
+      '.entry-content, .post-body, .episodelist, #content, .singlelink, .sisi',
+    );
     var listContainers = document.querySelectorAll('.lcp_catlist');
 
     List<Element> epLinks = [];
@@ -1205,15 +1277,20 @@ class ScrapingService {
     String? cleanBaseShowTitle;
     if (showTitle != null && showTitle.isNotEmpty) {
       // Clean show title: remove (Sub Indo), trim, lowercase
-      normalizedShowTitle =
-          showTitle.toLowerCase().replaceAll(RegExp(r'\s*\(.*?\)'), '').trim();
+      normalizedShowTitle = showTitle
+          .toLowerCase()
+          .replaceAll(RegExp(r'\s*\(.*?\)'), '')
+          .trim();
 
       // Advanced cleaning to support multi-season anime (e.g. "Oshi no Ko Season 1 + 2 + 3")
       cleanBaseShowTitle = normalizedShowTitle
           .replaceAll(
-              RegExp(r'(season|part|cour)\s*\d+(\s*(\+|&|dan|/)\s*\d+)*',
-                  caseSensitive: false),
-              '')
+            RegExp(
+              r'(season|part|cour)\s*\d+(\s*(\+|&|dan|/)\s*\d+)*',
+              caseSensitive: false,
+            ),
+            '',
+          )
           .replaceAll(RegExp(r'[^a-z0-9\s]'), '')
           .replaceAll(RegExp(r'\s+'), ' ')
           .trim();
@@ -1258,7 +1335,8 @@ class ScrapingService {
       // Often "Oshi no Ko Season 2 Episode 1" has 'episode' or 'ep'. Wait, what if it's "Episode drama"? Let's just allow if it has the show title or generic episode.
 
       // Let's broaden the match condition to easily accept our links but try to filter out bad ones
-      bool containsEpOrKeyword = title.toLowerCase().contains('episode') ||
+      bool containsEpOrKeyword =
+          title.toLowerCase().contains('episode') ||
           title.toLowerCase().contains('ep ') ||
           title.toLowerCase().contains('selesai') ||
           title.toLowerCase().contains('tamat') ||
@@ -1273,9 +1351,10 @@ class ScrapingService {
             showTitle != null &&
             showTitle.isNotEmpty) {
           final normalizedTitle = title.toLowerCase();
-          final isGenericFormat =
-              RegExp(r'^(?:episode|ep|part)\s+\d+', caseSensitive: false)
-                  .hasMatch(normalizedTitle.trim());
+          final isGenericFormat = RegExp(
+            r'^(?:episode|ep|part)\s+\d+',
+            caseSensitive: false,
+          ).hasMatch(normalizedTitle.trim());
           final cleanTitleForMatch = normalizedTitle
               .replaceAll('“', '')
               .replaceAll('”', '')
@@ -1292,16 +1371,21 @@ class ScrapingService {
         }
 
         int epNum = 0;
-        final epMatch = RegExp(r'(?:Episode|Ep|Part|Cour)\s+(\d+)',
-                    caseSensitive: false)
-                .firstMatch(title) ??
-            RegExp(r'(?:Episode|Ep|Part|Cour).*\s+(\d+)', caseSensitive: false)
-                .firstMatch(title);
-        final isDownload = title.toLowerCase().contains('download') &&
+        final epMatch =
+            RegExp(
+              r'(?:Episode|Ep|Part|Cour)\s+(\d+)',
+              caseSensitive: false,
+            ).firstMatch(title) ??
+            RegExp(
+              r'(?:Episode|Ep|Part|Cour).*\s+(\d+)',
+              caseSensitive: false,
+            ).firstMatch(title);
+        final isDownload =
+            title.toLowerCase().contains('download') &&
             (cleanBaseShowTitle != null &&
-                    title
-                        .toLowerCase()
-                        .contains(cleanBaseShowTitle.split(' ')[0]) ||
+                    title.toLowerCase().contains(
+                      cleanBaseShowTitle.split(' ')[0],
+                    ) ||
                 cleanBaseShowTitle == null);
 
         if (epMatch != null || isDownload) {
@@ -1313,15 +1397,17 @@ class ScrapingService {
 
           seenUrls.add(url);
 
-          eps.add(Episode(
-            id: uniqueId,
-            showId: showId,
-            episodeNumber: epNum,
-            title: title,
-            videoUrl: '',
-            originalUrl: url,
-            show: show,
-          ));
+          eps.add(
+            Episode(
+              id: uniqueId,
+              showId: showId,
+              episodeNumber: epNum,
+              title: title,
+              videoUrl: '',
+              originalUrl: url,
+              show: show,
+            ),
+          );
         }
       }
     }
@@ -1355,15 +1441,17 @@ class ScrapingService {
             try {
               final decoded = utf8.decode(base64.decode(url));
               // The decoded string is typically an HTML fragment like <iframe src="..."></iframe>
-              final match = RegExp('src=["\'](.*?)["\']', caseSensitive: false)
-                  .firstMatch(decoded);
+              final match = RegExp(
+                'src=["\'](.*?)["\']',
+                caseSensitive: false,
+              ).firstMatch(decoded);
               if (match != null && match.group(1) != null) {
                 url = match.group(1)!;
               } else {
                 final decodedDoc = parse(decoded);
                 final src =
                     decodedDoc.querySelector('iframe')?.attributes['src'] ??
-                        decodedDoc.querySelector('IFRAME')?.attributes['SRC'];
+                    decodedDoc.querySelector('IFRAME')?.attributes['SRC'];
                 if (src != null) {
                   url = src;
                 }
@@ -1374,9 +1462,10 @@ class ScrapingService {
           }
 
           videoServers.add({
-            'name':
-                name.isNotEmpty ? name : 'Server ${videoServers.length + 1}',
-            'url': url!
+            'name': name.isNotEmpty
+                ? name
+                : 'Server ${videoServers.length + 1}',
+            'url': url!,
           });
         }
       }
@@ -1419,19 +1508,22 @@ class ScrapingService {
       final String safeUrl = episode.originalUrl!.startsWith('http')
           ? episode.originalUrl!
           : (episode.originalUrl!.startsWith('//')
-              ? 'https:${episode.originalUrl!}'
-              : (episode.originalUrl!.startsWith('/')
-                  ? '$anichinBaseUrl${episode.originalUrl!}'
-                  : '$anichinBaseUrl/${episode.originalUrl!}'));
-      final response =
-          await (await HttpClientService().client).get(Uri.parse(safeUrl));
+                ? 'https:${episode.originalUrl!}'
+                : (episode.originalUrl!.startsWith('/')
+                      ? '$anichinBaseUrl${episode.originalUrl!}'
+                      : '$anichinBaseUrl/${episode.originalUrl!}'));
+      final response = await (await HttpClientService().client).get(
+        Uri.parse(safeUrl),
+        headers: ScrapingService.getAnichinHeaders(),
+      );
       if (response.statusCode != 200) return episode;
 
       final document = parse(response.body);
 
       int realEpNum = episode.episodeNumber;
       if (realEpNum == 0) {
-        final titleText = document.querySelector('.entry-title')?.text ??
+        final titleText =
+            document.querySelector('.entry-title')?.text ??
             document.querySelector('.ts-breadcrumb li:last-child')?.text ??
             '';
         if (titleText.isNotEmpty) {
@@ -1442,7 +1534,8 @@ class ScrapingService {
         }
       }
 
-      final hasList = document.querySelector('.eplister') != null ||
+      final hasList =
+          document.querySelector('.eplister') != null ||
           document.querySelector('.lstep') != null ||
           document.querySelector('.episodelist') != null;
       final isShowPage = hasList && document.querySelector('iframe') == null;
@@ -1462,22 +1555,24 @@ class ScrapingService {
           final url = rawUrl.startsWith('http')
               ? rawUrl
               : (rawUrl.startsWith('//')
-                  ? 'https:$rawUrl'
-                  : (rawUrl.startsWith('/')
-                      ? '$anichinBaseUrl$rawUrl'
-                      : '$anichinBaseUrl/$rawUrl'));
+                    ? 'https:$rawUrl'
+                    : (rawUrl.startsWith('/')
+                          ? '$anichinBaseUrl$rawUrl'
+                          : '$anichinBaseUrl/$rawUrl'));
           final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
           final title = epEl.querySelector('.epl-title')?.text.trim() ?? '';
 
           if (url.isNotEmpty) {
-            allEpisodes.add(Episode(
-              id: url.hashCode,
-              showId: episode.showId,
-              episodeNumber: int.tryParse(numText) ?? 0,
-              title: title,
-              videoUrl: '',
-              originalUrl: url,
-            ));
+            allEpisodes.add(
+              Episode(
+                id: url.hashCode,
+                showId: episode.showId,
+                episodeNumber: int.tryParse(numText) ?? 0,
+                title: title,
+                videoUrl: '',
+                originalUrl: url,
+              ),
+            );
           }
         }
 
@@ -1492,13 +1587,15 @@ class ScrapingService {
             detailedEp = await getAnichinEpisodeDetails(targetEp);
           }
 
-          final fullShow = detailedEp.show ??
+          final fullShow =
+              detailedEp.show ??
               Show(
-                  id: episode.showId,
-                  title: episode.title ?? 'Donghua',
-                  type: 'donghua',
-                  status: 'ongoing',
-                  genres: []);
+                id: episode.showId,
+                title: episode.title ?? 'Donghua',
+                type: 'donghua',
+                status: 'ongoing',
+                genres: [],
+              );
           final updatedShow = Show(
             id: fullShow.id,
             title: fullShow.title,
@@ -1536,8 +1633,10 @@ class ScrapingService {
       if (metaContent != null) {
         extractedRating = double.tryParse(metaContent);
       } else {
-        final strongText =
-            document.querySelector('.rating strong')?.text.trim();
+        final strongText = document
+            .querySelector('.rating strong')
+            ?.text
+            .trim();
         if (strongText != null) {
           final match = RegExp(r'Rating\s+(\d+\.?\d*)').firstMatch(strongText);
           if (match != null) {
@@ -1546,8 +1645,9 @@ class ScrapingService {
         }
       }
 
-      final List<Map<String, String>> videoServers =
-          extractAnichinServers(document);
+      final List<Map<String, String>> videoServers = extractAnichinServers(
+        document,
+      );
 
       final List<Map<String, String>> downloadLinks = [];
 
@@ -1587,8 +1687,10 @@ class ScrapingService {
                 lowerText.contains('acefile') ||
                 lowerText.contains('files') ||
                 lowerText.contains('download')) {
-              downloadLinks.add(
-                  {'name': text.isEmpty ? 'Download Link' : text, 'url': href});
+              downloadLinks.add({
+                'name': text.isEmpty ? 'Download Link' : text,
+                'url': href,
+              });
             }
           }
         }
@@ -1597,8 +1699,9 @@ class ScrapingService {
       String? prevUrl;
       String? nextUrl;
 
-      final navLinks =
-          document.querySelectorAll('.lm .nav-links a, .naveps a, a.btn');
+      final navLinks = document.querySelectorAll(
+        '.lm .nav-links a, .naveps a, a.btn',
+      );
       for (var a in navLinks) {
         final text = a.text.trim().toLowerCase();
         final href = a.attributes['href'];
@@ -1629,8 +1732,10 @@ class ScrapingService {
       String? showUrl = findAnichinShowUrl(document);
 
       if (showUrl != null) {
-        final showResponse =
-            await (await HttpClientService().client).get(Uri.parse(showUrl));
+        final showResponse = await (await HttpClientService().client).get(
+          Uri.parse(showUrl),
+          headers: ScrapingService.getAnichinHeaders(),
+        );
         if (showResponse.statusCode == 200) {
           final showDoc = parse(showResponse.body);
           var epElements = showDoc.querySelectorAll('.eplister li a');
@@ -1646,34 +1751,38 @@ class ScrapingService {
             final url = rawUrl.startsWith('http')
                 ? rawUrl
                 : (rawUrl.startsWith('//')
-                    ? 'https:$rawUrl'
-                    : (rawUrl.startsWith('/')
-                        ? '$anichinBaseUrl$rawUrl'
-                        : '$anichinBaseUrl/$rawUrl'));
+                      ? 'https:$rawUrl'
+                      : (rawUrl.startsWith('/')
+                            ? '$anichinBaseUrl$rawUrl'
+                            : '$anichinBaseUrl/$rawUrl'));
             final numText = epEl.querySelector('.epl-num')?.text.trim() ?? '';
             final title = epEl.querySelector('.epl-title')?.text.trim() ?? '';
 
             if (url.isNotEmpty) {
-              allEpisodes.add(Episode(
-                id: url.hashCode,
-                showId: episode.showId,
-                episodeNumber: int.tryParse(numText) ?? 0,
-                title: title,
-                videoUrl: '',
-                originalUrl: url,
-              ));
+              allEpisodes.add(
+                Episode(
+                  id: url.hashCode,
+                  showId: episode.showId,
+                  episodeNumber: int.tryParse(numText) ?? 0,
+                  title: title,
+                  videoUrl: '',
+                  originalUrl: url,
+                ),
+              );
             }
           }
         }
       }
 
-      final show = episode.show ??
+      final show =
+          episode.show ??
           Show(
-              id: episode.showId,
-              title: episode.title ?? 'Donghua',
-              type: 'donghua',
-              status: 'ongoing',
-              genres: []);
+            id: episode.showId,
+            title: episode.title ?? 'Donghua',
+            type: 'donghua',
+            status: 'ongoing',
+            genres: [],
+          );
       final updatedShow = Show(
         id: show.id,
         title: show.title,
@@ -1711,10 +1820,7 @@ class ScrapingService {
     try {
       final response = await (await HttpClientService().client).get(
         Uri.parse('$anoboyBaseUrl/?s=${Uri.encodeComponent(query)}'),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
+        headers: ScrapingService.getAnoboyHeaders(),
       );
       if (response.statusCode != 200) return [];
 
@@ -1723,7 +1829,8 @@ class ScrapingService {
 
       final elements = document.querySelectorAll('a[rel="bookmark"]');
       for (var element in elements) {
-        final title = element.attributes['title'] ??
+        final title =
+            element.attributes['title'] ??
             element.querySelector('h3.ibox1')?.text.trim() ??
             '';
         final url = element.attributes['href'] ?? '';
@@ -1738,15 +1845,17 @@ class ScrapingService {
             status = 'completed';
           }
 
-          shows.add(Show(
-            id: url.hashCode,
-            title: title.split(' Episode')[0].split(' Ep ')[0],
-            type: 'anime',
-            status: status,
-            coverImageUrl: thumb,
-            originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
-            genres: [],
-          ));
+          shows.add(
+            Show(
+              id: url.hashCode,
+              title: title.split(' Episode')[0].split(' Ep ')[0],
+              type: 'anime',
+              status: status,
+              coverImageUrl: thumb,
+              originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
+              genres: [],
+            ),
+          );
         }
       }
 
@@ -1761,17 +1870,15 @@ class ScrapingService {
     try {
       final response = await (await HttpClientService().client).get(
         Uri.parse('$anoboyBaseUrl/anime-list/'),
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
+        headers: ScrapingService.getAnoboyHeaders(),
       );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
       final List<Show> shows = [];
 
-      var content = document.querySelector('#ada') ??
+      var content =
+          document.querySelector('#ada') ??
           document.querySelector('.entry-content') ??
           document.querySelector('.post-body');
 
@@ -1785,8 +1892,10 @@ class ScrapingService {
         final url = rawUrl.startsWith('http')
             ? rawUrl
             : (rawUrl.startsWith('//')
-                ? 'https:$rawUrl'
-                : (rawUrl.startsWith('/') ? '$anichinBaseUrl$rawUrl' : rawUrl));
+                  ? 'https:$rawUrl'
+                  : (rawUrl.startsWith('/')
+                        ? '$anichinBaseUrl$rawUrl'
+                        : rawUrl));
 
         if (title.isEmpty || title.length < 2) continue;
         if (!url.contains('anoboy')) continue;
@@ -1811,7 +1920,7 @@ class ScrapingService {
           'One Piece',
           'Rekomendasi',
           'Lapor Eror',
-          'Advertise'
+          'Advertise',
         ].contains(title)) {
           continue;
         }
@@ -1824,15 +1933,17 @@ class ScrapingService {
           status = 'completed';
         }
 
-        shows.add(Show(
-          id: url.hashCode,
-          title: title,
-          type: 'anime',
-          status: status,
-          genres: [],
-          originalUrl: url,
-          coverImageUrl: '',
-        ));
+        shows.add(
+          Show(
+            id: url.hashCode,
+            title: title,
+            type: 'anime',
+            status: status,
+            genres: [],
+            originalUrl: url,
+            coverImageUrl: '',
+          ),
+        );
       }
 
       return shows;
@@ -1844,8 +1955,10 @@ class ScrapingService {
 
   Future<List<Show>> searchAnichin(String query) async {
     try {
-      final response = await (await HttpClientService().client)
-          .get(Uri.parse('$anichinBaseUrl/?s=${Uri.encodeComponent(query)}'));
+      final response = await (await HttpClientService().client).get(
+        Uri.parse('$anichinBaseUrl/?s=${Uri.encodeComponent(query)}'),
+        headers: ScrapingService.getAnichinHeaders(),
+      );
       if (response.statusCode != 200) return [];
 
       final document = parse(response.body);
@@ -1864,14 +1977,15 @@ class ScrapingService {
           final url = rawUrl.startsWith('http')
               ? rawUrl
               : (rawUrl.startsWith('//')
-                  ? 'https:$rawUrl'
-                  : (rawUrl.startsWith('/')
-                      ? '$anichinBaseUrl$rawUrl'
-                      : rawUrl));
+                    ? 'https:$rawUrl'
+                    : (rawUrl.startsWith('/')
+                          ? '$anichinBaseUrl$rawUrl'
+                          : rawUrl));
           final thumb = imgElement?.attributes['src'] ?? '';
 
           String status = 'ongoing';
-          final statusEl = element.querySelector('.status') ??
+          final statusEl =
+              element.querySelector('.status') ??
               element.querySelector('.sb') ??
               element.querySelector('.limit .bt');
           if (statusEl != null) {
@@ -1883,15 +1997,17 @@ class ScrapingService {
             }
           }
 
-          shows.add(Show(
-            id: url.hashCode,
-            title: title.split(' Episode')[0].split(' Ep ')[0],
-            type: 'donghua',
-            status: status,
-            coverImageUrl: thumb,
-            originalUrl: url,
-            genres: [],
-          ));
+          shows.add(
+            Show(
+              id: url.hashCode,
+              title: title.split(' Episode')[0].split(' Ep ')[0],
+              type: 'donghua',
+              status: status,
+              coverImageUrl: thumb,
+              originalUrl: url,
+              genres: [],
+            ),
+          );
         }
       }
 
@@ -1904,8 +2020,10 @@ class ScrapingService {
 
   Future<Map<String, List<Show>>> getAnichinSchedule() async {
     try {
-      final response = await (await HttpClientService().client)
-          .get(Uri.parse('$anichinBaseUrl/schedule/'));
+      final response = await (await HttpClientService().client).get(
+        Uri.parse('$anichinBaseUrl/schedule/'),
+        headers: ScrapingService.getAnichinHeaders(),
+      );
       if (response.statusCode != 200) return {};
 
       final document = parse(response.body);
@@ -1927,15 +2045,17 @@ class ScrapingService {
             final img = item.querySelector('img')?.attributes['src'] ?? '';
 
             if (title.isNotEmpty && link.isNotEmpty) {
-              shows.add(Show(
-                id: link.hashCode,
-                title: title,
-                type: 'donghua',
-                status: 'ongoing',
-                coverImageUrl: img,
-                originalUrl: link,
-                genres: [],
-              ));
+              shows.add(
+                Show(
+                  id: link.hashCode,
+                  title: title,
+                  type: 'donghua',
+                  status: 'ongoing',
+                  coverImageUrl: img,
+                  originalUrl: link,
+                  genres: [],
+                ),
+              );
             }
           }
           if (shows.isNotEmpty) schedule[dayName] = shows;
@@ -1950,7 +2070,7 @@ class ScrapingService {
           'Kamis',
           "Jum'at",
           'Sabtu',
-          'Minggu'
+          'Minggu',
         ];
         final content =
             document.querySelector('.entry-content') ?? document.body;
@@ -1972,20 +2092,23 @@ class ScrapingService {
                 final url = rawUrl.startsWith('http')
                     ? rawUrl
                     : (rawUrl.startsWith('//')
-                        ? 'https:$rawUrl'
-                        : (rawUrl.startsWith('/')
-                            ? '$anichinBaseUrl$rawUrl'
-                            : rawUrl));
+                          ? 'https:$rawUrl'
+                          : (rawUrl.startsWith('/')
+                                ? '$anichinBaseUrl$rawUrl'
+                                : rawUrl));
                 final img = link.querySelector('img')?.attributes['src'] ?? '';
                 if (title.isNotEmpty && url.isNotEmpty) {
-                  schedule[currentDay]!.add(Show(
+                  schedule[currentDay]!.add(
+                    Show(
                       id: url.hashCode,
                       title: title,
                       type: 'donghua',
                       status: 'ongoing',
                       coverImageUrl: img,
                       originalUrl: url,
-                      genres: []));
+                      genres: [],
+                    ),
+                  );
                 }
               }
             }
