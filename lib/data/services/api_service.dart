@@ -132,6 +132,10 @@ class ApiService {
   }
 
   Future<List<Show>> getDailySchedule(String type, String day) async {
-    return await ConfigService().fetchDailySchedule(type, day);
+    if (type == 'donghua') {
+      return await _scrapingService.getAnichinDailySchedule(day);
+    } else {
+      return await _scrapingService.getAnoboyDailySchedule(day);
+    }
   }
 }

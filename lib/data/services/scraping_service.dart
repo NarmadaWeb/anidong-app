@@ -2018,6 +2018,114 @@ class ScrapingService {
     }
   }
 
+  Future<List<Show>> getAnoboyDailySchedule(String day) async {
+    try {
+      final String url = 'https://anime.jepang.org/${day.toLowerCase()}';
+      final response = await (await HttpClientService().client).get(
+        Uri.parse(url),
+        headers: ScrapingService.getAnoboyHeaders(),
+      );
+      if (response.statusCode != 200) return [];
+
+      final document = parse(response.body);
+      final List<Show> shows = [];
+
+      final items = document.querySelectorAll('a[href^="/anime/"]');
+      for (var item in items) {
+        final img = item.querySelector('img');
+        if (img != null) {
+          final title = img.attributes['alt']?.replaceFirst('Poster Anime: ', '').trim() ?? '';
+          String linkUrl = item.attributes['href'] ?? '';
+          String imgUrl = img.attributes['src'] ?? '';
+
+          if (title.isNotEmpty && !imgUrl.contains('avatar') && !imgUrl.contains('jepang.org')) {
+             if (linkUrl.startsWith('/')) {
+                linkUrl = 'https://anime.jepang.org$linkUrl';
+             }
+             if (imgUrl.startsWith('/')) {
+                imgUrl = 'https://anime.jepang.org$imgUrl';
+             }
+
+             shows.add(
+                Show(
+                  id: linkUrl.hashCode,
+                  title: title,
+                  type: 'anime',
+                  status: 'ongoing',
+                  coverImageUrl: imgUrl,
+                  originalUrl: linkUrl,
+                  genres: [],
+                ),
+             );
+          }
+        }
+      }
+      return shows;
+    } catch (e) {
+      debugPrint('Error getting Anoboy daily schedule for $day: $e');
+      return [];
+    }
+  }
+
+  Future<List<Show>> getAnichinDailySchedule(String day) async {
+    try {
+      final response = await (await HttpClientService().client).get(
+        Uri.parse('$anichinBaseUrl/schedule/'),
+        headers: ScrapingService.getAnichinHeaders(),
+      );
+      if (response.statusCode != 200) return [];
+
+      final document = parse(response.body);
+      final List<Show> shows = [];
+
+      final blocks = document.querySelectorAll('.bixbox');
+      for (var b in blocks) {
+        final header = b.querySelector('.releases h3');
+        if (header != null) {
+          final dayText = header.text.trim();
+          if (dayText.toLowerCase() == day.toLowerCase()) {
+            final items = b.querySelectorAll('.bsx');
+            for (var item in items) {
+              final a = item.querySelector('a');
+              final img = item.querySelector('img');
+              final title = a?.attributes['title']?.trim() ?? '';
+              final linkUrl = a?.attributes['href'] ?? '';
+              final imgUrl = img?.attributes['src'] ?? '';
+
+              if (title.isNotEmpty && linkUrl.isNotEmpty) {
+                // Determine absolute URL
+                String absoluteLink = linkUrl.startsWith('http')
+                    ? linkUrl
+                    : linkUrl.startsWith('//')
+                        ? 'https:$linkUrl'
+                        : linkUrl.startsWith('/')
+                            ? '$anichinBaseUrl$linkUrl'
+                            : '$anichinBaseUrl/$linkUrl';
+
+                shows.add(
+                  Show(
+                    id: linkUrl.hashCode,
+                    title: title,
+                    type: 'donghua',
+                    status: 'ongoing',
+                    coverImageUrl: imgUrl,
+                    originalUrl: absoluteLink,
+                    genres: [],
+                  ),
+                );
+              }
+            }
+            break; // Found the day, no need to check other bixboxes
+          }
+        }
+      }
+      return shows;
+    } catch (e) {
+      debugPrint('Error getting Anichin daily schedule for $day: $e');
+      return [];
+    }
+  }
+
   Future<Map<String, List<Show>>> getAnichinSchedule() async {
     try {
       final response = await (await HttpClientService().client).get(
