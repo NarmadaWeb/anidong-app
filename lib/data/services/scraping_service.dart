@@ -2034,7 +2034,7 @@ class ScrapingService {
       for (var item in items) {
         final img = item.querySelector('img');
         if (img != null) {
-          final title = img.attributes['alt']?.replaceFirst('Poster Anime: ', '')?.trim() ?? '';
+          final title = img.attributes['alt']?.replaceFirst('Poster Anime: ', '').trim() ?? '';
           String linkUrl = item.attributes['href'] ?? '';
           String imgUrl = img.attributes['src'] ?? '';
 
