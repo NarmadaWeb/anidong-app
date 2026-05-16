@@ -10,7 +10,9 @@ void main() {
       service = ScrapingService();
     });
 
-    test('findAnoboyParentShowUrl finds parent URL when table is outside entry-content', () async {
+    test(
+        'findAnoboyParentShowUrl finds parent URL when table is outside entry-content',
+        () async {
       const html = '''
 <div class="deskripsi">
 <div class="sisi entry-content">
@@ -44,11 +46,12 @@ Description here.
       final document = parse(html);
       final parentShowUrl = service.findAnoboyParentShowUrl(document);
 
-      expect(parentShowUrl, 'https://ww1.anoboy.boo/2026/01/maou-no-musume-wa-yasashisugiru/');
+      expect(parentShowUrl,
+          'https://ww1.anoboy.boo/2026/01/maou-no-musume-wa-yasashisugiru/');
     });
 
     test('findAnoboyParentShowUrl finds parent URL from breadcrumbs', () async {
-        const html = '''
+      const html = '''
 <div class="breadcrumb" itemprop="breadcrumb">
 <span itemscope itemtype="https://schema.org/BreadcrumbList">
 <span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
@@ -70,20 +73,21 @@ Description here.
 </div>
         ''';
 
-        final document = parse(html);
-        final parentShowUrl = service.findAnoboyParentShowUrl(document);
-        expect(parentShowUrl, 'https://ww1.anoboy.boo/maou-no-musume-wa-yasashisugiru/');
+      final document = parse(html);
+      final parentShowUrl = service.findAnoboyParentShowUrl(document);
+      expect(parentShowUrl,
+          'https://ww1.anoboy.boo/maou-no-musume-wa-yasashisugiru/');
     });
 
     test('findAnoboyParentShowUrl fallback to text link', () async {
-        const html = '''
+      const html = '''
         <div>
            <a href="https://ww1.anoboy.boo/some-show/">Semua Episode</a>
         </div>
         ''';
-        final document = parse(html);
-        final parentShowUrl = service.findAnoboyParentShowUrl(document);
-        expect(parentShowUrl, 'https://ww1.anoboy.boo/some-show/');
+      final document = parse(html);
+      final parentShowUrl = service.findAnoboyParentShowUrl(document);
+      expect(parentShowUrl, 'https://ww1.anoboy.boo/some-show/');
     });
   });
 }

@@ -17,7 +17,8 @@ void main() {
 
       // Logic from ScrapingService
       final h2 = titleElement?.querySelector('h2');
-      final rawTitle = h2 != null ? h2.text.trim() : titleElement?.text.trim() ?? '';
+      final rawTitle =
+          h2 != null ? h2.text.trim() : titleElement?.text.trim() ?? '';
 
       expect(rawTitle, 'Renegade Immortals Episode 123');
 
@@ -36,28 +37,30 @@ void main() {
 
       // Logic from ScrapingService
       final h2 = titleElement?.querySelector('h2');
-      final rawTitle = h2 != null ? h2.text.trim() : titleElement?.text.trim() ?? '';
+      final rawTitle =
+          h2 != null ? h2.text.trim() : titleElement?.text.trim() ?? '';
 
       expect(rawTitle, 'Renegade Immortals');
     });
 
     test('Search scenario: Show result (no Episode text)', () {
-       const html = '''
+      const html = '''
         <div class="tt">
           Perfect World
           <h2 itemprop="headline">Perfect World</h2>
         </div>
        ''';
-       final document = parse(html);
-       final titleElement = document.querySelector('.tt');
+      final document = parse(html);
+      final titleElement = document.querySelector('.tt');
 
-       final h2 = titleElement?.querySelector('h2');
-       final title = h2 != null ? h2.text.trim() : titleElement?.text.trim() ?? '';
+      final h2 = titleElement?.querySelector('h2');
+      final title =
+          h2 != null ? h2.text.trim() : titleElement?.text.trim() ?? '';
 
-       expect(title, 'Perfect World');
+      expect(title, 'Perfect World');
 
-       final cleanTitle = title.split(' Episode')[0].split(' Ep ')[0];
-       expect(cleanTitle, 'Perfect World');
+      final cleanTitle = title.split(' Episode')[0].split(' Ep ')[0];
+      expect(cleanTitle, 'Perfect World');
     });
   });
 }

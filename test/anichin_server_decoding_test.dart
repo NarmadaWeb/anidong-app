@@ -22,9 +22,12 @@ void main() {
 
     // Check if the URL is DECODED
     final vipServer = servers.firstWhere((s) => s['name'] == 'Vip 1');
-    expect(vipServer['url'], equals('https://anichin.stream/?id=v73k384'), reason: 'URL should be decoded from Base64');
+    expect(vipServer['url'], equals('https://anichin.stream/?id=v73k384'),
+        reason: 'URL should be decoded from Base64');
 
-    final dailyServer = servers.firstWhere((s) => s['name']!.contains('Dailymotion'));
-    expect(dailyServer['url'], contains('dailymotion.com/player'), reason: 'Dailymotion URL should be decoded');
+    final dailyServer =
+        servers.firstWhere((s) => s['name']!.contains('Dailymotion'));
+    expect(dailyServer['url'], contains('dailymotion.com/player'),
+        reason: 'Dailymotion URL should be decoded');
   });
 }

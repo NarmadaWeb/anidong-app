@@ -1,4 +1,3 @@
-
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/services/database_helper.dart';
@@ -20,13 +19,12 @@ void main() {
 
     test('Insert and Get Bookmark', () async {
       final show = Show(
-        id: 1,
-        title: 'Test Anime',
-        type: 'anime',
-        status: 'ongoing',
-        genres: [],
-        originalUrl: 'https://example.com/test'
-      );
+          id: 1,
+          title: 'Test Anime',
+          type: 'anime',
+          status: 'ongoing',
+          genres: [],
+          originalUrl: 'https://example.com/test');
 
       await dbHelper.insertBookmark(show);
       final bookmarks = await dbHelper.getBookmarks('anime');
@@ -41,12 +39,11 @@ void main() {
 
     test('Insert and Get History', () async {
       final episode = Episode(
-        id: 101,
-        showId: 1,
-        episodeNumber: 1,
-        videoUrl: 'https://example.com/video',
-        originalUrl: 'https://example.com/ep1'
-      );
+          id: 101,
+          showId: 1,
+          episodeNumber: 1,
+          videoUrl: 'https://example.com/video',
+          originalUrl: 'https://example.com/ep1');
 
       await dbHelper.insertHistory(episode);
       final history = await dbHelper.getHistory();

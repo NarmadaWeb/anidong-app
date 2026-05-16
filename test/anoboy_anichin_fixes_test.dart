@@ -32,7 +32,8 @@ void main() {
       final result = service.parseAnoboyShowDetailsFromDoc(document, show);
 
       expect(result.episodes, isNotNull);
-      expect(result.episodes!.length, 2); // Should match Ep 1 and Ep 3 (relative)
+      expect(
+          result.episodes!.length, 2); // Should match Ep 1 and Ep 3 (relative)
 
       final ep1 = result.episodes!.firstWhere((e) => e.episodeNumber == 1);
       expect(ep1.originalUrl, 'https://ww1.anoboy.boo/2023/10/ep-1.html');
@@ -41,7 +42,9 @@ void main() {
       expect(ep3.originalUrl, 'https://ww1.anoboy.boo/anime/ep-3');
     });
 
-    test('parseAnichinShowDetailsFromDoc extracts cover image, synopsis and episodes', () {
+    test(
+        'parseAnichinShowDetailsFromDoc extracts cover image, synopsis and episodes',
+        () {
       const html = '''
         <html>
         <body>
@@ -84,8 +87,10 @@ void main() {
 
       final result = service.parseAnichinShowDetailsFromDoc(document, show);
 
-      expect(result.coverImageUrl, 'https://anichin.asia/wp-content/uploads/2023/09/Renegade-Immortal.png?resize=195,350');
-      expect(result.synopsis, contains('Renegade Immortal (Xian Ni) Bercerita tentang'));
+      expect(result.coverImageUrl,
+          'https://anichin.asia/wp-content/uploads/2023/09/Renegade-Immortal.png?resize=195,350');
+      expect(result.synopsis,
+          contains('Renegade Immortal (Xian Ni) Bercerita tentang'));
       expect(result.episodes, isNotNull);
       expect(result.episodes!.length, 2);
       expect(result.episodes!.first.episodeNumber, 128);

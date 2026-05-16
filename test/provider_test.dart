@@ -1,4 +1,3 @@
-
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/database_helper.dart';
 import 'package:anidong/providers/local_data_provider.dart';
@@ -20,13 +19,12 @@ void main() {
 
     test('Toggle bookmark updates state', () async {
       final show = Show(
-        id: 1,
-        title: 'Test Anime',
-        type: 'anime',
-        status: 'ongoing',
-        genres: [],
-        originalUrl: 'https://example.com/test'
-      );
+          id: 1,
+          title: 'Test Anime',
+          type: 'anime',
+          status: 'ongoing',
+          genres: [],
+          originalUrl: 'https://example.com/test');
 
       // Initial state
       expect(provider.isBookmarked(show), false);

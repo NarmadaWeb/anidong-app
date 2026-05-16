@@ -83,7 +83,9 @@ void main() {
       final document = parse(html);
 
       // Method 2: Meta tag
-      final metaContent = document.querySelector('meta[itemprop="ratingValue"]')?.attributes['content'];
+      final metaContent = document
+          .querySelector('meta[itemprop="ratingValue"]')
+          ?.attributes['content'];
       final rating = double.tryParse(metaContent ?? '');
 
       expect(rating, 8.5);
@@ -93,7 +95,9 @@ void main() {
       const html = '<div>No rating here</div>';
       final document = parse(html);
 
-      final metaContent = document.querySelector('meta[itemprop="ratingValue"]')?.attributes['content'];
+      final metaContent = document
+          .querySelector('meta[itemprop="ratingValue"]')
+          ?.attributes['content'];
       final rating = double.tryParse(metaContent ?? '');
 
       expect(rating, isNull);

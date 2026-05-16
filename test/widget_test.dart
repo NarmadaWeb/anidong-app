@@ -12,7 +12,8 @@ void main() {
     DatabaseHelper.databasePath = inMemoryDatabasePath;
   });
 
-  testWidgets('App starts and displays splash screen smoke test', (WidgetTester tester) async {
+  testWidgets('App starts and displays splash screen smoke test',
+      (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
 

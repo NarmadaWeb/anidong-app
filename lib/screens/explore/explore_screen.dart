@@ -9,6 +9,7 @@ import 'package:anidong/widgets/glass_card.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:anidong/data/services/scraping_service.dart';
+
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
 

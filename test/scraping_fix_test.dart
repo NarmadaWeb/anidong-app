@@ -19,14 +19,18 @@ List<Episode> parseAnoboyEpisodes(dynamic document, int showId) {
   final List<Episode> eps = [];
   var epLinks = document.querySelectorAll('a[rel="bookmark"]');
   if (epLinks.isEmpty) {
-     epLinks = document.querySelectorAll('.entry-content a, .post-body a');
+    epLinks = document.querySelectorAll('.entry-content a, .post-body a');
   }
 
   for (var link in epLinks) {
     final title = link.attributes['title'] ?? link.text.trim();
     final url = link.attributes['href'] ?? '';
 
-    if (url.isNotEmpty && (title.contains('Episode') || title.contains('Ep ')) && !url.contains('#') && !url.contains('facebook') && !url.contains('twitter')) {
+    if (url.isNotEmpty &&
+        (title.contains('Episode') || title.contains('Ep ')) &&
+        !url.contains('#') &&
+        !url.contains('facebook') &&
+        !url.contains('twitter')) {
       int epNum = 0;
       final epMatch = RegExp(r'Episode\s+(\d+)').firstMatch(title);
       if (epMatch != null) epNum = int.tryParse(epMatch.group(1)!) ?? 0;
@@ -46,7 +50,8 @@ List<Episode> parseAnoboyEpisodes(dynamic document, int showId) {
 
 void main() {
   group('Scraping Fixes Verification', () {
-    test('Anoboy Series Page: Extracts Cover Image and Episodes from Content', () {
+    test('Anoboy Series Page: Extracts Cover Image and Episodes from Content',
+        () {
       const html = '''
       <div class="post-body">
         <p>Tokyo Revengers adalah...</p>
@@ -84,10 +89,10 @@ void main() {
       final titleText = document.querySelector('.entry-title')?.text ?? '';
 
       if (titleText.isNotEmpty) {
-         final match = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(titleText);
-         if (match != null) {
-            realEpNum = int.tryParse(match.group(1)!) ?? 0;
-         }
+        final match = RegExp(r'(?:Episode|Ep)\s+(\d+)').firstMatch(titleText);
+        if (match != null) {
+          realEpNum = int.tryParse(match.group(1)!) ?? 0;
+        }
       }
 
       expect(realEpNum, 12);
@@ -107,17 +112,18 @@ void main() {
       String? prevUrl;
       String? nextUrl;
 
-      final navLinks = document.querySelectorAll('.lm .nav-links a, .naveps a, a.btn');
+      final navLinks =
+          document.querySelectorAll('.lm .nav-links a, .naveps a, a.btn');
       for (var a in navLinks) {
-         final text = a.text.trim().toLowerCase();
-         final href = a.attributes['href'];
-         if (href == null || href.isEmpty) continue;
+        final text = a.text.trim().toLowerCase();
+        final href = a.attributes['href'];
+        if (href == null || href.isEmpty) continue;
 
-         if (text.contains('prev') || text.contains('sebelumnya')) {
-           prevUrl = href;
-         } else if (text.contains('next') || text.contains('selanjutnya')) {
-           nextUrl = href;
-         }
+        if (text.contains('prev') || text.contains('sebelumnya')) {
+          prevUrl = href;
+        } else if (text.contains('next') || text.contains('selanjutnya')) {
+          nextUrl = href;
+        }
       }
 
       expect(prevUrl, 'https://anichin.asia/prev');
@@ -139,15 +145,23 @@ void main() {
 
       final navLinks = document.querySelectorAll('a');
       for (var link in navLinks) {
-         final text = link.text.trim().toLowerCase();
-         final href = link.attributes['href'];
-         if (href == null || href.isEmpty || href == '#') continue;
+        final text = link.text.trim().toLowerCase();
+        final href = link.attributes['href'];
+        if (href == null || href.isEmpty || href == '#') continue;
 
-         if (text == 'episode sebelumnya' || text == 'prev' || text == 'sebelumnya' || text.contains('<< previous')) {
-             prevEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-         } else if (text == 'episode selanjutnya' || text == 'next' || text == 'selanjutnya' || text.contains('next >>')) {
-             nextEpisodeUrl = href.startsWith('http') ? href : '$anoboyBaseUrl$href';
-         }
+        if (text == 'episode sebelumnya' ||
+            text == 'prev' ||
+            text == 'sebelumnya' ||
+            text.contains('<< previous')) {
+          prevEpisodeUrl =
+              href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+        } else if (text == 'episode selanjutnya' ||
+            text == 'next' ||
+            text == 'selanjutnya' ||
+            text.contains('next >>')) {
+          nextEpisodeUrl =
+              href.startsWith('http') ? href : '$anoboyBaseUrl$href';
+        }
       }
 
       expect(prevEpisodeUrl, 'https://anoboy.boo/prev');

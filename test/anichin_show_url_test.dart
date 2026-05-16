@@ -28,7 +28,8 @@ void main() {
       expect(url, 'https://anichin.asia/the-supreme-body-refining-master/');
     });
 
-    test('extracts show URL from "Semua Episode" link without category slug', () {
+    test('extracts show URL from "Semua Episode" link without category slug',
+        () {
       const html = '''
       <div class="entry-content">
         <p>Some text</p>
