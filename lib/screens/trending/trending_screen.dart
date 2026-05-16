@@ -34,45 +34,52 @@ class TrendingScreen extends StatelessWidget {
               ),
             ),
           ),
-          SingleChildScrollView(
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('🔥 Trending Now',
-                            style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryText)),
-                        const SizedBox(height: 4),
-                        Text('Discover what everyone is watching',
-                            style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.primaryText
-                                    .withValues(alpha: 0.8))),
-                      ],
-                    ),
+          CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('🔥 Trending Now',
+                                style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryText)),
+                            const SizedBox(height: 4),
+                            Text('Discover what everyone is watching',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.primaryText
+                                        .withValues(alpha: 0.8))),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: _buildCategoryCards(),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      children: [
-                        _buildCategoryCards(),
-                        const SizedBox(height: 24),
-                        _buildTrendingList(),
-                        const SizedBox(height: 100),
-                      ],
-                    ),
-                  )
-                ],
+                ),
               ),
-            ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                sliver: _buildTrendingList(),
+              ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
           ),
         ],
       ),
@@ -141,31 +148,55 @@ class TrendingScreen extends StatelessWidget {
               provider.fetchTrendingPageData(context);
             }
           });
-          return const Center(
-              child: CircularProgressIndicator(color: AppColors.accent));
-        }
-
-        if (provider.state == TrendingState.error) {
-          return Center(
-            child: Text('Error: ${provider.errorMessage}',
-                style: const TextStyle(color: AppColors.secondaryText)),
+          return const SliverToBoxAdapter(
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.accent),
+            ),
           );
         }
 
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: provider.topRatedShows.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final show = provider.topRatedShows[index];
-            return RepaintBoundary(
-              child: _buildTrendingItem(
-                rank: index + 1,
-                show: show,
+        if (provider.state == TrendingState.error) {
+          return SliverToBoxAdapter(
+            child: Center(
+              child: Text('Error: ${provider.errorMessage}',
+                  style: const TextStyle(color: AppColors.secondaryText)),
+            ),
+          );
+        }
+
+        // Performance: Using SliverList instead of ListView(shrinkWrap: true)
+        // to enable lazy loading and reduce memory overhead for long lists.
+        final shows = provider.topRatedShows;
+        if (shows.isEmpty) {
+          return const SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Text('No trending shows found.',
+                    style: TextStyle(color: AppColors.secondaryText)),
               ),
-            );
-          },
+            ),
+          );
+        }
+
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              // Manual separator logic for SliverList
+              if (index.isOdd) {
+                return const SizedBox(height: 12);
+              }
+              final itemIndex = index ~/ 2;
+              final show = shows[itemIndex];
+              return RepaintBoundary(
+                child: _buildTrendingItem(
+                  rank: itemIndex + 1,
+                  show: show,
+                ),
+              );
+            },
+            childCount: shows.length * 2 - 1,
+          ),
         );
       },
     );
