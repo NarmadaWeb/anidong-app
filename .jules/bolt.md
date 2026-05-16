@@ -1,3 +1,0 @@
-## 2025-05-15 - [Lazy Loading for HomeScreen Episodes]
-**Learning:** Using `GridView.builder` with `shrinkWrap: true` inside a `SingleChildScrollView` disables lazy loading because Flutter needs to calculate the full height of the grid upfront, forcing all items to build immediately. This leads to high memory usage and frame drops as the list grows (e.g., after several "Load More" clicks).
-**Action:** Replace `SingleChildScrollView` + `Column` with `CustomScrollView` and use `SliverGrid`. Removing `shrinkWrap` and `NeverScrollableScrollPhysics` allows the `SliverGrid` to build only the items visible on screen, significantly improving performance and reducing memory footprint.
