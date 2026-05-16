@@ -1,0 +1,3 @@
+## 2025-05-15 - [Flutter] Lazy Loading with Slivers vs. ShrinkWrap
+**Learning:** Using `shrinkWrap: true` on `ListView` or `GridView` inside a `SingleChildScrollView` is a significant performance bottleneck in Flutter. It forces the framework to calculate the total height of the list/grid immediately, building all items at once and defeating lazy loading.
+**Action:** Always prefer `CustomScrollView` with `Slivers` (e.g., `SliverList`, `SliverGrid`) for scrollable content to ensure proper virtualization and memory efficiency. Replace `Consumer` with `Selector` when only a specific part of a provider's data is needed to minimize unnecessary widget rebuilds.

@@ -12,12 +12,11 @@ class HeroSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Menggunakan Consumer untuk mendapatkan data dari HomeProvider
-    return Consumer<HomeProvider>(
-      builder: (context, provider, child) {
-        // Ambil data slider dari provider
-        final slides = provider.heroSlides;
-
+    // Menggunakan Selector untuk mendapatkan data dari HomeProvider.
+    // Ini mencegah rebuild HeroSlider jika data lain di HomeProvider berubah (misal: recentEpisodes).
+    return Selector<HomeProvider, List<Show>>(
+      selector: (context, provider) => provider.heroSlides,
+      builder: (context, slides, child) {
         if (slides.isEmpty) {
           // Tampilkan placeholder jika tidak ada data
           return AspectRatio(
