@@ -159,9 +159,11 @@ class TrendingScreen extends StatelessWidget {
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final show = provider.topRatedShows[index];
-            return _buildTrendingItem(
-              rank: index + 1,
-              show: show,
+            return RepaintBoundary(
+              child: _buildTrendingItem(
+                rank: index + 1,
+                show: show,
+              ),
             );
           },
         );

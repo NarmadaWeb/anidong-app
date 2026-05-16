@@ -1,6 +1,5 @@
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static ThemeData get light {
@@ -12,9 +11,10 @@ class AppTheme {
       hintColor: Colors.grey[600],
       cardColor: Colors.white,
       dividerColor: Colors.grey[200],
-      textTheme: GoogleFonts.poppinsTextTheme(baseTextTheme).apply(
+      textTheme: baseTextTheme.apply(
         bodyColor: Colors.black87,
         displayColor: Colors.black87,
+        fontFamily: 'sans-serif',
       ),
       iconTheme: const IconThemeData(color: Colors.black54),
       appBarTheme: const AppBarTheme(
@@ -55,9 +55,10 @@ class AppTheme {
       hintColor: AppColors.secondaryText,
       cardColor: AppColors.darkSurface,
       dividerColor: AppColors.surface,
-      textTheme: GoogleFonts.poppinsTextTheme(baseTextTheme).apply(
+      textTheme: baseTextTheme.apply(
         bodyColor: AppColors.primaryText,
         displayColor: AppColors.primaryText,
+        fontFamily: 'sans-serif',
       ),
       iconTheme: const IconThemeData(color: AppColors.secondaryText),
       appBarTheme: const AppBarTheme(

@@ -76,10 +76,12 @@ class HomeScreen extends StatelessWidget {
               children: [
                 SizedBox(
                     height: 64 + MediaQuery.of(context).viewPadding.top + 16),
-                const HeroSlider(),
+                const RepaintBoundary(child: HeroSlider()),
                 _buildSectionTitle('New Episodes'),
-                _buildNewEpisodesGrid(context, allRecentEpisodes,
-                    provider.currentMode, provider), // Kirim mode saat ini
+                RepaintBoundary(
+                  child: _buildNewEpisodesGrid(context, allRecentEpisodes,
+                      provider.currentMode, provider),
+                ), // Kirim mode saat ini
                 _buildSectionTitle('Recommended For You'),
                 _buildRecommendedList(context, filteredRecommended),
                 const SizedBox(height: 100),

@@ -3,6 +3,7 @@
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/providers/local_data_provider.dart';
 import 'package:anidong/screens/video_player_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:anidong/utils/app_colors.dart';
 import 'package:anidong/widgets/glass_card.dart';
@@ -88,7 +89,9 @@ class HistoryScreen extends StatelessWidget {
                           final episode = history[index];
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12.0),
-                            child: _buildHistoryItem(context, episode),
+                            child: RepaintBoundary(
+                              child: _buildHistoryItem(context, episode),
+                            ),
                           );
                         },
                       );
@@ -122,10 +125,15 @@ class HistoryScreen extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: episode.thumbnailUrl != null
-                    ? Image.network(episode.thumbnailUrl!,
+                    ? CachedNetworkImage(
+                        imageUrl: episode.thumbnailUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => Icon(Icons.movie,
-                            color: Theme.of(context).iconTheme.color))
+                        placeholder: (context, url) => Container(
+                          color: Theme.of(context).cardColor,
+                        ),
+                        errorWidget: (c, e, s) => Icon(Icons.movie,
+                            color: Theme.of(context).iconTheme.color),
+                      )
                     : Icon(Icons.movie,
                         color: Theme.of(context).iconTheme.color),
               ),
