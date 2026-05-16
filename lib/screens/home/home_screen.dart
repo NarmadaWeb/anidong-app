@@ -69,24 +69,28 @@ class HomeScreen extends StatelessWidget {
           onRefresh: () => provider.fetchHomePageData(context),
           backgroundColor: Theme.of(context).cardColor,
           color: Theme.of(context).primaryColor,
-          child: SingleChildScrollView(
+          // Performance: Using CustomScrollView with Slivers instead of SingleChildScrollView + GridView(shrinkWrap: true).
+          // This allows for lazy loading of grid items, reducing initial build time and memory usage.
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
+            slivers: [
+              SliverToBoxAdapter(
+                child: SizedBox(
                     height: 64 + MediaQuery.of(context).viewPadding.top + 16),
-                const RepaintBoundary(child: HeroSlider()),
-                _buildSectionTitle('New Episodes'),
-                RepaintBoundary(
-                  child: _buildNewEpisodesGrid(context, allRecentEpisodes,
-                      provider.currentMode, provider),
-                ), // Kirim mode saat ini
-                _buildSectionTitle('Recommended For You'),
-                _buildRecommendedList(context, filteredRecommended),
-                const SizedBox(height: 100),
-              ],
-            ),
+              ),
+              const SliverToBoxAdapter(
+                child: RepaintBoundary(child: HeroSlider()),
+              ),
+              SliverToBoxAdapter(child: _buildSectionTitle('New Episodes')),
+              ..._buildNewEpisodesSlivers(context, allRecentEpisodes,
+                  provider.currentMode, provider),
+              SliverToBoxAdapter(
+                  child: _buildSectionTitle('Recommended For You')),
+              SliverToBoxAdapter(
+                child: _buildRecommendedList(context, filteredRecommended),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
           ),
         );
       },
@@ -110,126 +114,132 @@ class HomeScreen extends StatelessWidget {
     });
   }
 
-  // --- PERBAIKAN DI SINI ---
-  Widget _buildNewEpisodesGrid(BuildContext context, List<Episode> episodes,
-      String currentMode, HomeProvider provider) {
+  List<Widget> _buildNewEpisodesSlivers(BuildContext context,
+      List<Episode> episodes, String currentMode, HomeProvider provider) {
     final filteredEpisodes = episodes.where((ep) {
       return true;
     }).toList();
 
     if (filteredEpisodes.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
-        alignment: Alignment.center,
-        child: Text('No new episodes available for this mode.',
-            textAlign: TextAlign.center,
-            style:
-                TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
-      );
+      return [
+        SliverToBoxAdapter(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+            alignment: Alignment.center,
+            child: Text('No new episodes available for this mode.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color)),
+          ),
+        )
+      ];
     }
 
-    return Column(
-      children: [
-        GridView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 12,
             mainAxisSpacing: 16,
             childAspectRatio: 0.6,
           ),
-          itemCount: filteredEpisodes.length,
-          itemBuilder: (context, index) {
-            final episode = filteredEpisodes[index];
-            // Judul sekarang diambil dari episode itu sendiri jika ada, jika tidak, dari Show.
-            final displayTitle =
-                episode.title ?? episode.show?.title ?? 'Unknown Episode';
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final episode = filteredEpisodes[index];
+              // Judul sekarang diambil dari episode itu sendiri jika ada, jika tidak, dari Show.
+              final displayTitle =
+                  episode.title ?? episode.show?.title ?? 'Unknown Episode';
 
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VideoPlayerScreen(episode: episode),
-                  ),
-                );
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: CachedNetworkImage(
-                            imageUrl: episode.thumbnailUrl ?? '',
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) =>
-                                Container(color: Theme.of(context).cardColor),
-                            errorWidget: (context, url, error) => Center(
-                                child: Icon(Icons.image_not_supported,
-                                    color: Theme.of(context).iconTheme.color)),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          right: 8,
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(
-                                    color: Theme.of(context)
-                                        .primaryColor
-                                        .withValues(alpha: 0.9),
-                                    borderRadius: BorderRadius.circular(4)),
-                                child: Text('Ep ${episode.episodeNumber}',
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600)),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(
-                                    color: AppColors.yellow400,
-                                    borderRadius: BorderRadius.circular(4)),
-                                child: const Text('Sub',
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VideoPlayerScreen(episode: episode),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    displayTitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            );
-          },
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: CachedNetworkImage(
+                              imageUrl: episode.thumbnailUrl ?? '',
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) =>
+                                  Container(color: Theme.of(context).cardColor),
+                              errorWidget: (context, url, error) => Center(
+                                  child: Icon(Icons.image_not_supported,
+                                      color:
+                                          Theme.of(context).iconTheme.color)),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 8,
+                            left: 8,
+                            right: 8,
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 3),
+                                  decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .primaryColor
+                                          .withValues(alpha: 0.9),
+                                      borderRadius: BorderRadius.circular(4)),
+                                  child: Text('Ep ${episode.episodeNumber}',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600)),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 3),
+                                  decoration: BoxDecoration(
+                                      color: AppColors.yellow400,
+                                      borderRadius: BorderRadius.circular(4)),
+                                  child: const Text('Sub',
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      displayTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              );
+            },
+            childCount: filteredEpisodes.length,
+          ),
         ),
-        Padding(
+      ),
+      SliverToBoxAdapter(
+        child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: provider.isLoadingMore
               ? Center(
@@ -248,8 +258,8 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
         ),
-      ],
-    );
+      ),
+    ];
   }
 
   Widget _buildRecommendedList(BuildContext context, List<Show> shows) {
