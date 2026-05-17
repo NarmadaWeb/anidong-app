@@ -82,6 +82,9 @@ class _HeroSlideItem extends StatelessWidget {
       // Menggunakan bannerImageUrl dari objek Show
       imageUrl: show.bannerImageUrl ?? show.coverImageUrl ?? '',
       fit: BoxFit.cover,
+      // Performance: Large banner images are decoded at 600px width to save memory
+      // while maintaining visual fidelity on most mobile displays.
+      memCacheWidth: 600,
       placeholder: (context, url) =>
           Container(color: Theme.of(context).cardColor),
       errorWidget: (context, url, error) => Center(

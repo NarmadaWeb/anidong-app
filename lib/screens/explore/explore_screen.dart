@@ -268,6 +268,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             width: 60,
                             height: 80,
                             fit: BoxFit.cover,
+                            // Performance: Small search result thumbnails optimized with memCacheWidth.
+                            memCacheWidth: 150,
                             httpHeaders: ScrapingService.getAnoboyHeaders(),
                             errorWidget: (context, url, error) => Container(
                                 color: AppColors.surface,

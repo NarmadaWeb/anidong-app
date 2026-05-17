@@ -170,6 +170,8 @@ class AnidongSearchDelegate extends SearchDelegate {
                   width: 60,
                   height: 80,
                   fit: BoxFit.cover,
+                  // Performance: Search delegate thumbnails optimized with memCacheWidth.
+                  memCacheWidth: 150,
                   errorWidget: (context, url, error) => Container(
                     width: 60,
                     height: 80,

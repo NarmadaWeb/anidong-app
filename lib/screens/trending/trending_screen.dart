@@ -228,6 +228,8 @@ class TrendingScreen extends StatelessWidget {
                 width: 64,
                 height: 80,
                 fit: BoxFit.cover,
+                // Performance: Small list thumbnails optimized with memCacheWidth.
+                memCacheWidth: 150,
                 placeholder: (context, url) =>
                     Container(color: Theme.of(context).cardColor),
                 errorWidget: (context, url, error) => Center(

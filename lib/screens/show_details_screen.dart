@@ -111,6 +111,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
             width: 120,
             height: 180,
             fit: BoxFit.cover,
+            // Performance: Large header image optimized with memCacheWidth.
+            memCacheWidth: 350,
             placeholder: (context, url) => Container(
               color: Theme.of(context).cardColor,
               width: 120,
@@ -362,6 +364,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
               CachedNetworkImage(
                 imageUrl: ep.thumbnailUrl!,
                 fit: BoxFit.cover,
+                // Performance: Episode grid thumbnails optimized with memCacheWidth.
+                memCacheWidth: 300,
                 placeholder: (context, url) =>
                     Container(color: Theme.of(context).canvasColor),
                 errorWidget: (context, url, error) => Container(
