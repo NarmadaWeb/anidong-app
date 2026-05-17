@@ -128,6 +128,8 @@ class HistoryScreen extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: episode.thumbnailUrl!,
                         fit: BoxFit.cover,
+                        // Performance: Caching small thumbnails at 150px width.
+                        memCacheWidth: 150,
                         placeholder: (context, url) => Container(
                           color: Theme.of(context).cardColor,
                         ),

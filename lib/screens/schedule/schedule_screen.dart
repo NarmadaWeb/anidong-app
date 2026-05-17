@@ -228,6 +228,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     imageUrl: show.coverImageUrl!,
                     fit: BoxFit.cover,
                     width: double.infinity,
+                    // Performance: Grid items optimized with 300px width caching.
+                    memCacheWidth: 300,
                     placeholder: (context, url) =>
                         Container(color: AppColors.surface),
                     errorWidget: (context, url, error) => Container(

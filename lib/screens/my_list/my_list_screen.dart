@@ -152,6 +152,8 @@ class _MyListScreenState extends State<MyListScreen>
                         width: 70,
                         height: 90,
                         fit: BoxFit.cover,
+                        // Performance: Bookmark list thumbnails optimized with memCacheWidth.
+                        memCacheWidth: 150,
                         httpHeaders: ScrapingService.getAnoboyHeaders(),
                         placeholder: (context, url) => Center(
                             child: CircularProgressIndicator(

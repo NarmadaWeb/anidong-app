@@ -116,9 +116,8 @@ class HomeScreen extends StatelessWidget {
 
   List<Widget> _buildNewEpisodesSlivers(BuildContext context,
       List<Episode> episodes, String currentMode, HomeProvider provider) {
-    final filteredEpisodes = episodes.where((ep) {
-      return true;
-    }).toList();
+    // Performance: Removed redundant .where((ep) => true).toList() call.
+    final filteredEpisodes = episodes;
 
     if (filteredEpisodes.isEmpty) {
       return [
@@ -173,6 +172,9 @@ class HomeScreen extends StatelessWidget {
                             child: CachedNetworkImage(
                               imageUrl: episode.thumbnailUrl ?? '',
                               fit: BoxFit.cover,
+                              // Performance: memCacheWidth/Height reduces memory footprint by decoding
+                              // the image at the display size rather than its full resolution.
+                              memCacheWidth: 250,
                               placeholder: (context, url) =>
                                   Container(color: Theme.of(context).cardColor),
                               errorWidget: (context, url, error) => Center(
@@ -307,6 +309,8 @@ class HomeScreen extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: show.coverImageUrl ?? '',
                           fit: BoxFit.cover,
+                          // Performance: Reduces memory usage by caching decoded image at 250px width.
+                          memCacheWidth: 250,
                           placeholder: (context, url) =>
                               Container(color: Theme.of(context).cardColor),
                           errorWidget: (context, url, error) => Center(
