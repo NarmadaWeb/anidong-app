@@ -1,4 +1,3 @@
-
 import 'package:anidong/data/models/show_model.dart';
 import 'package:anidong/data/services/scraping_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,7 +40,12 @@ void main() {
   test('Anoboy: Parses multiple seasons and respects order/sorting', () {
     final service = ScrapingService();
     final document = parse(anoboyHtml);
-    final show = Show(id: 1, title: 'Jigokuraku', type: 'anime', status: 'ongoing', genres: []);
+    final show = Show(
+        id: 1,
+        title: 'Jigokuraku',
+        type: 'anime',
+        status: 'ongoing',
+        genres: []);
 
     final result = service.parseAnoboyShowDetailsFromDoc(document, show);
 
@@ -74,13 +78,14 @@ void main() {
     final document = parse(anoboyHtml);
 
     String? parentShowUrl;
-    final rows = document.querySelectorAll('.entry-content table tr, .post-body table tr');
+    final rows = document
+        .querySelectorAll('.entry-content table tr, .post-body table tr');
     for (var row in rows) {
-       final th = row.querySelector('th');
-       if (th != null && th.text.toLowerCase().contains('semua episode')) {
-          parentShowUrl = row.querySelector('td a')?.attributes['href'];
-          break;
-       }
+      final th = row.querySelector('th');
+      if (th != null && th.text.toLowerCase().contains('semua episode')) {
+        parentShowUrl = row.querySelector('td a')?.attributes['href'];
+        break;
+      }
     }
 
     expect(parentShowUrl, '/2023/04/jigokuraku-season-1-2/');

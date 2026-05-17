@@ -82,8 +82,8 @@ class HomeScreen extends StatelessWidget {
                 child: RepaintBoundary(child: HeroSlider()),
               ),
               SliverToBoxAdapter(child: _buildSectionTitle('New Episodes')),
-              ..._buildNewEpisodesSlivers(context, allRecentEpisodes,
-                  provider.currentMode, provider),
+              ..._buildNewEpisodesSlivers(
+                  context, allRecentEpisodes, provider.currentMode, provider),
               SliverToBoxAdapter(
                   child: _buildSectionTitle('Recommended For You')),
               SliverToBoxAdapter(

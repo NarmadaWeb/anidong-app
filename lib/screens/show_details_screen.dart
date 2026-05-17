@@ -75,332 +75,343 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
           ? Center(
               child: CircularProgressIndicator(
                   color: Theme.of(context).primaryColor))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Section
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Cover Image
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: CachedNetworkImage(
-                          imageUrl: _show.coverImageUrl ?? '',
-                          width: 120,
-                          height: 180,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Theme.of(context).cardColor,
-                            width: 120,
-                            height: 180,
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Theme.of(context).cardColor,
-                            width: 120,
-                            height: 180,
-                            child: const Icon(Icons.image_not_supported),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _show.title,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            if (_show.rating != null)
-                              Row(
-                                children: [
-                                  StarRating(rating: _show.rating!),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _show.rating.toString(),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            const SizedBox(height: 8),
-                            _buildInfoRow('Status', _show.status),
-                            _buildInfoRow('Type', _show.type),
-                            if (_show.releaseYear != null)
-                              _buildInfoRow('Released', '${_show.releaseYear}'),
-                          ],
-                        ),
-                      ),
-                    ],
+          : CustomScrollView(
+              // Performance: Using CustomScrollView with Slivers for lazy loading of the episode list.
+              // This is much more efficient than SingleChildScrollView + GridView.builder(shrinkWrap: true)
+              // for shows with many episodes, as it reduces memory usage and build time.
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.all(16.0),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _buildHeaderSection(),
+                      const SizedBox(height: 24),
+                      _buildMetadataSection(),
+                      const SizedBox(height: 24),
+                      _buildSynopsisSection(),
+                    ]),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Metadata Table (Studio, Source, Duration, etc.)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        _buildTableRow('Semua Episode', _show.title,
-                            isLink: true),
-                        const Divider(height: 16),
-                        if (_show.studio != null) ...[
-                          _buildTableRow('Studio', _show.studio!),
-                          const Divider(height: 16),
-                        ],
-                        if (_show.source != null) ...[
-                          _buildTableRow('Source', _show.source!),
-                          const Divider(height: 16),
-                        ],
-                        if (_show.duration != null) ...[
-                          _buildTableRow('Durasi', _show.duration!),
-                          const Divider(height: 16),
-                        ],
-                        if (_show.genres.isNotEmpty) ...[
-                          _buildTableRow('Genre',
-                              _show.genres.map((g) => g.name).join(', ')),
-                          const Divider(height: 16),
-                        ],
-                        if (_show.rating != null)
-                          _buildTableRow('Score', _show.rating.toString()),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Synopsis
-                  if (_show.synopsis != null && _show.synopsis!.isNotEmpty) ...[
-                    const Text(
-                      'Synopsis',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _show.synopsis!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.color
-                            ?.withValues(alpha: 0.8),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Episodes Section
-                  if (_show.episodes != null && _show.episodes!.isNotEmpty)
-                    Builder(
-                      builder: (context) {
-                        if (_show.type == 'anime') {
-                          final Map<int, List<Episode>> groupedEpisodes = {};
-                          for (var ep in _show.episodes!) {
-                            final season = _getSeason(ep.title);
-                            if (!groupedEpisodes.containsKey(season)) {
-                              groupedEpisodes[season] = [];
-                            }
-                            groupedEpisodes[season]!.add(ep);
-                          }
-
-                          final sortedSeasons = groupedEpisodes.keys.toList()
-                            ..sort();
-
-                          // If there's only one season, just show 'All Episodes' header
-                          if (sortedSeasons.length == 1) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'All Episodes',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 16),
-                                _buildEpisodesGrid(context,
-                                    groupedEpisodes[sortedSeasons.first]!),
-                              ],
-                            );
-                          }
-
-                          // Multiple seasons, show headers for each
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: sortedSeasons.map((season) {
-                              final eps = groupedEpisodes[season]!;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12.0),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 4,
-                                          height: 20,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Season $season',
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  _buildEpisodesGrid(context, eps),
-                                  const SizedBox(height: 16),
-                                ],
-                              );
-                            }).toList(),
-                          );
-                        } else {
-                          // Non-anime (Donghua), standard display
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'All Episodes',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildEpisodesGrid(context, _show.episodes!),
-                            ],
-                          );
-                        }
-                      },
-                    )
-                  else if (!_isLoading)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Text('No episodes found.'),
-                      ),
-                    ),
-
-                  const SizedBox(height: 40),
-                ],
-              ),
+                ),
+                ..._buildEpisodesSlivers(),
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              ],
             ),
     );
   }
 
-  Widget _buildEpisodesGrid(BuildContext context, List<Episode> episodes) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.5,
-      ),
-      itemCount: episodes.length,
-      itemBuilder: (context, index) {
-        final ep = episodes[index];
-        return InkWell(
-          onTap: () {
-            AdService.instance.showAdIfAvailable(() {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VideoPlayerScreen(episode: ep),
-                ),
-              );
-            });
-          },
+  Widget _buildHeaderSection() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Cover Image
+        ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Container(
-            decoration: BoxDecoration(
+          child: CachedNetworkImage(
+            imageUrl: _show.coverImageUrl ?? '',
+            width: 120,
+            height: 180,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
               color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              width: 120,
+              height: 180,
             ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (ep.thumbnailUrl != null && ep.thumbnailUrl!.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: ep.thumbnailUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                        Container(color: Theme.of(context).canvasColor),
-                    errorWidget: (context, url, error) => Container(
-                      color: Theme.of(context).canvasColor,
-                      child: const Icon(Icons.image_not_supported, size: 40),
-                    ),
-                  )
-                else
-                  Container(
-                    color: Theme.of(context).canvasColor,
-                    child: const Center(
-                      child: Icon(Icons.movie_creation_outlined,
-                          size: 40, color: Colors.grey),
-                    ),
-                  ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.8),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                    child: Text(
-                      'Episode ${ep.episodeNumber}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        shadows: [
-                          Shadow(
-                              blurRadius: 2,
-                              color: Colors.black,
-                              offset: Offset(0, 1)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            errorWidget: (context, url, error) => Container(
+              color: Theme.of(context).cardColor,
+              width: 120,
+              height: 180,
+              child: const Icon(Icons.image_not_supported),
             ),
           ),
-        );
+        ),
+        const SizedBox(width: 16),
+        // Details
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _show.title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_show.rating != null)
+                Row(
+                  children: [
+                    StarRating(rating: _show.rating!),
+                    const SizedBox(width: 8),
+                    Text(
+                      _show.rating.toString(),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 8),
+              _buildInfoRow('Status', _show.status),
+              _buildInfoRow('Type', _show.type),
+              if (_show.releaseYear != null)
+                _buildInfoRow('Released', '${_show.releaseYear}'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetadataSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          _buildTableRow('Semua Episode', _show.title, isLink: true),
+          const Divider(height: 16),
+          if (_show.studio != null) ...[
+            _buildTableRow('Studio', _show.studio!),
+            const Divider(height: 16),
+          ],
+          if (_show.source != null) ...[
+            _buildTableRow('Source', _show.source!),
+            const Divider(height: 16),
+          ],
+          if (_show.duration != null) ...[
+            _buildTableRow('Durasi', _show.duration!),
+            const Divider(height: 16),
+          ],
+          if (_show.genres.isNotEmpty) ...[
+            _buildTableRow('Genre', _show.genres.map((g) => g.name).join(', ')),
+            const Divider(height: 16),
+          ],
+          if (_show.rating != null)
+            _buildTableRow('Score', _show.rating.toString()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSynopsisSection() {
+    if (_show.synopsis == null || _show.synopsis!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Synopsis',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _show.synopsis!,
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.color
+                ?.withValues(alpha: 0.8),
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildEpisodesSlivers() {
+    if (_show.episodes == null || _show.episodes!.isEmpty) {
+      if (!_isLoading) {
+        return [
+          const SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Text('No episodes found.'),
+              ),
+            ),
+          )
+        ];
+      }
+      return [];
+    }
+
+    if (_show.type == 'anime') {
+      final Map<int, List<Episode>> groupedEpisodes = {};
+      for (var ep in _show.episodes!) {
+        final season = _getSeason(ep.title);
+        if (!groupedEpisodes.containsKey(season)) {
+          groupedEpisodes[season] = [];
+        }
+        groupedEpisodes[season]!.add(ep);
+      }
+
+      final sortedSeasons = groupedEpisodes.keys.toList()..sort();
+
+      if (sortedSeasons.length == 1) {
+        return [
+          _buildSliverSectionTitle('All Episodes'),
+          _buildEpisodesSliverGrid(groupedEpisodes[sortedSeasons.first]!),
+        ];
+      }
+
+      final List<Widget> slivers = [];
+      for (var season in sortedSeasons) {
+        slivers.add(_buildSliverSeasonHeader(season));
+        slivers.add(_buildEpisodesSliverGrid(groupedEpisodes[season]!));
+        slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 16)));
+      }
+      return slivers;
+    } else {
+      return [
+        _buildSliverSectionTitle('All Episodes'),
+        _buildEpisodesSliverGrid(_show.episodes!),
+      ];
+    }
+  }
+
+  Widget _buildSliverSectionTitle(String title) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+      sliver: SliverToBoxAdapter(
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSliverSeasonHeader(int season) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 12.0),
+      sliver: SliverToBoxAdapter(
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 20,
+              color: Theme.of(context).primaryColor,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Season $season',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEpisodesSliverGrid(List<Episode> episodes) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.5,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final ep = episodes[index];
+            return _buildEpisodeItem(ep);
+          },
+          childCount: episodes.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEpisodeItem(Episode ep) {
+    return InkWell(
+      onTap: () {
+        AdService.instance.showAdIfAvailable(() {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VideoPlayerScreen(episode: ep),
+            ),
+          );
+        });
       },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (ep.thumbnailUrl != null && ep.thumbnailUrl!.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: ep.thumbnailUrl!,
+                fit: BoxFit.cover,
+                placeholder: (context, url) =>
+                    Container(color: Theme.of(context).canvasColor),
+                errorWidget: (context, url, error) => Container(
+                  color: Theme.of(context).canvasColor,
+                  child: const Icon(Icons.image_not_supported, size: 40),
+                ),
+              )
+            else
+              Container(
+                color: Theme.of(context).canvasColor,
+                child: const Center(
+                  child: Icon(Icons.movie_creation_outlined,
+                      size: 40, color: Colors.grey),
+                ),
+              ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.8),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Text(
+                  'Episode ${ep.episodeNumber}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    shadows: [
+                      Shadow(
+                          blurRadius: 2,
+                          color: Colors.black,
+                          offset: Offset(0, 1)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

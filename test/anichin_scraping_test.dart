@@ -1,10 +1,11 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart';
 import 'package:anidong/data/services/scraping_service.dart';
 
 void main() {
-  test('Anichin Selector Logic: Finds list by header "Rilisan Terbaru" in old structure', () {
+  test(
+      'Anichin Selector Logic: Finds list by header "Rilisan Terbaru" in old structure',
+      () {
     const html = '''
 <html>
 <body>
@@ -22,11 +23,14 @@ void main() {
 
     final document = parse(html);
     final scraper = ScrapingService();
-    final latestSection = scraper.findAnichinListupd(document, ['rilisan terbaru', 'latest release']);
+    final latestSection = scraper
+        .findAnichinListupd(document, ['rilisan terbaru', 'latest release']);
     expect(latestSection?.attributes['id'], 'target-list');
   });
 
-  test('Anichin Selector Logic: Finds list by header "Latest Release" in new bixbox structure', () {
+  test(
+      'Anichin Selector Logic: Finds list by header "Latest Release" in new bixbox structure',
+      () {
     const html = '''
 <html>
 <body>
@@ -46,7 +50,8 @@ void main() {
 
     final document = parse(html);
     final scraper = ScrapingService();
-    final latestSection = scraper.findAnichinListupd(document, ['rilisan terbaru', 'latest release']);
+    final latestSection = scraper
+        .findAnichinListupd(document, ['rilisan terbaru', 'latest release']);
     expect(latestSection?.attributes['id'], 'recent-list');
   });
 }

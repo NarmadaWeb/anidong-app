@@ -15,7 +15,8 @@ class MockHttpOverrides extends HttpOverrides {
 
   @override
   HttpClient createHttpClient(SecurityContext? context) {
-    return MockHttpClient(showPageHtml: showPageHtml, episodePageHtml: episodePageHtml);
+    return MockHttpClient(
+        showPageHtml: showPageHtml, episodePageHtml: episodePageHtml);
   }
 }
 
@@ -35,7 +36,7 @@ class MockHttpClient extends Fake implements HttpClient {
 
   @override
   Future<HttpClientRequest> openUrl(String method, Uri url) async {
-     return MockHttpClientRequest(url, showPageHtml, episodePageHtml);
+    return MockHttpClientRequest(url, showPageHtml, episodePageHtml);
   }
 
   @override
@@ -76,7 +77,8 @@ class MockHttpClientRequest extends Fake implements HttpClientRequest {
   void writeln([Object? object = ""]) {}
 
   @override
-  Future<HttpClientResponse> get done => Future.value(MockHttpClientResponse(url, showPageHtml, episodePageHtml));
+  Future<HttpClientResponse> get done =>
+      Future.value(MockHttpClientResponse(url, showPageHtml, episodePageHtml));
 
   @override
   Future<void> flush() async {}
@@ -165,7 +167,8 @@ class MockHttpClientResponse extends Fake implements HttpClientResponse {
   HttpHeaders get headers => MockHttpHeaders();
 
   @override
-  HttpClientResponseCompressionState get compressionState => HttpClientResponseCompressionState.notCompressed;
+  HttpClientResponseCompressionState get compressionState =>
+      HttpClientResponseCompressionState.notCompressed;
 
   @override
   String get reasonPhrase => 'OK';
@@ -181,7 +184,8 @@ class MockHttpClientResponse extends Fake implements HttpClientResponse {
 
   @override
   Stream<S> transform<S>(StreamTransformer<List<int>, S> streamTransformer) {
-    return Stream.value(utf8.encode(_getBody()) as List<int>).transform(streamTransformer);
+    return Stream.value(utf8.encode(_getBody()) as List<int>)
+        .transform(streamTransformer);
   }
 
   @override
@@ -251,14 +255,16 @@ void main() {
       HttpOverrides.global = null;
     });
 
-    test('getAnoboyEpisodeDetails should extract episodes from Show Page', () async {
+    test('getAnoboyEpisodeDetails should extract episodes from Show Page',
+        () async {
       final episode = Episode(
         id: 1,
         showId: 100,
         episodeNumber: 1,
         title: 'Hikuidori',
         videoUrl: '',
-        originalUrl: 'https://ww1.anoboy.boo/2026/01/hikuidori-ushuu-boro-tobi-gumi/',
+        originalUrl:
+            'https://ww1.anoboy.boo/2026/01/hikuidori-ushuu-boro-tobi-gumi/',
       );
 
       final result = await service.getAnoboyEpisodeDetails(episode);
@@ -268,10 +274,13 @@ void main() {
       expect(result.show!.episodes, isNotNull);
       // The logic sorts episodes.
       expect(result.show!.episodes!.length, 2);
-      expect(result.show!.episodes!.map((e) => e.episodeNumber).toList(), containsAll([3, 4]));
+      expect(result.show!.episodes!.map((e) => e.episodeNumber).toList(),
+          containsAll([3, 4]));
     });
 
-    test('getAnoboyEpisodeDetails should extract episode number from Title if input is 0', () async {
+    test(
+        'getAnoboyEpisodeDetails should extract episode number from Title if input is 0',
+        () async {
       // Input episode has 0
       final episode = Episode(
         id: 2,
@@ -279,7 +288,8 @@ void main() {
         episodeNumber: 0,
         title: 'Hell Mode',
         videoUrl: '',
-        originalUrl: 'https://ww1.anoboy.boo/2026/02/hell-mode-yarikomizuki-no-gamer-episode-6/',
+        originalUrl:
+            'https://ww1.anoboy.boo/2026/02/hell-mode-yarikomizuki-no-gamer-episode-6/',
       );
 
       final result = await service.getAnoboyEpisodeDetails(episode);
@@ -288,7 +298,8 @@ void main() {
       expect(result.episodeNumber, 6);
 
       // Verify Prev link
-      expect(result.prevEpisodeUrl, 'https://ww1.anoboy.boo/2026/02/hell-mode-yarikomizuki-no-gamer-episode-5/');
+      expect(result.prevEpisodeUrl,
+          'https://ww1.anoboy.boo/2026/02/hell-mode-yarikomizuki-no-gamer-episode-5/');
     });
   });
 }

@@ -16,7 +16,8 @@ void main() {
         </div>
       ''';
       final doc = parse(html);
-      expect(service.findAnichinShowUrl(doc), 'https://anichin.asia/donghua/soul-land/');
+      expect(service.findAnichinShowUrl(doc),
+          'https://anichin.asia/donghua/soul-land/');
     });
 
     test('findAnichinShowUrl extracts URL from "Semua Episode" link', () {
@@ -26,10 +27,12 @@ void main() {
         </div>
       ''';
       final doc = parse(html);
-      expect(service.findAnichinShowUrl(doc), 'https://anichin.asia/donghua/battle-through-the-heavens/');
+      expect(service.findAnichinShowUrl(doc),
+          'https://anichin.asia/donghua/battle-through-the-heavens/');
     });
 
-    test('parseAnichinShowDetailsFromDoc extracts thumbnails from eplister', () {
+    test('parseAnichinShowDetailsFromDoc extracts thumbnails from eplister',
+        () {
       final html = '''
         <html>
         <body>
@@ -48,12 +51,14 @@ void main() {
         </html>
       ''';
       final doc = parse(html);
-      final show = Show(id: 1, title: 'Test', type: 'donghua', status: 'ongoing', genres: []);
+      final show = Show(
+          id: 1, title: 'Test', type: 'donghua', status: 'ongoing', genres: []);
       final result = service.parseAnichinShowDetailsFromDoc(doc, show);
 
       expect(result.episodes, isNotNull);
       expect(result.episodes!.length, 1);
-      expect(result.episodes!.first.thumbnailUrl, 'https://anichin.asia/wp-content/uploads/2023/01/sl-ep-1.jpg');
+      expect(result.episodes!.first.thumbnailUrl,
+          'https://anichin.asia/wp-content/uploads/2023/01/sl-ep-1.jpg');
     });
 
     test('parseAnichinShowDetailsFromDoc extracts thumbnails from lstep', () {
@@ -75,12 +80,18 @@ void main() {
         </html>
       ''';
       final doc = parse(html);
-      final show = Show(id: 2, title: 'Test 2', type: 'donghua', status: 'ongoing', genres: []);
+      final show = Show(
+          id: 2,
+          title: 'Test 2',
+          type: 'donghua',
+          status: 'ongoing',
+          genres: []);
       final result = service.parseAnichinShowDetailsFromDoc(doc, show);
 
       expect(result.episodes, isNotNull);
       expect(result.episodes!.length, 1);
-      expect(result.episodes!.first.thumbnailUrl, 'https://anichin.asia/wp-content/uploads/2023/01/btth-ep-1.jpg');
+      expect(result.episodes!.first.thumbnailUrl,
+          'https://anichin.asia/wp-content/uploads/2023/01/btth-ep-1.jpg');
     });
   });
 }

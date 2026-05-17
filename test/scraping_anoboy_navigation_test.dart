@@ -56,16 +56,17 @@ void main() {
       final result = service.findAnoboyNavigationLinks(document, 6, 'My Anime');
 
       // We Expect NULL because it's a different anime.
-      expect(result['next'], isNull, reason: 'Should not pick up Other Anime link');
+      expect(result['next'], isNull,
+          reason: 'Should not pick up Other Anime link');
     });
 
     test('should accept "Episode X" button if it is the correct anime', () {
-       // Here .content matches .entry-content logic if we assume standard WP classes,
-       // but my test uses generic divs. The service looks for .naveps, .entry-content.
-       // Let's use .entry-content to ensure it doesn't fallback to all links,
-       // ensuring the logic works when filtering IS applied.
+      // Here .content matches .entry-content logic if we assume standard WP classes,
+      // but my test uses generic divs. The service looks for .naveps, .entry-content.
+      // Let's use .entry-content to ensure it doesn't fallback to all links,
+      // ensuring the logic works when filtering IS applied.
 
-       const html2 = '''
+      const html2 = '''
         <html>
         <body>
           <div class="entry-content">

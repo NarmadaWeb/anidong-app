@@ -7,7 +7,8 @@ import 'package:anidong/data/services/scraping_service.dart';
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/show_model.dart';
 
-class DelegateHttpClientResponse extends Stream<List<int>> implements HttpClientResponse {
+class DelegateHttpClientResponse extends Stream<List<int>>
+    implements HttpClientResponse {
   final Stream<List<int>> _stream;
   final int _statusCode;
 
@@ -21,12 +22,14 @@ class DelegateHttpClientResponse extends Stream<List<int>> implements HttpClient
   int get contentLength => -1;
 
   @override
-  HttpClientResponseCompressionState get compressionState => HttpClientResponseCompressionState.notCompressed;
+  HttpClientResponseCompressionState get compressionState =>
+      HttpClientResponseCompressionState.notCompressed;
 
   @override
   StreamSubscription<List<int>> listen(void Function(List<int> event)? onData,
       {Function? onError, void Function()? onDone, bool? cancelOnError}) {
-    return _stream.listen(onData, onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+    return _stream.listen(onData,
+        onError: onError, onDone: onDone, cancelOnError: cancelOnError);
   }
 
   @override
@@ -45,7 +48,9 @@ class DelegateHttpClientResponse extends Stream<List<int>> implements HttpClient
   String get reasonPhrase => 'OK';
 
   @override
-  Future<HttpClientResponse> redirect([String? method, Uri? url, bool? followLoops]) async => this;
+  Future<HttpClientResponse> redirect(
+          [String? method, Uri? url, bool? followLoops]) async =>
+      this;
 
   @override
   List<RedirectInfo> get redirects => [];
@@ -82,9 +87,7 @@ class MockHttpClientRequest extends Fake implements HttpClientRequest {
   @override
   Future<HttpClientResponse> close() async {
     return DelegateHttpClientResponse(
-      matches ? utf8.encode(html) : [],
-      matches ? 200 : 404
-    );
+        matches ? utf8.encode(html) : [], matches ? 200 : 404);
   }
 
   @override
@@ -131,7 +134,7 @@ class MockHttpClient extends Fake implements HttpClient {
 
   @override
   Future<HttpClientRequest> openUrl(String method, Uri url) async {
-     return MockHttpClientRequest(html, url.toString() == urlToMatch);
+    return MockHttpClientRequest(html, url.toString() == urlToMatch);
   }
 
   @override
@@ -152,7 +155,9 @@ class MockHttpOverrides extends HttpOverrides {
 
 void main() {
   group('Anichin Recursion Bug', () {
-    test('Prevents infinite recursion when target episode URL matches current URL', () async {
+    test(
+        'Prevents infinite recursion when target episode URL matches current URL',
+        () async {
       const url = 'https://anichin.asia/episode-123/';
       const html = '''
       <html>
@@ -182,16 +187,20 @@ void main() {
         title: 'Episode 123',
         videoUrl: '',
         originalUrl: url,
-        show: Show(id: 100, title: 'Show 1', type: 'donghua', status: 'ongoing', genres: []),
+        show: Show(
+            id: 100,
+            title: 'Show 1',
+            type: 'donghua',
+            status: 'ongoing',
+            genres: []),
       );
 
       try {
-        await service.getAnichinEpisodeDetails(episode).timeout(
-          const Duration(seconds: 2),
-          onTimeout: () {
-             throw TimeoutException('Timed out - Infinite recursion detected!');
-          }
-        );
+        await service
+            .getAnichinEpisodeDetails(episode)
+            .timeout(const Duration(seconds: 2), onTimeout: () {
+          throw TimeoutException('Timed out - Infinite recursion detected!');
+        });
       } on TimeoutException catch (e) {
         fail(e.message!);
       } catch (e) {

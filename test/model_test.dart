@@ -1,4 +1,3 @@
-
 import 'package:anidong/data/models/episode_model.dart';
 import 'package:anidong/data/models/genre_model.dart';
 import 'package:anidong/data/models/show_model.dart';
@@ -28,7 +27,9 @@ void main() {
         'studio': null,
         'source': null,
         'duration': null,
-        'genres': [{'id': 1, 'name': 'Action'}],
+        'genres': [
+          {'id': 1, 'name': 'Action'}
+        ],
         'created_at': '2023-01-01T00:00:00.000',
         'original_url': 'https://example.com/naruto',
         'episodes': null
@@ -50,8 +51,12 @@ void main() {
         'video_url': 'https://example.com/video.mp4',
         'iframe_url': 'https://example.com/iframe',
         'original_url': 'https://example.com/ep1',
-        'download_links': [{'name': 'Mega', 'url': 'https://mega.nz'}],
-        'video_servers': [{'name': 'Server 1', 'url': 'https://server1.com'}],
+        'download_links': [
+          {'name': 'Mega', 'url': 'https://mega.nz'}
+        ],
+        'video_servers': [
+          {'name': 'Server 1', 'url': 'https://server1.com'}
+        ],
         'prev_episode_url': null,
         'next_episode_url': null,
         'thumbnail_url': 'https://example.com/thumb.jpg',

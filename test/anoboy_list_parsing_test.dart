@@ -25,7 +25,8 @@ void main() {
         expect(firstShow.originalUrl, contains('anoboy.boo'));
 
         debugPrint('Fetched ${shows.length} anime.');
-        debugPrint('First anime: ${firstShow.title} -> ${firstShow.originalUrl}');
+        debugPrint(
+            'First anime: ${firstShow.title} -> ${firstShow.originalUrl}');
       }
     });
   });
