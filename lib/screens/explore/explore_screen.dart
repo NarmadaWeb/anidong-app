@@ -78,14 +78,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // PERBAIKAN: Menggunakan Scaffold TANPA AppBar
     return Scaffold(
-      // backgroundColor: AppColors.background, // Removed to let theme handle it
       body: Stack(
         children: [
-          // Background Gradien
+          // Dynamic Gradient Background
           Container(
-            height: MediaQuery.of(context).size.height * 0.3,
+            height: MediaQuery.of(context).size.height * 0.4,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -95,92 +93,113 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
             ),
           ),
-          // Konten yang bisa di-scroll
-          SingleChildScrollView(
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Teks
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 56.0, 16.0, 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('🔍 Search & Explore',
-                            style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white)),
-                        const SizedBox(height: 4),
-                        Text('Find your favorite Anime & Donghua',
-                            style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withValues(alpha: 0.8))),
-                      ],
-                    ),
-                  ),
-
-                  // Search Bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: 'Search title...',
-                              border: InputBorder.none,
-                              icon: Icon(Icons.search,
-                                  color: Theme.of(context).iconTheme.color),
-                            ),
-                            onSubmitted: _handleSearch,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+          // Scrollable Content with Slivers
+          SafeArea(
+            bottom: false,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Header & Search Bar
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildTypeChip('Anime', 'anime'),
-                            const SizedBox(width: 8),
-                            _buildTypeChip('Donghua', 'donghua'),
+                            const Text('🔍 Search & Explore',
+                                style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: -0.5)),
+                            const SizedBox(height: 8),
+                            Text('Find your favorite Anime & Donghua',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    color:
+                                        Colors.white.withValues(alpha: 0.9))),
                           ],
                         ),
-                      ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: TextField(
+                                controller: _searchController,
+                                decoration: InputDecoration(
+                                  hintText: 'Search title...',
+                                  border: InputBorder.none,
+                                  icon: Icon(Icons.search,
+                                      color: Theme.of(context).primaryColor),
+                                ),
+                                onSubmitted: _handleSearch,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildTypeChip('Anime', 'anime'),
+                                const SizedBox(width: 12),
+                                _buildTypeChip('Donghua', 'donghua'),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+
+                // Results or Genres
+                if (_hasSearched)
+                  _buildSearchResultsSliver()
+                else ...[
+                  const SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Text('🎭 Main Genres',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold)),
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Results or Genres
-                  if (_hasSearched)
-                    _buildSearchResults()
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('🎭 Genres',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 16),
-                          _buildGenreGrid(),
-                          const SizedBox(height: 24),
-                          _buildSubGenreGrid(),
-                        ],
-                      ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  _buildGenreGridSliver(),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  const SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Text('🏷️ More Categories',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold)),
                     ),
-                  const SizedBox(height: 100),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  _buildSubGenreGridSliver(),
                 ],
-              ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
             ),
           ),
         ],
@@ -220,157 +239,174 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  Widget _buildSearchResults() {
+  Widget _buildSearchResultsSliver() {
     if (_isSearching) {
-      return Center(
-          child:
-              CircularProgressIndicator(color: Theme.of(context).primaryColor));
-    }
-
-    if (_searchResults.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Text('No results found.',
-              style: TextStyle(
-                  color: Theme.of(context).textTheme.bodySmall?.color)),
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(64.0),
+            child: CircularProgressIndicator(
+                color: Theme.of(context).primaryColor),
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _searchResults.length,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemBuilder: (context, index) {
-        final show = _searchResults[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ShowDetailsScreen(show: show),
-                ),
-              );
-            },
-            child: GlassCard(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: show.coverImageUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: show.coverImageUrl!,
-                            width: 60,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            // Performance: Small search result thumbnails optimized with memCacheWidth.
-                            memCacheWidth: 150,
-                            httpHeaders: ScrapingService.getAnoboyHeaders(),
-                            errorWidget: (context, url, error) => Container(
-                                color: AppColors.surface,
-                                width: 60,
-                                height: 80,
-                                child: const Icon(Icons.movie)),
-                            placeholder: (context, url) => Container(
-                                color: AppColors.surface,
-                                width: 60,
-                                height: 80,
-                                child: const Center(
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2))),
-                          )
-                        : Container(
-                            color: AppColors.surface,
-                            width: 60,
-                            height: 80,
-                            child: const Icon(Icons.movie)),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(show.title,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.color)),
-                        const SizedBox(height: 4),
-                        Text(show.status,
-                            style: TextStyle(
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.color,
-                                fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.chevron_right,
-                      color: Theme.of(context).iconTheme.color),
-                ],
-              ),
-            ),
+    if (_searchResults.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(64.0),
+            child: Text('No results found.',
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color)),
           ),
-        );
-      },
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final show = _searchResults[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ShowDetailsScreen(show: show),
+                    ),
+                  );
+                },
+                child: GlassCard(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: show.coverImageUrl != null
+                            ? CachedNetworkImage(
+                                imageUrl: show.coverImageUrl!,
+                                width: 70,
+                                height: 90,
+                                fit: BoxFit.cover,
+                                memCacheWidth: 200,
+                                httpHeaders: ScrapingService.getAnoboyHeaders(),
+                                errorWidget: (context, url, error) => Container(
+                                    color: AppColors.surface,
+                                    width: 70,
+                                    height: 90,
+                                    child: const Icon(Icons.movie)),
+                                placeholder: (context, url) => Container(
+                                    color: AppColors.surface,
+                                    width: 70,
+                                    height: 90,
+                                    child: const Center(
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2))),
+                              )
+                            : Container(
+                                color: AppColors.surface,
+                                width: 70,
+                                height: 90,
+                                child: const Icon(Icons.movie)),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(show.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16)),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .primaryColor
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(show.status,
+                                  style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right,
+                          color: Theme.of(context).iconTheme.color),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: _searchResults.length,
+        ),
+      ),
     );
   }
 
-  Widget _buildGenreGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 0.85,
-      children: [
-        _buildGenreCard(
-          emoji: '⚔️',
-          title: 'Action',
-          description: 'Fast-paced adventures',
-          gradientColors: [
-            AppColors.actionGradientStart,
-            AppColors.actionGradientEnd
-          ],
-        ),
-        _buildGenreCard(
-          emoji: '💖',
-          title: 'Romance',
-          description: 'Heart-warming stories',
-          gradientColors: [
-            AppColors.romanceGradientStart,
-            AppColors.romanceGradientEnd
-          ],
-        ),
-        _buildGenreCard(
-          emoji: '🔮',
-          title: 'Fantasy',
-          description: 'Magical adventures',
-          gradientColors: [
-            AppColors.fantasyGradientStart,
-            AppColors.fantasyGradientEnd
-          ],
-        ),
-        _buildGenreCard(
-          emoji: '😂',
-          title: 'Comedy',
-          description: 'Hilarious moments',
-          gradientColors: [
-            AppColors.comedyGradientStart,
-            AppColors.comedyGradientEnd
-          ],
-        ),
-      ],
+  Widget _buildGenreGridSliver() {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverGrid.count(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.9,
+        children: [
+          _buildGenreCard(
+            emoji: '⚔️',
+            title: 'Action',
+            description: 'Fast-paced adventures',
+            gradientColors: [
+              AppColors.actionGradientStart,
+              AppColors.actionGradientEnd
+            ],
+          ),
+          _buildGenreCard(
+            emoji: '💖',
+            title: 'Romance',
+            description: 'Heart-warming stories',
+            gradientColors: [
+              AppColors.romanceGradientStart,
+              AppColors.romanceGradientEnd
+            ],
+          ),
+          _buildGenreCard(
+            emoji: '🔮',
+            title: 'Fantasy',
+            description: 'Magical adventures',
+            gradientColors: [
+              AppColors.fantasyGradientStart,
+              AppColors.fantasyGradientEnd
+            ],
+          ),
+          _buildGenreCard(
+            emoji: '😂',
+            title: 'Comedy',
+            description: 'Hilarious moments',
+            gradientColors: [
+              AppColors.comedyGradientStart,
+              AppColors.comedyGradientEnd
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -379,71 +415,89 @@ class _ExploreScreenState extends State<ExploreScreen> {
       required String title,
       required String description,
       required List<Color> gradientColors}) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-      gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return InkWell(
+      onTap: () {
+        _searchController.text = title;
+        _handleSearch(title);
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: GlassCard(
+        padding: const EdgeInsets.all(16.0),
+        gradient: LinearGradient(
+            colors: gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 44)),
+            const SizedBox(height: 12),
+            Text(title,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20)),
+            const SizedBox(height: 4),
+            Text(description,
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+                textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubGenreGridSliver() {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverGrid.count(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1 / 1.1,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 40)),
-          Column(
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: AppColors.primaryText,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20)),
-              const SizedBox(height: 4),
-              Text(description,
-                  style: TextStyle(
-                      color: AppColors.primaryText.withValues(alpha: 0.8),
-                      fontSize: 14),
-                  textAlign: TextAlign.center),
-            ],
-          ),
+          _buildSubGenreCard(emoji: '🤖', title: 'Sci-Fi'),
+          _buildSubGenreCard(emoji: '👻', title: 'Horror'),
+          _buildSubGenreCard(emoji: '🏫', title: 'School'),
+          _buildSubGenreCard(emoji: '🏀', title: 'Sports'),
+          _buildSubGenreCard(emoji: '🎵', title: 'Music'),
+          _buildSubGenreCard(emoji: '🔍', title: 'Mystery'),
+          _buildSubGenreCard(emoji: '🌋', title: 'Adventure'),
+          _buildSubGenreCard(emoji: '🎭', title: 'Drama'),
+          _buildSubGenreCard(emoji: '🍃', title: 'Slice of Life'),
+          _buildSubGenreCard(emoji: '✨', title: 'Supernatural'),
+          _buildSubGenreCard(emoji: '🪄', title: 'Magic'),
+          _buildSubGenreCard(emoji: '🦾', title: 'Mecha'),
+          _buildSubGenreCard(emoji: '🧠', title: 'Psychological'),
+          _buildSubGenreCard(emoji: '🔪', title: 'Thriller'),
+          _buildSubGenreCard(emoji: '📜', title: 'Historical'),
         ],
       ),
     );
   }
 
-  Widget _buildSubGenreGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 3,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1 / 1.1,
-      children: [
-        _buildSubGenreCard(emoji: '🤖', title: 'Sci-Fi'),
-        _buildSubGenreCard(emoji: '👻', title: 'Horror'),
-        _buildSubGenreCard(emoji: '🏫', title: 'School'),
-        _buildSubGenreCard(emoji: '🏀', title: 'Sports'),
-        _buildSubGenreCard(emoji: '🎵', title: 'Music'),
-        _buildSubGenreCard(emoji: '🔍', title: 'Mystery'),
-      ],
-    );
-  }
-
   Widget _buildSubGenreCard({required String emoji, required String title}) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 8),
-          Text(title,
-              style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center),
-        ],
+    return InkWell(
+      onTap: () {
+        _searchController.text = title;
+        _handleSearch(title);
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 28)),
+            const SizedBox(height: 8),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }
