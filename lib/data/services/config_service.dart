@@ -36,35 +36,6 @@ class ConfigService {
     }
   }
 
-  Future<List<Show>> fetchTrendings() async {
-    try {
-      final response = await (await HttpClientService().client).get(Uri.parse(
-          'https://raw.githubusercontent.com/rajasunrise/anidong/main/trendings.json'));
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body);
-        final List<Show> shows = [];
-
-        for (var item in jsonList) {
-          shows.add(Show(
-            id: item['no'] ?? 0,
-            title: item['nama'] ?? 'Unknown',
-            type: 'donghua', // Defaulting to donghua
-            status: 'Ongoing',
-            coverImageUrl: item['imageurl'],
-            originalUrl: '', // Not provided
-            genres: [],
-          ));
-        }
-        return shows;
-      } else {
-        debugPrint('Failed to load trendings: ${response.statusCode}');
-        return [];
-      }
-    } catch (e) {
-      debugPrint('Error fetching trendings: $e');
-      return [];
-    }
-  }
 
   Future<Map<String, List<Show>>> fetchSchedule() async {
     try {

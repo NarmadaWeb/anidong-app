@@ -217,6 +217,73 @@ class ScrapingService {
     }
   }
 
+  Future<List<Show>> getAnoboyPopularToday() async {
+    try {
+      final response = await (await HttpClientService().client).get(
+        Uri.parse(anoboyBaseUrl),
+        headers: ScrapingService.getAnoboyHeaders(),
+      );
+      if (response.statusCode != 200) return [];
+
+      final document = parse(response.body);
+      final List<Show> shows = [];
+
+      // Target "Baru ditambahkan" or popular sidebar
+      final containers = document.querySelectorAll('.side_home');
+      Element? popularContainer;
+
+      for (var container in containers) {
+        final header = container.querySelector('h2.jdl');
+        if (header != null &&
+            (header.text.toLowerCase().contains('baru ditambahkan') ||
+                header.text.toLowerCase().contains('paling banyak dilihat'))) {
+          popularContainer = container;
+          break;
+        }
+      }
+
+      final elements = (popularContainer ?? document).querySelectorAll(
+        'a[rel="bookmark"]',
+      );
+
+      for (var element in elements) {
+        // Skip if not inside an appropriate container if we found one
+        if (popularContainer != null && !popularContainer.contains(element)) {
+          continue;
+        }
+
+        final title = element.attributes['title'] ??
+            element.querySelector('h3.ibox')?.text.trim() ??
+            '';
+        final url = element.attributes['href'] ?? '';
+        final imgElement = element.querySelector('img');
+
+        if (title.isNotEmpty && url.isNotEmpty) {
+          final thumb = _extractImageUrl(imgElement);
+
+          shows.add(
+            Show(
+              id: url.hashCode,
+              title: title.split(' Episode')[0].split(' Ep ')[0],
+              type: 'anime',
+              status: 'ongoing',
+              coverImageUrl: thumb,
+              originalUrl: url.startsWith('http') ? url : '$anoboyBaseUrl$url',
+              genres: [],
+            ),
+          );
+        }
+      }
+
+      // Deduplicate by title
+      final seenTitles = <String>{};
+      return shows.where((s) => seenTitles.add(s.title)).toList();
+    } catch (e) {
+      debugPrint('Error scraping Anoboy Popular: $e');
+      return [];
+    }
+  }
+
   Future<List<Show>> getAnichinPopularToday() async {
     try {
       final response = await (await HttpClientService().client).get(
