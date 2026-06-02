@@ -1,7 +1,7 @@
 import 'package:anidong/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
-class ModeSwitch extends StatefulWidget {
+class ModeSwitch extends StatelessWidget {
   final String currentMode;
   final ValueChanged<String> onModeChanged;
 
@@ -12,17 +12,12 @@ class ModeSwitch extends StatefulWidget {
   });
 
   @override
-  State<ModeSwitch> createState() => _ModeSwitchState();
-}
-
-class _ModeSwitchState extends State<ModeSwitch> {
-  @override
   Widget build(BuildContext context) {
-    final isAnime = widget.currentMode == 'anime';
+    final isAnime = currentMode == 'anime';
 
     return GestureDetector(
       onTap: () {
-        widget.onModeChanged(isAnime ? 'donghua' : 'anime');
+        onModeChanged(isAnime ? 'donghua' : 'anime');
       },
       child: Container(
         width: 135,
@@ -37,11 +32,11 @@ class _ModeSwitchState extends State<ModeSwitch> {
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
-              left: isAnime ? 0 : (130 / 2) - 4,
+              left: isAnime ? 0 : (135 - 8) / 2, // Adjusted for 135 width and 4 padding
               top: 0,
               bottom: 0,
               child: Container(
-                width: 65,
+                width: 63, // Half of 135 minus some padding
                 decoration: BoxDecoration(
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(9999),

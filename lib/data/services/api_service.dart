@@ -57,7 +57,14 @@ class ApiService {
   }
 
   Future<List<Show>> getTrendingShows() async {
-    return await ConfigService().fetchTrendings();
+    final results = await Future.wait([
+      _scrapingService.getAnoboyPopularToday(),
+      _scrapingService.getAnichinPopularToday(),
+    ]);
+
+    final List<Show> combined = [...results[0], ...results[1]];
+    combined.shuffle();
+    return combined;
   }
 
   Future<List<Show>> getPopularShows(BuildContext context,
