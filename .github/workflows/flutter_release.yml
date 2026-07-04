@@ -76,14 +76,12 @@ jobs:
         run: flutter build windows --release
 
       - name: Package Windows
-        shell: pwsh
-        run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath anidong-windows.zip
+        run: iscc windows/installer.iss
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: anidong-windows.zip
+          files: build/windows/installer/anidong-setup.exe
           tag_name: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
