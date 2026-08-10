@@ -1021,8 +1021,9 @@ class ScrapingService {
           if (iframeUrl.contains('adsbatch720.php') ||
               iframeUrl.contains('yup/data.php')) {
             final nested = await extractNestedIframe(iframeUrl);
-            if (nested != null)
+            if (nested != null) {
               iframeUrl = _normalizeUrl(nested, anoboyBaseUrl);
+            }
           }
           videoServers.add({'name': 'Primary Server', 'url': iframeUrl});
           primaryIframe = iframeUrl;
