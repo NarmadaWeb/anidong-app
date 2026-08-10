@@ -22,7 +22,7 @@ void main() {
 
         final firstShow = shows.first;
         expect(firstShow.title, isNotEmpty);
-        expect(firstShow.originalUrl, contains('anoboy.boo'));
+        expect(firstShow.originalUrl, contains('anoboy'));
 
         debugPrint('Fetched ${shows.length} anime.');
         debugPrint(

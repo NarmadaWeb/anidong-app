@@ -68,8 +68,9 @@ class ScrapingService {
     if (url.startsWith('http')) return url;
     if (url.startsWith('//')) return 'https:$url';
     if (url.startsWith('/')) {
-      final base =
-          baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+      final base = baseUrl.endsWith('/')
+          ? baseUrl.substring(0, baseUrl.length - 1)
+          : baseUrl;
       return '$base$url';
     }
     final base = baseUrl.endsWith('/') ? baseUrl : '$baseUrl/';
@@ -571,10 +572,10 @@ class ScrapingService {
       thumb ??= epEl.querySelector('img')?.attributes['data-src'];
 
       if (url.isNotEmpty) {
-          final absoluteUrl = _normalizeUrl(url, anichinBaseUrl);
+        final absoluteUrl = _normalizeUrl(url, anichinBaseUrl);
         allEpisodes.add(
           Episode(
-              id: absoluteUrl.hashCode,
+            id: absoluteUrl.hashCode,
             showId: show.id,
             episodeNumber: int.tryParse(numText) ?? 0,
             title: title,
@@ -1020,7 +1021,8 @@ class ScrapingService {
           if (iframeUrl.contains('adsbatch720.php') ||
               iframeUrl.contains('yup/data.php')) {
             final nested = await extractNestedIframe(iframeUrl);
-            if (nested != null) iframeUrl = _normalizeUrl(nested, anoboyBaseUrl);
+            if (nested != null)
+              iframeUrl = _normalizeUrl(nested, anoboyBaseUrl);
           }
           videoServers.add({'name': 'Primary Server', 'url': iframeUrl});
           primaryIframe = iframeUrl;
@@ -1311,7 +1313,8 @@ class ScrapingService {
         isValidUrl = true;
       } else if (url.startsWith('/')) {
         isValidUrl = true; // Relative path
-        url = _normalizeUrl(url, anoboyBaseUrl); // Normalize to full URL immediately
+        url = _normalizeUrl(
+            url, anoboyBaseUrl); // Normalize to full URL immediately
       }
 
       if (!isValidUrl) continue;
@@ -1400,6 +1403,40 @@ class ScrapingService {
       }
     }
     return eps;
+  }
+
+  Future<String> resolveAnichinProxyUrl(String originalUrl) async {
+    if (!originalUrl.contains('anichin.moe/stream/') &&
+        !originalUrl.contains('anichin-player.web.id')) {
+      return originalUrl;
+    }
+
+    try {
+      final response = await (await HttpClientService().client).get(
+        Uri.parse(originalUrl),
+        headers: getAnichinHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final doc = parse(response.body);
+        final iframe = doc.querySelector('iframe');
+        if (iframe != null) {
+          final src = iframe.attributes['src'];
+          if (src != null && src.isNotEmpty) {
+            final absoluteSrc = _normalizeUrl(src, anichinBaseUrl);
+            if (absoluteSrc.contains('anichin.moe/stream/') ||
+                absoluteSrc.contains('anichin-player.web.id/index.php?url=') ||
+                absoluteSrc.contains('anichin-player.web.id/index.php?ok=')) {
+              return await resolveAnichinProxyUrl(absoluteSrc);
+            }
+            return absoluteSrc;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error resolving Anichin proxy: $e');
+    }
+    return originalUrl;
   }
 
   @visibleForTesting
@@ -1622,6 +1659,12 @@ class ScrapingService {
       final List<Map<String, String>> videoServers = extractAnichinServers(
         document,
       );
+
+      for (int i = 0; i < videoServers.length; i++) {
+        final resolvedUrl =
+            await resolveAnichinProxyUrl(videoServers[i]['url']!);
+        videoServers[i]['url'] = resolvedUrl;
+      }
 
       final List<Map<String, String>> downloadLinks = [];
 
@@ -1902,15 +1945,15 @@ class ScrapingService {
           status = 'completed';
         }
 
-      final absoluteUrl = _normalizeUrl(url, anoboyBaseUrl);
+        final absoluteUrl = _normalizeUrl(url, anoboyBaseUrl);
         shows.add(
           Show(
-          id: absoluteUrl.hashCode,
+            id: absoluteUrl.hashCode,
             title: title,
             type: 'anime',
             status: status,
             genres: [],
-              originalUrl: _normalizeUrl(url, anoboyBaseUrl),
+            originalUrl: _normalizeUrl(url, anoboyBaseUrl),
             coverImageUrl: '',
           ),
         );
