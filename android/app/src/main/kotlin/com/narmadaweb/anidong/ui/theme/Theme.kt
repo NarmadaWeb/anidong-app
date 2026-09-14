@@ -1,7 +1,7 @@
 package com.narmadaweb.anidong.ui.theme
 
-import androidx.compose.material3.DarkColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -12,7 +12,7 @@ val AccentAmber = Color(0xFFF59E0B)
 val TextPrimary = Color(0xFFF8FAFC)
 val TextSecondary = Color(0xFF94A3B8)
 
-private val DarkThemeColors = DarkColorScheme(
+private val DarkThemeColors = darkColorScheme(
     primary = PrimaryRed,
     secondary = AccentAmber,
     background = DarkBackground,

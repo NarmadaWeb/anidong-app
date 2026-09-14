@@ -43,7 +43,7 @@ class ScrapingService(
     }
 
     private fun normalizeUrl(url: String?, baseUrl: String): String {
-        if (url.isNull_orEmpty() || url == "#" || url == "none") return ""
+        if (url.isNullOrEmpty() || url == "#" || url == "none") return ""
         if (url.startsWith("http")) return url
         if (url.startsWith("//")) return "https:$url"
         if (url.startsWith("/")) {
@@ -53,8 +53,6 @@ class ScrapingService(
         val base = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
         return "$base$url"
     }
-
-    private fun String?.isNull_orEmpty(): Boolean = this == null || this.trim().isEmpty()
 
     private fun extractImageUrl(imgElement: Element?): String {
         if (imgElement == null) return ""
@@ -236,7 +234,7 @@ class ScrapingService(
             val seenTitles = mutableSetOf<String>()
 
             for (element in elements) {
-                if (popularContainer != null && !popularContainer.contains(element)) continue
+                if (popularContainer != null && !element.parents().contains(popularContainer)) continue
 
                 val title = element.attr("title").ifEmpty { element.select("h3.ibox").text().trim() }
                 val href = element.attr("href")
@@ -385,7 +383,7 @@ class ScrapingService(
             val title = epEl.selectFirst(".epl-title")?.text()?.trim() ?: ""
 
             var thumb = epEl.selectFirst("img")?.attr("src")
-            if (thumb.isNull_orEmpty()) thumb = epEl.selectFirst("img")?.attr("data-src")
+            if (thumb.isNullOrEmpty()) thumb = epEl.selectFirst("img")?.attr("data-src")
 
             if (url.isNotEmpty()) {
                 val absoluteUrl = normalizeUrl(url, anichinBaseUrl)
@@ -484,7 +482,7 @@ class ScrapingService(
         }
 
         var coverImage = show.coverImageUrl
-        if (coverImage.isNull_orEmpty()) {
+        if (coverImage.isNullOrEmpty()) {
             val imgEl = doc.selectFirst(".entry-content img, .post-body img")
             coverImage = extractImageUrl(imgEl)
         }
@@ -555,7 +553,7 @@ class ScrapingService(
             val doc = fetchDocument(originalUrl, getAnichinHeaders()) ?: return@withContext originalUrl
             val iframe = doc.selectFirst("iframe")
             val src = iframe?.attr("src")
-            if (!src.isNull_orEmpty()) {
+            if (!src.isNullOrEmpty()) {
                 val absSrc = normalizeUrl(src, anichinBaseUrl)
                 if (absSrc.contains("anichin.moe/stream/") || absSrc.contains("anichin-player.web.id")) {
                     return@withContext resolveAnichinProxyUrl(absSrc)
@@ -574,7 +572,7 @@ class ScrapingService(
             ?: doc.selectFirst("iframe")
 
         val primaryIframe = iframeElement?.attr("src")
-        if (!primaryIframe.isNull_orEmpty()) {
+        if (!primaryIframe.isNullOrEmpty()) {
             videoServers.add(mapOf("name" to "Primary Server", "url" to normalizeUrl(primaryIframe, anichinBaseUrl)))
         }
 
