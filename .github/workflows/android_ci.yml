@@ -7,8 +7,8 @@ on:
     branches: [ "*" ]
 
 jobs:
-  test:
-    name: Run Kotlin Unit Tests & Lint
+  test_and_build:
+    name: Run Unit Tests & Build APKs
     runs-on: ubuntu-latest
 
     steps:
@@ -26,3 +26,22 @@ jobs:
 
       - name: Run Unit Tests
         run: cd android && ./gradlew test
+
+      - name: Build Release APKs
+        run: cd android && ./gradlew assembleRelease
+
+      - name: Organize APK Artifacts
+        run: |
+          cd android/app/build/outputs/apk/release
+          cp app-arm64-v8a-release.apk anidong-arm64-v8a.apk 2>/dev/null || cp app-arm64-v8a-release-unsigned.apk anidong-arm64-v8a.apk 2>/dev/null || true
+          cp app-armeabi-v7a-release.apk anidong-armeabi-v7a.apk 2>/dev/null || cp app-armeabi-v7a-release-unsigned.apk anidong-armeabi-v7a.apk 2>/dev/null || true
+          cp app-universal-release.apk anidong-universal.apk 2>/dev/null || cp app-universal-release-unsigned.apk anidong-universal.apk 2>/dev/null || cp app-release.apk anidong-universal.apk 2>/dev/null || cp app-release-unsigned.apk anidong-universal.apk 2>/dev/null || true
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-apks
+          path: |
+            android/app/build/outputs/apk/release/anidong-arm64-v8a.apk
+            android/app/build/outputs/apk/release/anidong-armeabi-v7a.apk
+            android/app/build/outputs/apk/release/anidong-universal.apk

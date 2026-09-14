@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build_android:
-    name: Build Release APK
+    name: Build Release APKs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -24,17 +24,23 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
-      - name: Build Release APK
+      - name: Build Release APKs
         run: cd android && ./gradlew assembleRelease
 
-      - name: Rename APK
+      - name: Organize APK Artifacts
         run: |
-          cp android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/anidong-release.apk || cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/anidong-release.apk
+          cd android/app/build/outputs/apk/release
+          cp app-arm64-v8a-release.apk anidong-arm64-v8a.apk 2>/dev/null || cp app-arm64-v8a-release-unsigned.apk anidong-arm64-v8a.apk 2>/dev/null || true
+          cp app-armeabi-v7a-release.apk anidong-armeabi-v7a.apk 2>/dev/null || cp app-armeabi-v7a-release-unsigned.apk anidong-armeabi-v7a.apk 2>/dev/null || true
+          cp app-universal-release.apk anidong-universal.apk 2>/dev/null || cp app-universal-release-unsigned.apk anidong-universal.apk 2>/dev/null || cp app-release.apk anidong-universal.apk 2>/dev/null || cp app-release-unsigned.apk anidong-universal.apk 2>/dev/null || true
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/release/anidong-release.apk
+          files: |
+            android/app/build/outputs/apk/release/anidong-arm64-v8a.apk
+            android/app/build/outputs/apk/release/anidong-armeabi-v7a.apk
+            android/app/build/outputs/apk/release/anidong-universal.apk
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
         env:
