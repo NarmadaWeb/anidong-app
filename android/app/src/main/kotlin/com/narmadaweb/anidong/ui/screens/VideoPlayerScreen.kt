@@ -12,7 +12,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,7 +40,8 @@ fun VideoPlayerScreen(
     initialEpisode: Episode,
     viewModel: VideoPlayerViewModel,
     dao: ShowDao,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onDownloadClick: (Episode) -> Unit
 ) {
     LaunchedEffect(initialEpisode) {
         viewModel.loadEpisode(initialEpisode, dao)
@@ -46,6 +50,9 @@ fun VideoPlayerScreen(
     val episodeDetails by viewModel.episodeDetails.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val selectedServerUrl by viewModel.selectedServerUrl.collectAsState()
+    val allEpisodes by viewModel.allEpisodes.collectAsState()
+    val prevEpisode by viewModel.prevEpisode.collectAsState()
+    val nextEpisode by viewModel.nextEpisode.collectAsState()
 
     val currentEp = episodeDetails ?: initialEpisode
 
@@ -55,7 +62,7 @@ fun VideoPlayerScreen(
                 title = { Text(text = currentEp.title ?: "Episode ${currentEp.episodeNumber}", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -110,10 +117,57 @@ fun VideoPlayerScreen(
                 }
             }
 
+            // Navigation Controls & Download Button Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Prev Button
+                Button(
+                    onClick = { prevEpisode?.let { viewModel.loadEpisode(it, dao) } },
+                    enabled = prevEpisode != null,
+                    colors = ButtonDefaults.buttonColors(containerColor = CardBackground, disabledContainerColor = CardBackground.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = "Sebelumnya", tint = if (prevEpisode != null) Color.White else Color.Gray)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Sebelumnya", fontSize = 12.sp, color = if (prevEpisode != null) Color.White else Color.Gray)
+                }
+
+                // Download Button
+                Button(
+                    onClick = { onDownloadClick(currentEp) },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Download, contentDescription = "Download", tint = Color.White, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Download", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                }
+
+                // Next Button
+                Button(
+                    onClick = { nextEpisode?.let { viewModel.loadEpisode(it, dao) } },
+                    enabled = nextEpisode != null,
+                    colors = ButtonDefaults.buttonColors(containerColor = CardBackground, disabledContainerColor = CardBackground.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Text("Selanjutnya", fontSize = 12.sp, color = if (nextEpisode != null) Color.White else Color.Gray)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(imageVector = Icons.AutoMirrored.Filled.NavigateNext, contentDescription = "Selanjutnya", tint = if (nextEpisode != null) Color.White else Color.Gray)
+                }
+            }
+
             // Video Servers Selector
             val servers = currentEp.videoServers
             if (servers.isNotEmpty()) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Text(
                         text = "Pilih Server",
                         fontWeight = FontWeight.Bold,
@@ -159,6 +213,37 @@ fun VideoPlayerScreen(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp
                 )
+            }
+
+            // All Episodes Section
+            if (allEpisodes.isNotEmpty()) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Text(
+                        text = "Semua Episode",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(allEpisodes) { ep ->
+                            val isCurrent = ep.episodeNumber == currentEp.episodeNumber || ep.originalUrl == currentEp.originalUrl
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isCurrent) PrimaryRed else CardBackground)
+                                    .clickable { viewModel.loadEpisode(ep, dao) }
+                                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                            ) {
+                                Text(
+                                    text = if (ep.episodeNumber > 0) "Ep ${ep.episodeNumber}" else (ep.title ?: "Episode"),
+                                    fontSize = 13.sp,
+                                    color = Color.White,
+                                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
