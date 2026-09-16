@@ -50,6 +50,7 @@ fun MainAppScreen(dao: com.narmadaweb.anidong.data.db.ShowDao) {
 
     var selectedShowForDetails by remember { mutableStateOf<Show?>(null) }
     var selectedEpisodeForPlayer by remember { mutableStateOf<Episode?>(null) }
+    var selectedEpisodeForDownload by remember { mutableStateOf<Episode?>(null) }
 
     val homeViewModel: HomeViewModel = viewModel()
     val showDetailsViewModel: ShowDetailsViewModel = viewModel()
@@ -154,6 +155,18 @@ fun MainAppScreen(dao: com.narmadaweb.anidong.data.db.ShowDao) {
                         initialEpisode = ep,
                         viewModel = videoPlayerViewModel,
                         dao = dao,
+                        onBackClick = { navController.popBackStack() },
+                        onDownloadClick = { downloadEp ->
+                            selectedEpisodeForDownload = downloadEp
+                            navController.navigate("download")
+                        }
+                    )
+                }
+            }
+            composable("download") {
+                selectedEpisodeForDownload?.let { ep ->
+                    DownloadScreen(
+                        episode = ep,
                         onBackClick = { navController.popBackStack() }
                     )
                 }
