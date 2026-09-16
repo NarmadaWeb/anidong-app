@@ -598,6 +598,94 @@ class ScrapingService(
         return videoServers
     }
 
+    fun extractAnichinDownloadLinks(doc: Document): List<Map<String, String>> {
+        val downloadLinks = mutableListOf<Map<String, String>>()
+        val dlWrappers = doc.select(".mctnx, .soradl, .soraurl, .dlbox, .downloads, .download-link")
+        if (dlWrappers.isNotEmpty()) {
+            for (wrapper in dlWrappers) {
+                val resLabel = wrapper.selectFirst(".sorattl, .title, .resolution, strong, b, h3, h4")?.text()?.trim() ?: "Download"
+                for (link in wrapper.select("a")) {
+                    val provider = link.text().trim()
+                    val href = link.attr("href")
+                    if (href.isNotEmpty() && !href.startsWith("#") && !href.startsWith("javascript:")) {
+                        val label = if (resLabel.isNotEmpty()) "$resLabel - $provider" else provider
+                        downloadLinks.add(mapOf("name" to label, "url" to normalizeUrl(href, anichinBaseUrl)))
+                    }
+                }
+            }
+        }
+        if (downloadLinks.isEmpty()) {
+            val genericLinks = doc.select("a[href*=drive.google], a[href*=mega.nz], a[href*=mediafire], a[href*=krakenfiles], a[href*=terabox], a[href*=zippyshare], a[href*=racaty]")
+            for (link in genericLinks) {
+                val provider = link.text().trim().ifEmpty { "Download Link" }
+                val href = link.attr("href")
+                if (href.isNotEmpty()) {
+                    downloadLinks.add(mapOf("name" to provider, "url" to normalizeUrl(href, anichinBaseUrl)))
+                }
+            }
+        }
+        return downloadLinks
+    }
+
+    fun extractAnoboyDownloadLinks(doc: Document): List<Map<String, String>> {
+        val downloadLinks = mutableListOf<Map<String, String>>()
+
+        val tables = doc.select(".entry-content table, .post-body table, .singlelink table, .sisi table")
+        for (table in tables) {
+            val rows = table.select("tr")
+            for (row in rows) {
+                val cols = row.select("td, th")
+                if (cols.size >= 2) {
+                    val resText = cols.first()?.text()?.trim() ?: ""
+                    val isRes = resText.contains(Regex("(360p|480p|720p|1080p|240p|HD|SD|MP4|MKV)", RegexOption.IGNORE_CASE))
+                    val labelPrefix = if (isRes) resText else ""
+
+                    for (i in 1 until cols.size) {
+                        for (link in cols[i].select("a")) {
+                            val provider = link.text().trim()
+                            val href = link.attr("href")
+                            if (href.isNotEmpty() && !href.startsWith("#") && !href.startsWith("javascript:")) {
+                                val name = if (labelPrefix.isNotEmpty()) "$labelPrefix - $provider" else provider
+                                if (name.lowercase().contains("download") || isRes || href.contains("http")) {
+                                    downloadLinks.add(mapOf("name" to name, "url" to normalizeUrl(href, anoboyBaseUrl)))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (downloadLinks.isEmpty()) {
+            val containers = doc.select(".entry-content, .post-body, .singlelink, .sisi, .download-area")
+            val links = containers.select("a")
+            for (link in links) {
+                val text = link.text().trim()
+                val href = link.attr("href")
+                val lowerText = text.lowercase()
+                val lowerHref = href.lowercase()
+
+                if (href.isNotEmpty() && !href.startsWith("#") && !href.startsWith("javascript:")) {
+                    val isDownload = lowerText.contains("download") || lowerText.contains("zippy") ||
+                            lowerText.contains("gdrive") || lowerText.contains("mega") ||
+                            lowerText.contains("mediafire") || lowerText.contains("acefile") ||
+                            lowerText.contains("kfiles") || lowerText.contains("files.im") ||
+                            lowerText.contains("racaty") || lowerText.contains("pixeldrain") ||
+                            lowerText.contains("720p") || lowerText.contains("480p") ||
+                            lowerText.contains("1080p") || lowerText.contains("360p") ||
+                            lowerHref.contains("zippyshare") || lowerHref.contains("mediafire") ||
+                            lowerHref.contains("mega.nz") || lowerHref.contains("drive.google")
+
+                    if (isDownload) {
+                        downloadLinks.add(mapOf("name" to text.ifEmpty { "Download Link" }, "url" to normalizeUrl(href, anoboyBaseUrl)))
+                    }
+                }
+            }
+        }
+
+        return downloadLinks
+    }
+
     suspend fun getAnichinEpisodeDetails(episode: Episode): Episode = withContext(Dispatchers.IO) {
         val safeUrl = episode.originalUrl ?: return@withContext episode
         try {
@@ -608,20 +696,7 @@ class ScrapingService(
                 mapOf("name" to (server["name"] ?: "Server"), "url" to resolved)
             }
 
-            val downloadLinks = mutableListOf<Map<String, String>>()
-            val dlWrappers = doc.select(".mctnx")
-            if (dlWrappers.isNotEmpty()) {
-                for (wrapper in dlWrappers) {
-                    val resLabel = wrapper.selectFirst(".sorattl")?.text()?.trim() ?: "Download"
-                    for (link in wrapper.select("a")) {
-                        val provider = link.text().trim()
-                        val href = link.attr("href")
-                        if (href.isNotEmpty() && !href.startsWith("#")) {
-                            downloadLinks.add(mapOf("name" to "$resLabel - $provider", "url" to normalizeUrl(href, anichinBaseUrl)))
-                        }
-                    }
-                }
-            }
+            val downloadLinks = extractAnichinDownloadLinks(doc)
 
             episode.copy(
                 iframeUrl = videoServers.firstOrNull()?.get("url"),
@@ -655,9 +730,12 @@ class ScrapingService(
                 }
             }
 
+            val downloadLinks = extractAnoboyDownloadLinks(doc)
+
             episode.copy(
                 iframeUrl = videoServers.firstOrNull()?.get("url"),
-                videoServers = videoServers
+                videoServers = videoServers,
+                downloadLinks = downloadLinks
             )
         } catch (e: Exception) {
             episode

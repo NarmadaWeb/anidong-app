@@ -24,6 +24,15 @@ class VideoPlayerViewModel(
     private val _selectedServerUrl = MutableStateFlow<String?>(null)
     val selectedServerUrl: StateFlow<String?> = _selectedServerUrl.asStateFlow()
 
+    private val _allEpisodes = MutableStateFlow<List<Episode>>(emptyList())
+    val allEpisodes: StateFlow<List<Episode>> = _allEpisodes.asStateFlow()
+
+    private val _prevEpisode = MutableStateFlow<Episode?>(null)
+    val prevEpisode: StateFlow<Episode?> = _prevEpisode.asStateFlow()
+
+    private val _nextEpisode = MutableStateFlow<Episode?>(null)
+    val nextEpisode: StateFlow<Episode?> = _nextEpisode.asStateFlow()
+
     fun loadEpisode(initialEpisode: Episode, dao: ShowDao) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -52,6 +61,40 @@ class VideoPlayerViewModel(
                     originalUrl = detailed.originalUrl
                 )
             )
+
+            // Load Show Episodes if needed
+            fetchShowEpisodesIfNeeded(detailed)
+        }
+    }
+
+    private suspend fun fetchShowEpisodesIfNeeded(currentEp: Episode) {
+        val show = currentEp.show
+        var eps = show?.episodes
+        if (eps.isNullOrEmpty() && show != null && !show.originalUrl.isNullOrEmpty()) {
+            val isDonghua = show.type == "donghua" || currentEp.originalUrl?.contains("anichin") == true
+            val detailedShow = if (isDonghua) {
+                scrapingService.getAnichinShowDetails(show)
+            } else {
+                scrapingService.getAnoboyShowDetails(show)
+            }
+            eps = detailedShow.episodes
+        }
+
+        if (!eps.isNullOrEmpty()) {
+            val sortedList = eps.sortedBy { it.episodeNumber }
+            _allEpisodes.value = sortedList
+
+            val currentIndex = sortedList.indexOfFirst {
+                it.episodeNumber == currentEp.episodeNumber || it.originalUrl == currentEp.originalUrl
+            }
+
+            if (currentIndex != -1) {
+                _prevEpisode.value = if (currentIndex > 0) sortedList[currentIndex - 1] else null
+                _nextEpisode.value = if (currentIndex < sortedList.size - 1) sortedList[currentIndex + 1] else null
+            } else {
+                _prevEpisode.value = null
+                _nextEpisode.value = null
+            }
         }
     }
 

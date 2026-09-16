@@ -40,6 +40,7 @@ fun HomeScreen(
     val popularShows by viewModel.popularShows.collectAsState()
     val recentEpisodes by viewModel.recentEpisodes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
 
     Scaffold(
         topBar = {
@@ -117,6 +118,32 @@ fun HomeScreen(
 
                 items(recentEpisodes) { episode ->
                     RecentEpisodeItem(episode = episode, onClick = { onEpisodeClick(episode) })
+                }
+
+                if (recentEpisodes.isNotEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isLoadingMore) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(28.dp),
+                                    color = PrimaryRed
+                                )
+                            } else {
+                                Button(
+                                    onClick = { viewModel.loadMoreEpisodes() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
+                                    shape = RoundedCornerShape(20.dp)
+                                ) {
+                                    Text(text = "Muat Lebih Banyak Episode", color = Color.White)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
